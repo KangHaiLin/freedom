@@ -11,6 +11,7 @@ docs/validation/
 ├── README.md                           # 本文件，材料目录说明
 ├── requirement-validation-checklist.md # 需求验证检查清单（8个类别）
 ├── requirement-validation-report.md    # 需求验证报告（详细检查结果）
+├── compliance-verification-report.md   # 监管合规性专项验证报告
 ├── review-materials-package.md         # 评审材料包（综合材料指南）
 ├── review-team-roles.md               # 评审团队与职责定义
 ├── review-schedule.md                  # 评审时间安排和会议计划
@@ -34,7 +35,13 @@ docs/validation/
    - 基于检查清单的验证结果
    - 详细的问题清单和改进建议
    - 后续行动计划
-   - 总体结论：SRS v0.2.0通过初步验证，需专题评审
+   - 总体结论：SRS v0.3.0通过初步验证，需专题评审
+
+3. **监管合规性专项验证报告** (`compliance-verification-report.md`)
+   - 专门验证SRS的监管合规性
+   - 对照证券法、交易所规则、数据安全法等
+   - 覆盖交易制度、数据安全、审计合规等领域
+   - 总体合规性评估：81%覆盖度，需专家确认
 
 ### 评审组织材料
 3. **评审材料包** (`review-materials-package.md`)
@@ -189,10 +196,11 @@ docs/validation/
 |------|------|--------|----------|
 | v1.0 | 2026-03-10 | Claude Code | 初始版本创建 |
 | v1.1 | 2026-03-10 | Claude Code | 补充评审会议材料说明 |
+| v1.2 | 2026-03-11 | Claude Code | 添加监管合规性专项验证报告 |
 
 ---
 
 **分发范围**：评审委员会全体成员、项目相关方
 **保密级别**：内部机密
-**生效日期**：2026年3月10日
+**生效日期**：2026年3月11日
 **备注**：本目录材料将根据评审过程实际情况进行更新和维护
