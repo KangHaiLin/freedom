@@ -11,6 +11,8 @@
 | 1. 引言 | [section1-introduction.md](section1-introduction.md) | 草稿 | 2026-03-08 |
 | 2. 总体描述 | [section2-overall-description.md](section2-overall-description.md) | 草稿 | 2026-03-08 |
 | 3. 具体需求 | [section3-specific-requirements.md](section3-specific-requirements.md) | 已细化 | 2026-03-10 |
+| 附录A：需求可追溯矩阵 | [appendices/appendix-a-traceability-matrix.md](appendices/appendix-a-traceability-matrix.md) | 已完成 | 2026-03-10 |
+| 附录B：数据字典 | [appendices/appendix-b-data-dictionary.md](appendices/appendix-b-data-dictionary.md) | 已完成 | 2026-03-11 |
 
 ## 相关文档
 
@@ -22,6 +24,7 @@
 
 | 版本 | 日期 | 作者 | 说明 |
 |------|------|------|------|
+| 0.3.0 | 2026-03-11 | Claude | 补充附录文档（需求可追溯矩阵、数据字典） |
 | 0.2.0 | 2026-03-10 | Claude | 阶段2完成：详细需求开发 |
 | 0.1.0 | 2026-03-08 | Claude | 初始文档框架创建 |
 
