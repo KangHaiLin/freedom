@@ -156,6 +156,7 @@
 3. [测试环境需求模板](templates/test-environment-requirements-template.md)
 4. [会议纪要模板](templates/meeting-minutes-template.md)
 5. [Q-005存储性能技术评估材料](Q005-storage-performance-assessment.md)
+6. [技术决策摘要](technical-decision-summary.md)（Q-004/Q-005综合决策参考）
 
 ## 注意事项
 
