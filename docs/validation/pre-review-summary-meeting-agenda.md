@@ -38,8 +38,8 @@
 ## 会议准备要求
 
 ### 会前阅读材料
-- [x] [预审问题汇总报告](pre-review-summary-report.md)（v1.0）
-- [x] [需求评审问题跟踪表](issue-tracking.md)（v1.1）
+- [x] [预审问题汇总报告](pre-review-summary-report.md)（v1.1）
+- [x] [需求评审问题跟踪表](issue-tracking.md)（v1.2）
 - [x] 个人预审问题清单（各委员自行整理）
 
 ### 设备要求
@@ -290,10 +290,10 @@
 ## 附件
 
 ### 附件清单
-1. [x] [预审问题汇总报告](pre-review-summary-report.md)
-2. [x] [需求评审问题跟踪表](issue-tracking.md)
+1. [x] [预审问题汇总报告](pre-review-summary-report.md)（v1.1）
+2. [x] [需求评审问题跟踪表](issue-tracking.md)（v1.2）
 3. [x] [评审时间安排表](review-schedule.md)
-4. [x] [评审材料包](review-materials-package.md)
+4. [x] [评审材料包](review-materials-package.md)（v1.2）
 
 ## 注意事项
 
