@@ -49,6 +49,7 @@
 - [ ] [预审问题汇总报告](pre-review-summary-report.md)
 - [ ] [问题跟踪表](issue-tracking.md)（技术相关问题）
 - [ ] [测试环境需求模板](templates/test-environment-requirements-template.md)
+- [ ] [Q-005存储性能技术评估材料](Q005-storage-performance-assessment.md)（重点关注）
 
 ### 3. 个人预审要求
 - 每位委员完成技术相关章节的个人预审
@@ -154,6 +155,7 @@
 2. [性能指标评估模板](templates/performance-metrics-assessment-template.md)
 3. [测试环境需求模板](templates/test-environment-requirements-template.md)
 4. [会议纪要模板](templates/meeting-minutes-template.md)
+5. [Q-005存储性能技术评估材料](Q005-storage-performance-assessment.md)
 
 ## 注意事项
 
