@@ -102,6 +102,7 @@
 - [ ] 软件安装计划（开发负责人）
 - [ ] 数据生成进度报告（数据工程师）
 - [ ] 测试环境准备检查清单（测试负责人）
+- [ ] 资源确认清单填写（所有相关人员参考）
 
 ## 预期产出
 
@@ -131,3 +132,4 @@
 2. [Q-004基准测试计划](Q004-backtest-benchmark-plan.md)
 3. [Q-005基准测试计划](Q005-storage-benchmark-plan.md)
 4. [技术可行性评估进展报告](technical-feasibility-assessment-progress.md)
+5. [资源确认清单](resource-confirmation-checklist-20260314.md)
