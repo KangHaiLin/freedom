@@ -157,6 +157,9 @@
 4. [会议纪要模板](templates/meeting-minutes-template.md)
 5. [Q-005存储性能技术评估材料](Q005-storage-performance-assessment.md)
 6. [技术决策摘要](technical-decision-summary.md)（Q-004/Q-005综合决策参考）
+7. [基准测试计划模板](templates/benchmark-test-plan-template.md)（性能测试规划工具）
+8. [硬件配置建议](hardware-configuration-recommendations.md)（Q-004/Q-005硬件需求）
+9. [技术风险评估](technical-risk-assessment.md)（风险识别与管理）
 
 ## 注意事项
 
