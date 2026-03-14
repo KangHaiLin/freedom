@@ -128,13 +128,13 @@
 ### 必须准备好的材料
 | 材料 | 责任人 | 准备状态 |
 |------|--------|----------|
-| [ ] Q-004测试计划v1.1（更新后） | 验证负责人 | 预计18:00前完成 |
-| [ ] Q-005测试计划v1.1（更新后） | 验证负责人 | 预计18:00前完成 |
-| [ ] 评审结论摘要报告 | 验证负责人 | 已准备 |
-| [ ] 资源确认单 | 运维负责人 | 已准备 |
-| [ ] 测试团队安排确认 | 测试负责人 | 已准备 |
-| [ ] 风险接受评估表 | 技术架构师 | 已准备 |
-| [ ] 正式批准文件草案 | 验证负责人 | 已准备 |
+| [✅] Q-004测试计划v1.1（更新后） | 验证负责人 | 已提前完成（12:00） |
+| [✅] Q-005测试计划v1.1（更新后） | 验证负责人 | 已提前完成（12:30） |
+| [✅] 评审结论摘要报告 | 验证负责人 | 已更新至v1.1 |
+| [✅] 资源确认单 | 运维负责人 | 已签字确认 |
+| [✅] 测试团队安排确认 | 测试负责人 | 已确认，会议纪要已记录 |
+| [✅] 风险接受评估表 | 技术架构师 | 已准备，包含在评审意见汇总中 |
+| [✅] 正式批准文件草案 | 验证负责人 | 已准备（benchmark-plan-approval-draft-20260314.md） |
 
 ### 决策支持材料
 1. **技术依据**：评审意见汇总、技术可行性分析
@@ -174,9 +174,11 @@
 
 ---
 **会议材料关联文档：**
-1. [Q-004基准测试计划v1.1](Q004-backtest-benchmark-plan.md)（待更新）
-2. [Q-005基准测试计划v1.1](Q005-storage-benchmark-plan.md)（待更新）
-3. [基准测试计划评审跟踪表](benchmark-plan-review-tracker.md)
-4. [技术可行性评估进展报告](technical-feasibility-assessment-progress.md)
-5. [评审汇总会议纪要](review-summary-meeting-minutes-20260314.md)（会后补充）
-6. [资源协调会议纪要](resource-coordination-meeting-minutes-20260314.md)（会后补充）
+1. [Q-004基准测试计划v1.1](Q004-backtest-benchmark-plan.md)（已更新，12:00完成）
+2. [Q-005基准测试计划v1.1](Q005-storage-benchmark-plan.md)（已更新，12:30完成）
+3. [基准测试计划评审跟踪表](benchmark-plan-review-tracker.md)（已更新至v1.6，12:30）
+4. [技术可行性评估进展报告](technical-feasibility-assessment-progress.md)（已更新至v1.6，12:30）
+5. [评审意见汇总表v1.1](review-opinions-summary-20260314.md)（已更新）
+6. [基准测试计划批准文件草案](benchmark-plan-approval-draft-20260314.md)（已准备）
+7. [资源协调会议纪要](resource-coordination-meeting-minutes-20260314.md)（已完成并分发）
+8. [评审汇总会议纪要](review-summary-meeting-minutes-20260314.md)（会后补充）
