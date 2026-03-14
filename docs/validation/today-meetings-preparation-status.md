@@ -25,6 +25,7 @@
 **议程文件：** ✅ [review-summary-meeting-agenda-20260314.md](review-summary-meeting-agenda-20260314.md)
 **意见汇总：** ✅ [review-opinions-summary-20260314.md](review-opinions-summary-20260314.md)
 **纪要模板：** ✅ [review-summary-meeting-minutes-20260314.md](review-summary-meeting-minutes-20260314.md)
+**结论草案：** ✅ [review-conclusions-draft-20260314.md](review-conclusions-draft-20260314.md)
 **支撑材料：** ✅ 基准测试计划评审跟踪表、原始评审意见
 
 ### 3. 批准决策会议（17:30-18:00）
