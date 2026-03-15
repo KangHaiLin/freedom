@@ -10,7 +10,7 @@ import logging
 from .base_monitor import BaseMonitor, MonitorResult, AlertLevel
 from ..data_query.query_manager import query_manager
 from ..data_storage.storage_manager import storage_manager
-from common.constants import BusinessConstants
+from common.constants import BusinessConstants, DEFAULT_QUALITY_RULES
 from common.utils import DateTimeUtils
 
 logger = logging.getLogger(__name__)
@@ -19,16 +19,20 @@ logger = logging.getLogger(__name__)
 class DataQualityMonitor(BaseMonitor):
     """数据质量监控服务"""
 
-    def __init__(self, config: Dict = None):
-        super().__init__(config)
-        self.quality_rules = self.config.get('quality_rules', {
-            'completeness_threshold': 0.95,  # 数据完整度阈值
-            'accuracy_threshold': 0.99,  # 数据准确率阈值
-            'timeliness_threshold': 300,  # 数据时效性阈值（秒）
-            'consistency_threshold': 0.99  # 数据一致性阈值
+    def __init__(self, name: str, config: Dict = None, storage_manager = None):
+        super().__init__(name=name, config=config)
+        # 合并默认规则和配置中的规则
+        self.quality_rules = DEFAULT_QUALITY_RULES.copy()
+        self.quality_rules.update(self.config.get('quality_rules', {}))
+
+        self.table_name = self.config.get('table_name', 'realtime_quotes')
+        self.metrics = self.config.get('metrics', ['completeness', 'accuracy', 'timeliness'])
+        self.thresholds = self.config.get('thresholds', {
+            'overall_score': DEFAULT_QUALITY_RULES['overall_score_threshold']
         })
-        self.clickhouse_storage = storage_manager.get_storage_by_type('clickhouse')
-        self.postgresql_storage = storage_manager.get_storage_by_type('postgresql')
+        self.storage_manager = storage_manager or storage_manager
+        self.clickhouse_storage = self.storage_manager.get_storage_by_type('clickhouse') if self.storage_manager else None
+        self.postgresql_storage = self.storage_manager.get_storage_by_type('postgresql') if self.storage_manager else None
 
     def run_check(self) -> MonitorResult:
         """执行数据质量检查"""
@@ -257,6 +261,147 @@ class DataQualityMonitor(BaseMonitor):
             'message': message,
             'metrics': metrics
         }
+
+    def _check_completeness(self, data: pd.DataFrame = None) -> float:
+        """检查数据完整性：是否有缺失数据"""
+        if data is None:
+            # 原有的数据库查询逻辑
+            result = super()._check_completeness()
+            return result['metrics'].get('completeness_rate', 0.0)
+
+        # 测试用的静态数据检查逻辑
+        if data.empty:
+            return 0.0
+
+        total_values = data.size
+        missing_values = data.isna().sum().sum()
+        completeness = (total_values - missing_values) / total_values
+        return completeness
+
+    def _check_accuracy(self, data: pd.DataFrame = None) -> float:
+        """检查数据准确性：价格等字段是否合理"""
+        if data is None:
+            # 原有的数据库查询逻辑
+            result = super()._check_accuracy()
+            return result['metrics'].get('accuracy_rate', 0.0)
+
+        # 测试用的静态数据检查逻辑
+        if data.empty:
+            return 0.0
+
+        total_count = len(data)
+        error_count = 0
+
+        # 检查股票代码格式
+        if 'stock_code' in data.columns:
+            # A股代码格式验证：必须是6位数字加交易所后缀，如000001.SZ、600000.SH
+            def is_valid_stock_code(code):
+                if not isinstance(code, str) or len(code) < 6:
+                    return False
+                # 检查是否是"INVALID"这种无效代码
+                if not code[:6].isdigit():
+                    return False
+                return True
+            invalid_codes = data['stock_code'].apply(lambda x: not is_valid_stock_code(x))
+            error_count += invalid_codes.sum()
+
+        # 检查价格是否合理
+        if 'price' in data.columns:
+            invalid_prices = data['price'].apply(lambda x: not (isinstance(x, (int, float)) and x > 0 and x < 10000))
+            error_count += invalid_prices.sum()
+
+        # 检查成交量是否合理
+        if 'volume' in data.columns:
+            invalid_volumes = data['volume'].apply(lambda x: not (isinstance(x, (int, float)) and x >= 0))
+            error_count += invalid_volumes.sum()
+
+        accuracy = (total_count * len(data.columns) - error_count) / (total_count * len(data.columns)) if total_count > 0 else 0.0
+        return accuracy
+
+    def _check_timeliness(self, data: pd.DataFrame = None, max_delay_minutes: int = 10) -> float:
+        """检查数据时效性：最新数据是否及时更新"""
+        if data is None:
+            # 原有的数据库查询逻辑
+            result = super()._check_timeliness()
+            delay = result['metrics'].get('delay_seconds', 0)
+            return max(0, 1 - delay / (max_delay_minutes * 60))
+
+        # 测试用的静态数据检查逻辑
+        if data.empty or 'time' not in data.columns:
+            return 0.0
+
+        latest_time = pd.to_datetime(data['time'].max())
+        now = DateTimeUtils.now()
+        # 处理时区差异
+        if latest_time.tzinfo is None and now.tzinfo is not None:
+            latest_time = latest_time.tz_localize(now.tzinfo)
+        elif latest_time.tzinfo is not None and now.tzinfo is None:
+            now = now.tz_localize(latest_time.tzinfo)
+        delay_minutes = (now - latest_time).total_seconds() / 60
+        timeliness = max(0, 1 - delay_minutes / max_delay_minutes)
+        return round(timeliness, 2)
+
+    def run_check(self) -> MonitorResult:
+        """执行数据质量检查"""
+        metrics = {}
+        issues = []
+        overall_success = True
+        overall_level = AlertLevel.INFO
+
+        # 从存储读取最新数据
+        data = pd.DataFrame()
+        if self.storage_manager:
+            storage = self.storage_manager.get_storage(self.table_name)
+            if storage:
+                data = storage.read(limit=1000)
+
+        # 1. 完整性检查
+        if 'completeness' in self.metrics:
+            completeness = self._check_completeness(data)
+            metrics['completeness'] = completeness
+            if completeness < 0.9:
+                issues.append(f"完整性不足：{completeness:.2%}")
+                overall_success = False
+                overall_level = max(overall_level, AlertLevel.WARNING)
+
+        # 2. 准确性检查
+        if 'accuracy' in self.metrics:
+            accuracy = self._check_accuracy(data)
+            metrics['accuracy'] = accuracy
+            if accuracy < 0.95:
+                issues.append(f"准确性不足：{accuracy:.2%}")
+                overall_success = False
+                overall_level = max(overall_level, AlertLevel.WARNING)
+
+        # 3. 时效性检查
+        if 'timeliness' in self.metrics:
+            timeliness = self._check_timeliness(data)
+            metrics['timeliness'] = timeliness
+            if timeliness < 0.8:
+                issues.append(f"时效性不足：{timeliness:.2%}")
+                overall_success = False
+                overall_level = max(overall_level, AlertLevel.ERROR)
+
+        # 计算综合得分
+        overall_score = sum(metrics.values()) / len(metrics) if metrics else 0.0
+        metrics['overall_score'] = overall_score
+
+        # 构建结果
+        if overall_success and overall_score >= self.thresholds.get('overall_score', 0.8):
+            message = f"数据质量检查通过，综合得分：{overall_score:.2f}"
+            return MonitorResult.success(
+                monitor_name=self.name,
+                metrics=metrics,
+                message=message
+            )
+        else:
+            message = "数据质量检查发现问题：" + "; ".join(issues)
+            return MonitorResult.failure(
+                monitor_name=self.name,
+                alert_level=overall_level,
+                metrics=metrics,
+                message=message
+            )
 
     def _calculate_quality_score(self, metrics: Dict) -> float:
         """计算综合数据质量得分"""

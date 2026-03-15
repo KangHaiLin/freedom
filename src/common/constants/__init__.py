@@ -2,6 +2,44 @@
 公共常量定义
 """
 from enum import Enum
+from typing import Dict, Any
+
+# 数据质量校验规则
+DEFAULT_QUALITY_RULES: Dict[str, Any] = {
+    # 完整性规则
+    'completeness_threshold': 0.95,  # 数据完整度阈值
+    'missing_value_fill_enabled': True,  # 是否启用缺失值填充
+
+    # 准确性规则
+    'accuracy_threshold': 0.99,  # 数据准确率阈值
+    'price_min': 0.01,  # 最小价格
+    'price_max': 10000.0,  # 最大价格
+    'volume_min': 0,  # 最小成交量
+    'volume_max': 10**10,  # 最大成交量
+    'price_change_threshold': 0.2,  # 价格涨跌幅阈值（20%）
+    'volume_change_threshold': 10,  # 成交量变化阈值（10倍均值）
+
+    # 时效性规则
+    'timeliness_threshold': 300,  # 数据时效性阈值（秒）
+    'realtime_data_delay_max': 300,  # 实时数据最大延迟（秒）
+    'daily_data_delay_max': 3600,  # 日线数据最大延迟（秒）
+
+    # 一致性规则
+    'consistency_threshold': 0.99,  # 数据一致性阈值
+    'price_tolerance': 0.01,  # 价格比较容忍度（1分）
+
+    # 整体质量阈值
+    'overall_score_threshold': 0.8,  # 整体质量得分阈值
+    'excellent_score_threshold': 0.95,  # 优秀质量得分阈值
+    'good_score_threshold': 0.8,  # 良好质量得分阈值
+    'poor_score_threshold': 0.6,  # 较差质量得分阈值
+
+    # 数据清洗规则
+    'duplicate_removal_enabled': True,  # 是否启用去重
+    'outlier_detection_enabled': True,  # 是否启用异常值检测
+    'standardization_enabled': True,  # 是否启用标准化
+    'price_limit_validation_enabled': True,  # 是否启用涨跌停校验
+}
 
 
 class SystemConstants:
@@ -206,5 +244,6 @@ class ErrorCode(Enum):
 __all__ = [
     'SystemConstants',
     'BusinessConstants',
-    'ErrorCode'
+    'ErrorCode',
+    'DEFAULT_QUALITY_RULES'
 ]

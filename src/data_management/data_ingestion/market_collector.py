@@ -9,7 +9,7 @@ import time
 import logging
 from datetime import datetime
 
-from common.constants import BusinessConstants
+from common.constants import BusinessConstants, DEFAULT_QUALITY_RULES
 from common.utils import DateTimeUtils
 
 logger = logging.getLogger(__name__)
@@ -105,7 +105,7 @@ class MarketDataCollector(ABC):
             latest_time = df['time'].max()
             if isinstance(latest_time, datetime):
                 time_diff = (DateTimeUtils.now() - latest_time).total_seconds()
-                if time_diff > 300:  # 数据延迟超过5分钟
+                if time_diff > DEFAULT_QUALITY_RULES['realtime_data_delay_max']:  # 数据延迟超过阈值
                     logger.warning(f"[{self.source}] 数据延迟过大：{time_diff:.2f}秒")
                     return False
 

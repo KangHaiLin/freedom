@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 
 from common.utils import NumberUtils, StockCodeUtils, DateTimeUtils
-from common.constants import BusinessConstants
+from common.constants import BusinessConstants, DEFAULT_QUALITY_RULES
 from common.exceptions import DataValidationException
 
 logger = logging.getLogger(__name__)
@@ -21,11 +21,11 @@ class DataCleaner:
     def __init__(self, config: Dict = None):
         self.config = config or {}
         # 异常值过滤阈值
-        self.price_change_threshold = self.config.get('price_change_threshold', 0.2)  # 价格涨跌幅超过20%标记为异常
-        self.volume_change_threshold = self.config.get('volume_change_threshold', 10)  # 成交量超过均值10倍标记为异常
-        self.enable_outlier_detection = self.config.get('enable_outlier_detection', True)
-        self.enable_missing_value_fill = self.config.get('enable_missing_value_fill', True)
-        self.enable_duplicate_removal = self.config.get('enable_duplicate_removal', True)
+        self.price_change_threshold = self.config.get('price_change_threshold', DEFAULT_QUALITY_RULES['price_change_threshold'])  # 价格涨跌幅超过20%标记为异常
+        self.volume_change_threshold = self.config.get('volume_change_threshold', DEFAULT_QUALITY_RULES['volume_change_threshold'])  # 成交量超过均值10倍标记为异常
+        self.enable_outlier_detection = self.config.get('enable_outlier_detection', DEFAULT_QUALITY_RULES['outlier_detection_enabled'])
+        self.enable_missing_value_fill = self.config.get('enable_missing_value_fill', DEFAULT_QUALITY_RULES['missing_value_fill_enabled'])
+        self.enable_duplicate_removal = self.config.get('enable_duplicate_removal', DEFAULT_QUALITY_RULES['duplicate_removal_enabled'])
 
     def clean_realtime_quote(self, df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -49,15 +49,23 @@ class DataCleaner:
 
             # 2. 数据类型转换
             df['price'] = pd.to_numeric(df['price'], errors='coerce')
-            df['open'] = pd.to_numeric(df['open'], errors='coerce')
-            df['high'] = pd.to_numeric(df['high'], errors='coerce')
-            df['low'] = pd.to_numeric(df['low'], errors='coerce')
+            if 'open' in df.columns:
+                df['open'] = pd.to_numeric(df['open'], errors='coerce')
+            if 'high' in df.columns:
+                df['high'] = pd.to_numeric(df['high'], errors='coerce')
+            if 'low' in df.columns:
+                df['low'] = pd.to_numeric(df['low'], errors='coerce')
             df['volume'] = pd.to_numeric(df['volume'], errors='coerce').astype('Int64')
-            df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-            df['bid_price1'] = pd.to_numeric(df['bid_price1'], errors='coerce')
-            df['bid_volume1'] = pd.to_numeric(df['bid_volume1'], errors='coerce').astype('Int64')
-            df['ask_price1'] = pd.to_numeric(df['ask_price1'], errors='coerce')
-            df['ask_volume1'] = pd.to_numeric(df['ask_volume1'], errors='coerce').astype('Int64')
+            if 'amount' in df.columns:
+                df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
+            if 'bid_price1' in df.columns:
+                df['bid_price1'] = pd.to_numeric(df['bid_price1'], errors='coerce')
+            if 'bid_volume1' in df.columns:
+                df['bid_volume1'] = pd.to_numeric(df['bid_volume1'], errors='coerce').astype('Int64')
+            if 'ask_price1' in df.columns:
+                df['ask_price1'] = pd.to_numeric(df['ask_price1'], errors='coerce')
+            if 'ask_volume1' in df.columns:
+                df['ask_volume1'] = pd.to_numeric(df['ask_volume1'], errors='coerce').astype('Int64')
 
             # 3. 缺失值处理
             if self.enable_missing_value_fill:
@@ -65,9 +73,12 @@ class DataCleaner:
                 df['price'] = df.groupby('stock_code')['price'].ffill()
                 # 成交量缺失填充0
                 df['volume'] = df['volume'].fillna(0)
-                df['amount'] = df['amount'].fillna(0)
-                df['bid_volume1'] = df['bid_volume1'].fillna(0)
-                df['ask_volume1'] = df['ask_volume1'].fillna(0)
+                if 'amount' in df.columns:
+                    df['amount'] = df['amount'].fillna(0)
+                if 'bid_volume1' in df.columns:
+                    df['bid_volume1'] = df['bid_volume1'].fillna(0)
+                if 'ask_volume1' in df.columns:
+                    df['ask_volume1'] = df['ask_volume1'].fillna(0)
 
             # 4. 异常值检测与处理
             if self.enable_outlier_detection:
@@ -76,9 +87,11 @@ class DataCleaner:
             # 5. 标准化处理
             df['stock_code'] = df['stock_code'].apply(lambda x: StockCodeUtils.normalize_code(x))
             df['time'] = pd.to_datetime(df['time']).dt.floor('s')  # 时间精确到秒
-            df['price'] = df['price'].apply(lambda x: NumberUtils.round_price(x))
-            df['bid_price1'] = df['bid_price1'].apply(lambda x: NumberUtils.round_price(x))
-            df['ask_price1'] = df['ask_price1'].apply(lambda x: NumberUtils.round_price(x))
+            df['price'] = df['price'].apply(lambda x: NumberUtils.round_price(x) if pd.notna(x) else x)
+            if 'bid_price1' in df.columns:
+                df['bid_price1'] = df['bid_price1'].apply(lambda x: NumberUtils.round_price(x) if pd.notna(x) else x)
+            if 'ask_price1' in df.columns:
+                df['ask_price1'] = df['ask_price1'].apply(lambda x: NumberUtils.round_price(x) if pd.notna(x) else x)
 
             # 6. 校验涨跌停限制
             df = self._validate_price_limit(df)
@@ -117,16 +130,20 @@ class DataCleaner:
             # 2. 数据类型转换
             numeric_columns = ['open', 'high', 'low', 'close', 'volume', 'amount', 'adjust_factor']
             for col in numeric_columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
 
             # 3. 缺失值处理
             if self.enable_missing_value_fill:
                 # 按股票代码分组填充缺失值
                 for col in ['open', 'high', 'low', 'close']:
-                    df[col] = df.groupby('stock_code')[col].ffill()
+                    if col in df.columns:
+                        df[col] = df.groupby('stock_code')[col].ffill()
                 df['volume'] = df['volume'].fillna(0)
-                df['amount'] = df['amount'].fillna(0)
-                df['adjust_factor'] = df['adjust_factor'].fillna(1.0)
+                if 'amount' in df.columns:
+                    df['amount'] = df['amount'].fillna(0)
+                if 'adjust_factor' in df.columns:
+                    df['adjust_factor'] = df['adjust_factor'].fillna(1.0)
 
             # 4. 异常值处理
             if self.enable_outlier_detection:
@@ -136,8 +153,10 @@ class DataCleaner:
             df['stock_code'] = df['stock_code'].apply(lambda x: StockCodeUtils.normalize_code(x))
             df['trade_date'] = pd.to_datetime(df['trade_date']).dt.date
             for col in ['open', 'high', 'low', 'close']:
-                df[col] = df[col].apply(lambda x: NumberUtils.round_price(x))
-            df['adjust_factor'] = df['adjust_factor'].apply(lambda x: NumberUtils.round_ratio(x))
+                if col in df.columns:
+                    df[col] = df[col].apply(lambda x: NumberUtils.round_price(x) if pd.notna(x) else x)
+            if 'adjust_factor' in df.columns:
+                df['adjust_factor'] = df['adjust_factor'].apply(lambda x: NumberUtils.round_ratio(x) if pd.notna(x) else x)
 
             # 6. 价格合理性校验
             df = df[df['high'] >= df['low']]
@@ -242,9 +261,11 @@ class DataCleaner:
             # 5. 标准化处理
             df['stock_code'] = df['stock_code'].apply(lambda x: StockCodeUtils.normalize_code(x))
             df['trade_time'] = pd.to_datetime(df['trade_time'])
-            df['price'] = df['price'].apply(lambda x: NumberUtils.round_price(x))
-            df['bid_price1'] = df['bid_price1'].apply(lambda x: NumberUtils.round_price(x))
-            df['ask_price1'] = df['ask_price1'].apply(lambda x: NumberUtils.round_price(x))
+            df['price'] = df['price'].apply(lambda x: NumberUtils.round_price(x) if pd.notna(x) else x)
+            if 'bid_price1' in df.columns:
+                df['bid_price1'] = df['bid_price1'].apply(lambda x: NumberUtils.round_price(x) if pd.notna(x) else x)
+            if 'ask_price1' in df.columns:
+                df['ask_price1'] = df['ask_price1'].apply(lambda x: NumberUtils.round_price(x) if pd.notna(x) else x)
 
             logger.debug(f"Tick行情清洗完成，原始数据{len(df)}条，清洗后剩余{len(df)}条")
             return df
@@ -354,22 +375,37 @@ class DataCleaner:
             accuracy = 1.0
 
         # 时效性：检查最新数据时间
+        now = DateTimeUtils.now()
         if 'time' in df.columns:
             latest_time = df['time'].max()
-            delay = (DateTimeUtils.now() - latest_time).total_seconds()
-            timeliness = max(0, 1 - delay / 300)  # 5分钟内为100%
+            if isinstance(latest_time, str):
+                latest_time = pd.to_datetime(latest_time)
+            # 处理时区差异
+            if latest_time.tzinfo is None and now.tzinfo is not None:
+                latest_time = latest_time.tz_localize(now.tzinfo)
+            elif latest_time.tzinfo is not None and now.tzinfo is None:
+                now = now.tz_localize(latest_time.tzinfo)
+            delay = (now - latest_time).total_seconds()
+            timeliness = max(0, 1 - delay / DEFAULT_QUALITY_RULES['realtime_data_delay_max'])  # 实时数据延迟阈值
         elif 'trade_time' in df.columns:
             latest_time = df['trade_time'].max()
-            delay = (DateTimeUtils.now() - latest_time).total_seconds()
-            timeliness = max(0, 1 - delay / 3600)  # 1小时内为100%
+            if isinstance(latest_time, str):
+                latest_time = pd.to_datetime(latest_time)
+            # 处理时区差异
+            if latest_time.tzinfo is None and now.tzinfo is not None:
+                latest_time = latest_time.tz_localize(now.tzinfo)
+            elif latest_time.tzinfo is not None and now.tzinfo is None:
+                now = now.tz_localize(latest_time.tzinfo)
+            delay = (now - latest_time).total_seconds()
+            timeliness = max(0, 1 - delay / DEFAULT_QUALITY_RULES['daily_data_delay_max'])  # 日线数据延迟阈值
         else:
             timeliness = 1.0
 
         quality_score = (completeness * 0.4 + accuracy * 0.4 + timeliness * 0.2)
 
-        status = "excellent" if quality_score >= 0.95 else \
-                 "good" if quality_score >= 0.8 else \
-                 "poor" if quality_score >= 0.6 else "bad"
+        status = "excellent" if quality_score >= DEFAULT_QUALITY_RULES['excellent_score_threshold'] else \
+                 "good" if quality_score >= DEFAULT_QUALITY_RULES['good_score_threshold'] else \
+                 "poor" if quality_score >= DEFAULT_QUALITY_RULES['poor_score_threshold'] else "bad"
 
         return {
             "total_count": total_count,
