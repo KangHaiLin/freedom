@@ -268,6 +268,16 @@ class TestAlertService:
             "channels": {
                 "webhook": {
                     "url": "http://localhost:8000/alert"
+                },
+                "email": {
+                    "smtp_server": "smtp.gmail.com",
+                    "smtp_port": 465,
+                    "smtp_user": "test@example.com",
+                    "smtp_password": "password",
+                    "receivers": ["admin@example.com"]
+                },
+                "wecom": {
+                    "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=test-key"
                 }
             }
         })
@@ -281,7 +291,8 @@ class TestAlertService:
         )
 
         with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
-            self.alert_service.send_alert(result, channels=["log"])
+            success = self.alert_service.send_alert(result, channels=["log"])
+            assert success
             mock_log.assert_called_once()
 
     @patch('requests.post')
@@ -297,7 +308,8 @@ class TestAlertService:
             message="测试告警"
         )
 
-        self.alert_service.send_alert(result, channels=["webhook"])
+        success = self.alert_service.send_alert(result, channels=["webhook"])
+        assert success
         mock_post.assert_called_once()
         # 验证请求参数
         args, kwargs = mock_post.call_args
@@ -307,6 +319,161 @@ class TestAlertService:
         payload = kwargs["json"]
         assert payload["alert"]["message"] == "测试告警"
         assert payload["alert"]["level"] == "error"
+
+    @patch('smtplib.SMTP_SSL')
+    def test_send_alert_email_channel_ssl(self, mock_smtp_ssl):
+        """测试通过邮件渠道发送告警（SSL连接）"""
+        mock_server = Mock()
+        mock_smtp_ssl.return_value = mock_server
+
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试邮件告警"
+        )
+
+        success = self.alert_service.send_alert(result, channels=["email"])
+        assert success
+        mock_smtp_ssl.assert_called_once()
+        mock_server.login.assert_called_once()
+        mock_server.sendmail.assert_called_once()
+        mock_server.quit.assert_called_once()
+
+    @patch('smtplib.SMTP')
+    def test_send_alert_email_channel_starttls(self, mock_smtp):
+        """测试通过邮件渠道发送告警（STARTTLS连接）"""
+        mock_server = Mock()
+        mock_smtp.return_value = mock_server
+
+        # 使用非SSL端口
+        self.alert_service.channel_configs['email']['smtp_port'] = 587
+
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试邮件告警"
+        )
+
+        success = self.alert_service.send_alert(result, channels=["email"])
+        assert success
+        mock_smtp.assert_called_once()
+        mock_server.starttls.assert_called_once()
+        mock_server.login.assert_called_once()
+        mock_server.sendmail.assert_called_once()
+        mock_server.quit.assert_called_once()
+
+    def test_send_alert_email_channel_incomplete_config(self):
+        """测试邮件告警配置不完整"""
+        # 移除密码
+        self.alert_service.channel_configs['email'].pop('smtp_password')
+
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试邮件告警"
+        )
+
+        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+            success = self.alert_service.send_alert(result, channels=["email"])
+            assert not success
+            mock_log.assert_called_once()
+
+    @patch('requests.post')
+    def test_send_alert_wecom_channel(self, mock_post):
+        """测试通过企业微信渠道发送告警"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试企业微信告警"
+        )
+
+        success = self.alert_service.send_alert(result, channels=["wecom"])
+        assert success
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        assert "json" in kwargs
+        payload = kwargs["json"]
+        assert payload["msgtype"] == "text"
+        assert "content" in payload["text"]
+
+    def test_send_alert_wecom_channel_no_webhook(self):
+        """测试企业微信未配置webhook"""
+        self.alert_service.channel_configs['wecom'].pop('webhook_url')
+
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试企业微信告警"
+        )
+
+        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+            success = self.alert_service.send_alert(result, channels=["wecom"])
+            assert not success
+            mock_log.assert_called_once()
+
+    @patch('requests.post')
+    def test_send_alert_dingtalk_channel(self, mock_post):
+        """测试通过钉钉渠道发送告警"""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+
+        # 添加钉钉配置
+        self.alert_service.channel_configs['dingtalk'] = {
+            'webhook_url': 'https://oapi.dingtalk.com/robot/send?access_token=test-token'
+        }
+
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试钉钉告警"
+        )
+
+        success = self.alert_service.send_alert(result, channels=["dingtalk"])
+        assert success
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        assert "json" in kwargs
+        payload = kwargs["json"]
+        assert payload["msgtype"] == "text"
+        assert "content" in payload["text"]
+
+    def test_send_alert_unknown_channel(self):
+        """测试未知告警渠道"""
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试告警"
+        )
+
+        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+            success = self.alert_service.send_alert(result, channels=["unknown"])
+            assert not success
+            mock_log.assert_called_once()
+
+    def test_send_test_alert(self):
+        """测试发送测试告警"""
+        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+            success = self.alert_service.send_test_alert(channels=["log"])
+            assert success
+            mock_log.assert_called_once()
+
+    def test_no_alert_when_disabled(self):
+        """测试禁用告警时不发送"""
+        self.alert_service.enabled = False
+
+        result = MonitorResult.failure(
+            "test_monitor",
+            AlertLevel.ERROR,
+            message="测试告警"
+        )
+
+        success = self.alert_service.send_alert(result, channels=["log"])
+        assert not success
 
 
 class TestMonitorManager:

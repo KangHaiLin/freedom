@@ -107,7 +107,7 @@ class AlertService:
         email_config = self.channel_configs.get('email', {})
         if not email_config:
             logger.warning("邮件告警未配置")
-            return
+            raise ValueError("邮件告警未配置")
 
         smtp_server = email_config.get('smtp_server')
         smtp_port = email_config.get('smtp_port', 465)
@@ -118,14 +118,14 @@ class AlertService:
 
         if not all([smtp_server, smtp_user, smtp_password, receivers]):
             logger.warning("邮件告警配置不完整")
-            return
+            raise ValueError("邮件告警配置不完整")
 
         # 构建邮件
         message = self._format_alert_message(result)
         msg = MIMEText(message, 'plain', 'utf-8')
         msg['From'] = Header(f"量化交易系统监控 <{sender}>", 'utf-8')
         msg['To'] = Header(','.join(receivers), 'utf-8')
-        subject = f"【{result.level.value.upper()}】{result.monitor_name}告警"
+        subject = f"【{result.level.name.upper()}】{result.monitor_name}告警"
         msg['Subject'] = Header(subject, 'utf-8')
 
         # 发送邮件
@@ -149,14 +149,14 @@ class AlertService:
         wecom_config = self.channel_configs.get('wecom', {})
         if not wecom_config:
             logger.warning("企业微信告警未配置")
-            return
+            raise ValueError("企业微信告警未配置")
 
         webhook_url = wecom_config.get('webhook_url')
         mentioned_list = receiver or wecom_config.get('mentioned_list', [])
 
         if not webhook_url:
             logger.warning("企业微信webhook未配置")
-            return
+            raise ValueError("企业微信webhook未配置")
 
         message = self._format_alert_message(result)
         data = {
@@ -180,7 +180,7 @@ class AlertService:
         dingtalk_config = self.channel_configs.get('dingtalk', {})
         if not dingtalk_config:
             logger.warning("钉钉告警未配置")
-            return
+            raise ValueError("钉钉告警未配置")
 
         webhook_url = dingtalk_config.get('webhook_url')
         secret = dingtalk_config.get('secret')
@@ -189,7 +189,7 @@ class AlertService:
 
         if not webhook_url:
             logger.warning("钉钉webhook未配置")
-            return
+            raise ValueError("钉钉webhook未配置")
 
         message = self._format_alert_message(result)
         data = {
@@ -232,14 +232,14 @@ class AlertService:
         webhook_config = self.channel_configs.get('webhook', {})
         if not webhook_config:
             logger.warning("Webhook告警未配置")
-            return
+            raise ValueError("Webhook告警未配置")
 
         webhook_url = webhook_config.get('url')
         headers = webhook_config.get('headers', {})
 
         if not webhook_url:
             logger.warning("Webhook URL未配置")
-            return
+            raise ValueError("Webhook URL未配置")
 
         data = {
             "alert": result.to_dict(),
