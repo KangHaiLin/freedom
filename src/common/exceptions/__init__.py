@@ -131,3 +131,9 @@ class InsufficientPositionException(BaseAppException):
 class CircuitBreakerException(BaseAppException):
     code = 503
     message = "系统熔断，交易功能暂时不可用"
+
+
+# 监控异常
+class MonitorException(BaseAppException):
+    code = 500
+    message = "监控执行异常"

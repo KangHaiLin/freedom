@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 
 from ..dependencies import verify_api_key, verify_admin_role
-from ...data_management.data_monitoring.monitor_manager import monitor_manager
+from data_management.data_monitoring.monitor_manager import monitor_manager
 from ..schemas import BaseResponse, MonitorStatusResponse, AlertRecordResponse, DashboardResponse
 
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(dependencies=[Depends(verify_api_key)])
 
 
-@router.get("/status", summary="获取监控状态", response_model=BaseResponse[List[MonitorStatusResponse]])
+@router.get("/status", summary="获取监控状态", response_model=BaseResponse)
 async def get_monitor_status():
     """
     获取所有监控任务的运行状态
@@ -28,7 +28,7 @@ async def get_monitor_status():
     }
 
 
-@router.get("/dashboard", summary="获取监控面板数据", response_model=BaseResponse[DashboardResponse])
+@router.get("/dashboard", summary="获取监控面板数据", response_model=BaseResponse)
 async def get_monitor_dashboard():
     """
     获取监控面板统计数据
@@ -41,7 +41,7 @@ async def get_monitor_dashboard():
     }
 
 
-@router.get("/alerts", summary="获取历史告警记录", response_model=BaseResponse[List[AlertRecordResponse]])
+@router.get("/alerts", summary="获取历史告警记录", response_model=BaseResponse)
 async def get_recent_alerts(
     limit: int = Query(100, description="返回记录数限制"),
     level: Optional[str] = Query(None, description="告警级别：info/warning/error/critical"),
@@ -60,7 +60,7 @@ async def get_recent_alerts(
     }
 
 
-@router.post("/run_all", summary="立即执行所有监控", response_model=BaseResponse[List[dict]], dependencies=[Depends(verify_admin_role)])
+@router.post("/run_all", summary="立即执行所有监控", response_model=BaseResponse)
 async def run_all_monitors():
     """
     立即执行所有监控检查，返回检查结果

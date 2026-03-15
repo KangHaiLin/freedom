@@ -111,6 +111,12 @@ class CryptoUtils:
         return api_key, api_secret
 
     @classmethod
+    def verify_api_key(cls, api_key: str) -> bool:
+        """验证API Key是否有效"""
+        from common.config import settings
+        return api_key in settings.API_KEYS
+
+    @classmethod
     def generate_jwt_token(cls, user_id: int, username: str, role: str,
                           secret_key: str, expire_minutes: int = 120) -> str:
         """生成JWT Token"""

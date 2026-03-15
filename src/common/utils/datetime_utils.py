@@ -39,6 +39,11 @@ class DateTimeUtils:
         return cls.today().strftime(format_str)
 
     @classmethod
+    def to_str(cls, dt: datetime, format_str: str = '%Y-%m-%d %H:%M:%S') -> str:
+        """将datetime对象转换为字符串"""
+        return dt.strftime(format_str)
+
+    @classmethod
     def is_trading_day(cls, dt: Union[date, str]) -> bool:
         """判断是否是A股交易日"""
         if isinstance(dt, str):

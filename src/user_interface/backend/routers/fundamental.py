@@ -7,7 +7,7 @@ from datetime import date, datetime
 import logging
 
 from ..dependencies import verify_api_key
-from ...data_management.data_query.query_manager import query_manager
+from data_management.data_query.query_manager import query_manager
 from ..schemas import (
     MarketDataResponse,
     StockBasicResponse,
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(dependencies=[Depends(verify_api_key)])
 
 
-@router.get("/stock_basic", summary="获取股票基础信息", response_model=MarketDataResponse[List[StockBasicResponse]])
+@router.get("/stock_basic", summary="获取股票基础信息", response_model=MarketDataResponse)
 async def get_stock_basic(
     stock_codes: Optional[List[str]] = Query(None, description="股票代码列表，为空则返回所有股票"),
     fields: Optional[List[str]] = Query(None, description="需要返回的字段列表"),
@@ -54,7 +54,7 @@ async def get_stock_basic(
     }
 
 
-@router.get("/financial_indicator", summary="获取财务指标", response_model=MarketDataResponse[List[FinancialIndicatorResponse]])
+@router.get("/financial_indicator", summary="获取财务指标", response_model=MarketDataResponse)
 async def get_financial_indicator(
     stock_codes: List[str] = Query(..., description="股票代码列表"),
     start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYY-MM-DD"),
@@ -85,7 +85,7 @@ async def get_financial_indicator(
     }
 
 
-@router.get("/income_statement", summary="获取利润表", response_model=MarketDataResponse[List[IncomeStatementResponse]])
+@router.get("/income_statement", summary="获取利润表", response_model=MarketDataResponse)
 async def get_income_statement(
     stock_codes: List[str] = Query(..., description="股票代码列表"),
     start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYY-MM-DD"),
@@ -116,7 +116,7 @@ async def get_income_statement(
     }
 
 
-@router.get("/balance_sheet", summary="获取资产负债表", response_model=MarketDataResponse[List[BalanceSheetResponse]])
+@router.get("/balance_sheet", summary="获取资产负债表", response_model=MarketDataResponse)
 async def get_balance_sheet(
     stock_codes: List[str] = Query(..., description="股票代码列表"),
     start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYY-MM-DD"),
@@ -147,7 +147,7 @@ async def get_balance_sheet(
     }
 
 
-@router.get("/cash_flow", summary="获取现金流量表", response_model=MarketDataResponse[List[CashFlowResponse]])
+@router.get("/cash_flow", summary="获取现金流量表", response_model=MarketDataResponse)
 async def get_cash_flow(
     stock_codes: List[str] = Query(..., description="股票代码列表"),
     start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYY-MM-DD"),
@@ -178,7 +178,7 @@ async def get_cash_flow(
     }
 
 
-@router.get("/holder_info", summary="获取股东信息", response_model=MarketDataResponse[List[HolderInfoResponse]])
+@router.get("/holder_info", summary="获取股东信息", response_model=MarketDataResponse)
 async def get_holder_info(
     stock_codes: List[str] = Query(..., description="股票代码列表"),
     start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYY-MM-DD"),
@@ -207,7 +207,7 @@ async def get_holder_info(
     }
 
 
-@router.get("/dividend", summary="获取分红送股信息", response_model=MarketDataResponse[List[DividendResponse]])
+@router.get("/dividend", summary="获取分红送股信息", response_model=MarketDataResponse)
 async def get_dividend(
     stock_codes: List[str] = Query(..., description="股票代码列表"),
     start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYY-MM-DD"),

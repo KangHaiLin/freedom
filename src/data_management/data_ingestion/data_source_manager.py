@@ -7,6 +7,7 @@ import time
 import random
 import logging
 from datetime import datetime
+import pandas as pd
 
 from .market_collector import MarketDataCollector
 from common.exceptions import DataSourceException

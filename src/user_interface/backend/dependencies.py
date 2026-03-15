@@ -34,7 +34,12 @@ async def get_current_user(authorization: Optional[str] = Header(None)):
 
     token = authorization.split(" ")[1]
     try:
-        payload = CryptoUtils.verify_jwt_token(token)
+        payload = CryptoUtils.verify_jwt_token(token, settings.JWT_SECRET_KEY)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="无效的Token"
+            )
         return payload
     except Exception as e:
         logger.warning(f"JWT验证失败：{e}")

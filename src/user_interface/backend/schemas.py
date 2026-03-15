@@ -187,7 +187,7 @@ class DashboardResponse(BaseModel):
     running: bool = Field(..., description="调度器是否运行")
     monitor_status: List[MonitorStatusResponse] = Field(..., description="监控状态列表")
     recent_alerts: List[AlertRecordResponse] = Field(..., description="最近告警列表")
-    "24h_alert_count": int = Field(..., description="24小时告警总数")
+    alert_count_24h: int = Field(..., description="24小时告警总数")
     error_count: int = Field(..., description="错误级别告警数")
     warning_count: int = Field(..., description="警告级别告警数")
 

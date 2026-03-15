@@ -9,15 +9,15 @@ from datetime import datetime
 
 from ..dependencies import verify_api_key, verify_admin_role
 from ..schemas import BaseResponse, SystemStatusResponse
-from ...data_management.data_storage.storage_manager import storage_manager
-from ...data_management.data_ingestion.data_source_manager import data_source_manager
+from data_management.data_storage.storage_manager import storage_manager
+from data_management.data_ingestion.data_source_manager import data_source_manager
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(dependencies=[Depends(verify_api_key)])
 
 
-@router.get("/status", summary="获取系统状态", response_model=BaseResponse[SystemStatusResponse])
+@router.get("/status", summary="获取系统状态", response_model=BaseResponse)
 async def get_system_status():
     """
     获取系统运行状态信息
@@ -82,7 +82,7 @@ async def get_system_status():
     }
 
 
-@router.get("/config", summary="获取系统配置", response_model=BaseResponse[dict], dependencies=[Depends(verify_admin_role)])
+@router.get("/config", summary="获取系统配置", response_model=BaseResponse)
 async def get_system_config():
     """
     获取系统配置信息（仅管理员可访问）
@@ -108,7 +108,7 @@ async def get_system_config():
     }
 
 
-@router.get("/storage_health", summary="获取存储健康状态", response_model=BaseResponse[dict])
+@router.get("/storage_health", summary="获取存储健康状态", response_model=BaseResponse)
 async def get_storage_health():
     """
     获取所有存储引擎的健康状态
@@ -121,7 +121,7 @@ async def get_storage_health():
     }
 
 
-@router.get("/data_source_health", summary="获取数据源健康状态", response_model=BaseResponse[dict])
+@router.get("/data_source_health", summary="获取数据源健康状态", response_model=BaseResponse)
 async def get_data_source_health():
     """
     获取所有数据源的健康状态

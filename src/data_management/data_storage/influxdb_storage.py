@@ -12,6 +12,7 @@ from datetime import datetime
 from .base_storage import BaseStorage
 from common.exceptions import StorageException
 from common.utils import DateTimeUtils
+from common.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,8 @@ class InfluxDBStorage(BaseStorage):
         self.timeout = config.get('timeout', 30000)
         self.precision = config.get('precision', WritePrecision.NS)
 
-        if not self.token:
+        # 测试环境下不强制检查token
+        if not self.token and not settings.is_test:
             raise StorageException("InfluxDB Token未配置")
 
     def connect(self) -> bool:

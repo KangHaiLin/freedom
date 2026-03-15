@@ -10,7 +10,7 @@ import asyncio
 from datetime import datetime
 
 from .dependencies import verify_api_key
-from ...data_management.data_query.query_manager import query_manager
+from data_management.data_query.query_manager import query_manager
 
 logger = logging.getLogger(__name__)
 

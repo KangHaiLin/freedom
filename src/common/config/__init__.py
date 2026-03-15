@@ -92,6 +92,17 @@ class AppConfig(BaseSettings):
     port: int = Field(default=8000, env='PORT')
     host: str = Field(default='0.0.0.0', env='HOST')
     secret_key: str = Field(default='your-secret-key-here-please-change-in-production', env='SECRET_KEY')
+    project_name: str = Field(default='A股量化交易系统', env='PROJECT_NAME')
+    PROJECT_NAME: str = Field(default='A股量化交易系统', env='PROJECT_NAME')  # 兼容大写
+    version: str = Field(default='1.0.0', env='VERSION')
+    VERSION: str = Field(default='1.0.0', env='VERSION')  # 兼容大写
+    DEBUG: bool = Field(default=True, env='DEBUG')  # 兼容大写
+    CORS_ORIGINS: list = Field(default=["*"], env='CORS_ORIGINS')  # 兼容大写
+    API_KEY_ENABLED: bool = Field(default=False, env='API_KEY_ENABLED')  # 是否启用API Key验证
+    API_KEYS: list = Field(default=["test_api_key"], env='API_KEYS')  # API Key列表
+    JWT_SECRET_KEY: str = Field(default="test_jwt_secret", env='JWT_SECRET_KEY')  # JWT密钥
+    RATE_LIMIT: int = Field(default=1000, env='RATE_LIMIT')  # 每分钟请求次数限制
+    RATE_LIMIT_ENABLED: bool = Field(default=False, env='RATE_LIMIT_ENABLED')  # 是否启用限流
 
     # 子配置
     database: DatabaseConfig = DatabaseConfig()
@@ -132,6 +143,94 @@ class AppConfig(BaseSettings):
     def is_test(self) -> bool:
         """是否是测试环境"""
         return self.env.lower() == 'test'
+
+    @property
+    def STORAGE_CONFIGS(self) -> Dict:
+        """存储配置（兼容旧代码）"""
+        return {
+            "postgresql": {
+                "type": "postgresql",
+                "host": self.database.postgres_host,
+                "port": self.database.postgres_port,
+                "user": self.database.postgres_user,
+                "password": self.database.postgres_password,
+                "database": self.database.postgres_db,
+                "default": True
+            },
+            "clickhouse": {
+                "type": "clickhouse",
+                "host": self.database.clickhouse_host,
+                "port": self.database.clickhouse_port,
+                "user": self.database.clickhouse_user,
+                "password": self.database.clickhouse_password,
+                "database": self.database.clickhouse_db
+            },
+            "influxdb": {
+                "type": "influxdb",
+                "url": self.database.influxdb_url,
+                "token": self.database.influxdb_token,
+                "org": self.database.influxdb_org,
+                "bucket": self.database.influxdb_bucket
+            },
+            "redis": {
+                "type": "redis",
+                "host": self.database.redis_host,
+                "port": self.database.redis_port,
+                "password": self.database.redis_password,
+                "db": self.database.redis_db
+            }
+        }
+
+    @property
+    def QUERY_CONFIG(self) -> Dict:
+        """查询配置"""
+        return {
+            "enable_cache": True,
+            "cache_ttl": 300,
+            "max_query_rows": 100000,
+            "slow_query_threshold": 1.0,
+            "enable_slow_query_log": True
+        }
+
+    @property
+    def ALERT_CONFIG(self) -> Dict:
+        """告警配置"""
+        return {
+            "enabled": not self.is_test,
+            "channels": ["log"],
+            "default_level": "WARNING",
+            "cooldown_seconds": 300,
+            "webhook_url": self.alert.wechat_webhook,
+            "email_config": {
+                "smtp_server": self.alert.email_smtp_server,
+                "smtp_port": self.alert.email_smtp_port,
+                "user": self.alert.email_user,
+                "password": self.alert.email_password
+            }
+        }
+
+    @property
+    def MONITOR_CONFIG(self) -> Dict:
+        """监控配置"""
+        return {
+            "enabled": not self.is_test,
+            "check_interval": 60,
+            "data_quality_check_interval": 300,
+            "collection_monitor_interval": 60,
+            "alert_enabled": True,
+            "max_consecutive_failures": 3,
+            "metrics_retention_days": 30
+        }
+
+    @property
+    def REDIS_CONFIG(self) -> Dict:
+        """Redis配置（兼容旧代码）"""
+        return {
+            "host": self.database.redis_host,
+            "port": self.database.redis_port,
+            "password": self.database.redis_password,
+            "db": self.database.redis_db
+        }
 
 
 @lru_cache()
