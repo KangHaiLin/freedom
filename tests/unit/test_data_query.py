@@ -17,27 +17,27 @@ class TestQueryCondition:
 
     def test_condition_creation(self):
         """测试查询条件创建"""
-        condition = QueryCondition(
-            table_name="realtime_quotes",
-            filters={"stock_code": "000001.SZ"},
-            start_time=datetime(2023, 1, 1),
-            end_time=datetime(2023, 1, 2),
-            limit=100
-        )
-        assert condition.table_name == "realtime_quotes"
+        condition = QueryCondition()
+        condition.filters = {"stock_code": "000001.SZ"}
+        condition.start_date = datetime(2023, 1, 1)
+        condition.end_date = datetime(2023, 1, 2)
+        condition.limit = 100
+        condition.stock_codes = ["000001.SZ"]
+
         assert condition.filters["stock_code"] == "000001.SZ"
         assert condition.limit == 100
+        assert condition.stock_codes == ["000001.SZ"]
 
     def test_to_dict(self):
         """测试转换为字典"""
-        condition = QueryCondition(
-            table_name="daily_quotes",
-            filters={"stock_code": ["000001.SZ", "600000.SH"]},
-            limit=10
-        )
+        condition = QueryCondition()
+        condition.filters = {"stock_code": ["000001.SZ", "600000.SH"]}
+        condition.limit = 10
+        condition.stock_codes = ["000001.SZ", "600000.SH"]
+
         condition_dict = condition.to_dict()
-        assert condition_dict["table_name"] == "daily_quotes"
         assert len(condition_dict["filters"]["stock_code"]) == 2
+        assert condition_dict["limit"] == 10
 
 
 class TestQueryResult:
@@ -46,18 +46,18 @@ class TestQueryResult:
     def test_success_result(self):
         """测试成功结果"""
         df = pd.DataFrame({"stock_code": ["000001.SZ"], "price": [10.0]})
-        result = QueryResult.success(df, query_time=0.1)
+        result = QueryResult(data=df, total=1, success=True, message="", query_time=0.1)
         assert result.success
-        assert not result.data.empty
+        assert not result.to_df().empty
         assert result.query_time == 0.1
-        assert result.error is None
+        assert result.message == ""
 
     def test_error_result(self):
         """测试错误结果"""
-        result = QueryResult.error("查询失败", query_time=0.05)
+        result = QueryResult(data=[], total=0, success=False, message="查询失败", query_time=0.05)
         assert not result.success
-        assert result.data is None
-        assert result.error == "查询失败"
+        assert len(result.data) == 0
+        assert result.message == "查询失败"
 
 
 class TestMarketDataQuery:
@@ -75,14 +75,26 @@ class TestMarketDataQuery:
             "time": [datetime.now(), datetime.now()]
         })
 
-        mock_storage = Mock()
-        mock_storage.read.return_value = mock_df
-        self.storage_manager.get_storage.return_value = mock_storage
+        # 模拟postgresql存储（实时行情存在postgresql）
+        mock_postgresql = Mock()
+        mock_postgresql.read.return_value = mock_df
+
+        # 模拟其他存储
+        mock_clickhouse = Mock()
+        mock_redis = Mock()
+        mock_redis.read.return_value = None  # 缓存未命中
+
+        self.storage_manager.get_storage_by_type.side_effect = lambda type_name: {
+            'clickhouse': mock_clickhouse,
+            'postgresql': mock_postgresql,
+            'redis': mock_redis
+        }[type_name]
 
         result = self.market_query.get_realtime_quote(["000001.SZ", "600000.SH"])
-        assert not result.empty
-        assert len(result) == 2
-        mock_storage.read.assert_called_once()
+        assert result.success
+        assert not result.to_df().empty
+        assert len(result.to_dict()["data"]) == 2
+        assert mock_postgresql.read.called
 
     def test_get_daily_quote_with_date_range(self):
         """测试获取指定日期范围的日线行情"""
