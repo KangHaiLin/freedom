@@ -133,3 +133,33 @@ async def monitor_health_check():
         "message": "success",
         "data": health
     }
+
+
+@router.get("/data-quality/history", summary="获取数据质量历史趋势", response_model=BaseResponse)
+async def get_data_quality_history(
+    days: int = Query(30, description="获取最近多少天的数据，默认30天")
+):
+    """
+    获取数据质量历史趋势数据，用于绘制趋势图表
+    返回按日期分组的平均质量得分、完整性、准确性等指标
+    """
+    data = monitor_manager.get_data_quality_history(days)
+    return {
+        "code": 200,
+        "message": "success",
+        "data": data
+    }
+
+
+@router.get("/data-quality/latest", summary="获取最新数据质量检查结果", response_model=BaseResponse)
+async def get_latest_data_quality():
+    """
+    获取最新一次数据质量检查的详细结果
+    包含所有质量指标的详细数据，用于仪表盘展示
+    """
+    data = monitor_manager.get_latest_data_quality()
+    return {
+        "code": 200,
+        "message": "success",
+        "data": data
+    }

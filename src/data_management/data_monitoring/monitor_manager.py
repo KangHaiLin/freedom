@@ -241,6 +241,86 @@ class MonitorManager:
             "check_time": DateTimeUtils.now_str()
         }
 
+    def get_data_quality_history(self, days: int = 30) -> Dict:
+        """获取数据质量历史趋势数据，用于可视化图表
+        Args:
+            days: 获取最近多少天的数据
+        Returns:
+            按日期分组的数据质量趋势数据
+        """
+        result = {
+            "dates": [],
+            "quality_scores": [],
+            "completeness": [],
+            "accuracy": []
+        }
+
+        try:
+            if not self.storage:
+                return result
+
+            # ClickHouse SQL 查询最近N天的数据质量检查结果，按日期分组计算平均得分
+            sql = f"""
+                SELECT
+                toDate(timestamp) as check_date,
+                AVG(JSONExtractFloat(metrics, 'overall_score')) as avg_score,
+                AVG(JSONExtractFloat(metrics, 'completeness')) as avg_completeness,
+                AVG(JSONExtractFloat(metrics, 'accuracy')) as avg_accuracy
+                FROM monitor_results
+                WHERE monitor_name LIKE '%数据质量%'
+                  AND timestamp >= now() - INTERVAL {days} day
+                GROUP BY toDate(timestamp)
+                ORDER BY check_date
+            """
+
+            df = self.storage.execute_sql(sql)
+
+            if not df.empty:
+                for _, row in df.iterrows():
+                    result["dates"].append(str(row["check_date"]))
+                    result["quality_scores"].append(float(row["avg_score"] if row["avg_score"] is not None else 0))
+                    if "avg_completeness" in df.columns:
+                        result["completeness"].append(float(row["avg_completeness"] if row["avg_completeness"] is not None else 0))
+                    if "avg_accuracy" in df.columns:
+                        result["accuracy"].append(float(row["avg_accuracy"] if row["avg_accuracy"] is not None else 0))
+
+        except Exception as e:
+            logger.error(f"获取数据质量历史失败：{e}")
+
+        return result
+
+    def get_latest_data_quality(self) -> Optional[Dict]:
+        """获取最新一次数据质量检查结果"""
+        try:
+            if not self.storage:
+                return None
+
+            sql = """
+                SELECT metrics, timestamp, success, message, level
+                FROM monitor_results
+                WHERE monitor_name LIKE '%数据质量%'
+                ORDER BY timestamp DESC
+                LIMIT 1
+            """
+
+            df = self.storage.execute_sql(sql)
+
+            if df.empty:
+                return None
+
+            row = df.iloc[0].to_dict()
+            if 'metrics' in row and isinstance(row['metrics'], str):
+                import json
+                try:
+                    row['metrics'] = json.loads(row['metrics'])
+                except:
+                    pass
+            return row
+
+        except Exception as e:
+            logger.error(f"获取最新数据质量结果失败：{e}")
+            return None
+
 
 # 全局监控管理器实例
 monitor_manager = MonitorManager()
