@@ -10,12 +10,12 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 # 启动服务
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker-compose.test.yml up -d
 
 echo "⏳ 等待服务启动..."
 
 # 等待所有服务健康检查通过
-until docker-compose -f docker-compose.test.yml ps | grep -E "postgres.*healthy|clickhouse.*healthy|redis.*healthy" | wc -l | grep -q 3; do
+until docker compose -f docker-compose.test.yml ps | grep -E "postgres.*healthy|clickhouse.*healthy|redis.*healthy" | wc -l | grep -q 3; do
     echo "等待服务启动中..."
     sleep 2
 done
@@ -36,4 +36,4 @@ echo "运行测试命令："
 echo "pytest tests/unit/ -v"
 echo ""
 echo "停止测试环境命令："
-echo "docker-compose -f docker-compose.test.yml down"
+echo "docker compose -f docker-compose.test.yml down"
