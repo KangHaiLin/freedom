@@ -232,6 +232,57 @@ class AppConfig(BaseSettings):
             "db": self.database.redis_db
         }
 
+    @property
+    def PROCESSING_CONFIG(self) -> Dict:
+        """数据处理配置"""
+        return {
+            "enable_transformation": True,
+            "enable_aggregation": True,
+            "enable_indicators": True,
+            "enable_normalization": True,
+            "enable_merging": True,
+            "enable_batch": True,
+            "enable_stream": True,
+            "transformation": {
+                "enabled": True,
+                "default_date_format": "%Y-%m-%d",
+                "default_datetime_format": "%Y-%m-%d %H:%M:%S"
+            },
+            "indicators": {
+                "enabled": True,
+                "default_params": {
+                    "sma": {"windows": [5, 10, 20, 60]},
+                    "ema": {"windows": [12, 26]},
+                    "rsi": {"window": 14},
+                    "kdj": {"n": 9, "m1": 3, "m2": 3},
+                    "macd": {"fast": 12, "slow": 26, "signal": 9},
+                    "boll": {"window": 20, "std_dev": 2},
+                    "adx": {"window": 14}
+                }
+            },
+            "batch": {
+                "enabled": True,
+                "chunk_size": 10000,
+                "max_workers": 4,
+                "enable_parallel": True
+            },
+            "stream": {
+                "enabled": True,
+                "window_size": 100,
+                "max_records": 10000,
+                "keep_raw_data": True
+            },
+            "normalization": {
+                "enabled": True
+            },
+            "aggregation": {
+                "enabled": True
+            },
+            "merging": {
+                "enabled": True
+            }
+        }
+
 
 @lru_cache()
 def get_config() -> AppConfig:
