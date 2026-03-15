@@ -11,7 +11,7 @@ import bcrypt
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import jwt
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
 class CryptoUtils:

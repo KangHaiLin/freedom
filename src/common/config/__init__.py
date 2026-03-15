@@ -2,7 +2,8 @@
 配置管理模块
 基于Pydantic实现多环境配置管理
 """
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import Dict, Optional
 import os
 from functools import lru_cache
@@ -142,9 +143,11 @@ def get_config() -> AppConfig:
 
 # 全局配置实例
 config = get_config()
+settings = config  # 兼容settings别名
 
 __all__ = [
     'config',
+    'settings',
     'get_config',
     'AppConfig',
     'DatabaseConfig',
