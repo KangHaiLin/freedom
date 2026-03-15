@@ -188,3 +188,24 @@ class DateTimeUtils:
         """更新节假日数据"""
         for holiday in holiday_list:
             cls._cn_holidays.append(holiday)
+
+    @classmethod
+    def parse(cls, dt: Union[str, date, datetime]) -> datetime:
+        """解析日期时间，支持多种输入格式"""
+        if isinstance(dt, datetime):
+            return dt
+        if isinstance(dt, date):
+            return datetime.combine(dt, datetime.min.time())
+        if isinstance(dt, str):
+            # 尝试多种格式解析
+            formats = [
+                '%Y-%m-%d %H:%M:%S',
+                '%Y-%m-%d %H:%M',
+                '%Y-%m-%d'
+            ]
+            for fmt in formats:
+                try:
+                    return datetime.strptime(dt, fmt)
+                except ValueError:
+                    continue
+            raise ValueError(f"无法解析日期时间：{dt}，支持格式：YYYY-MM-DD[ HH:MM[:SS]]")

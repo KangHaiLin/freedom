@@ -176,16 +176,18 @@ class BaseQuery(ABC):
         ascending = []
         for col in order_by:
             if col.startswith('-'):
-                sort_columns.append(col[1:])
-                ascending.append(False)
+                col_name = col[1:]
+                if col_name in df.columns:
+                    sort_columns.append(col_name)
+                    ascending.append(False)
             else:
-                sort_columns.append(col)
-                ascending.append(True)
+                if col in df.columns:
+                    sort_columns.append(col)
+                    ascending.append(True)
 
-        # 检查列是否存在
-        valid_columns = [col for col in sort_columns if col in df.columns]
-        if valid_columns:
-            df = df.sort_values(by=valid_columns, ascending=ascending)
+        # 只对存在的列进行排序
+        if sort_columns:
+            df = df.sort_values(by=sort_columns, ascending=ascending)
 
         return df
 
