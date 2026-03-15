@@ -20,6 +20,7 @@ from .base import (
     OrderType,
     OrderStatus,
 )
+from .trading_manager import TradingManager
 
 __version__ = "0.1.0"
 
@@ -32,4 +33,6 @@ __all__ = [
     'OrderSide',
     'OrderType',
     'OrderStatus',
+    # 统一入口
+    'TradingManager',
 ]

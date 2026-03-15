@@ -248,3 +248,12 @@ class PortfolioManager:
         """清空所有持仓"""
         self._positions.clear()
         logger.debug("清空所有持仓")
+
+    def health_check(self) -> Dict[str, Any]:
+        """健康检查"""
+        return {
+            'status': 'ok',
+            'cash': self._cash,
+            'initial_cash': self._initial_cash,
+            'position_count': len(self._positions),
+        }

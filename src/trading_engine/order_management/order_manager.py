@@ -2,7 +2,7 @@
 订单管理器
 管理所有订单，提供查询、新增、取消等功能
 """
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
 import logging
 
@@ -243,3 +243,12 @@ class OrderManager:
     def get_all_orders(self) -> List[BaseOrder]:
         """获取所有订单"""
         return list(self._orders.values())
+
+    def health_check(self) -> Dict[str, Any]:
+        """健康检查"""
+        stats = self.get_statistics()
+        return {
+            'status': 'ok',
+            'total_orders': stats['total'],
+            'active_orders': stats['active'],
+        }

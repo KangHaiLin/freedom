@@ -187,3 +187,13 @@ class TradeRecordManager:
         self._records.clear()
         self._order_trades.clear()
         logger.debug("清空所有成交记录")
+
+    def health_check(self) -> Dict[str, Any]:
+        """健康检查"""
+        stats = self.get_statistics()
+        return {
+            'status': 'ok',
+            'total_trades': stats['total_trades'],
+            'total_turnover': stats['total_turnover'],
+            'total_commission': stats['total_commission'],
+        }
