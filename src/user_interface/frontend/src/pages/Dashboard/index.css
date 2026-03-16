@@ -1,0 +1,30 @@
+.dashboard-page {
+}
+
+.health-overview {
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.health-status-text {
+  color: #fff;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.watchlist-container {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.price-ticker-loading {
+  margin-bottom: 8px;
+  color: #999;
+}
+
+.no-alerts {
+  text-align: center;
+  padding: 32px;
+  color: #999;
+}

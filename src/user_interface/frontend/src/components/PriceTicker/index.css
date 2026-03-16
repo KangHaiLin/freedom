@@ -1,0 +1,37 @@
+.price-ticker {
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.price-ticker.selected {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.price-ticker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.price-ticker-price {
+  font-size: 22px;
+  font-weight: bold;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.price-ticker-price .change {
+  font-size: 14px;
+}
+
+.price-ticker-footer {
+  margin-top: 4px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #999;
+}

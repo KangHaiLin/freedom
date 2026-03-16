@@ -61,3 +61,7 @@ flake8==6.0.0
 mypy==1.8.0
 isort==5.13.2
 pre-commit==3.6.0
+
+# 系统管理依赖
+psutil==5.9.8
+croniter==2.0.1

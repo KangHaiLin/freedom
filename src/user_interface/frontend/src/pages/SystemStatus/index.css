@@ -1,0 +1,38 @@
+.system-status-page {
+}
+
+.metric-card {
+  padding: 16px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.metric-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.metric-value {
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.system-info-list {
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.info-label {
+  color: #666;
+}
+
+.info-value {
+  font-weight: 500;
+}

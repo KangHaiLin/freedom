@@ -283,6 +283,31 @@ class AppConfig(BaseSettings):
             }
         }
 
+    @property
+    def SYSTEM_CONFIG(self) -> Dict:
+        """系统管理子系统配置"""
+        return {
+            "enable_config_hotreload": True,
+            "enable_structured_logging": True,
+            "log_level": self.log_level,
+            "log_path": self.log_path,
+            "log_retention_days": 30,
+            "monitor_interval_seconds": 15,
+            "max_concurrent_async_tasks": 10,
+            "enable_background_monitoring": True,
+            "health_check_interval_seconds": 60,
+            "cleanup_interval_hours": 24,
+            "default_log_file": "./logs/system.log",
+            "default_structured_log_file": "./logs/system_structured.log",
+            # 资源告警阈值
+            "cpu_warning_threshold": 70,
+            "cpu_critical_threshold": 90,
+            "memory_warning_threshold": 80,
+            "memory_critical_threshold": 95,
+            "disk_warning_threshold": 85,
+            "disk_critical_threshold": 95,
+        }
+
 
 @lru_cache()
 def get_config() -> AppConfig:

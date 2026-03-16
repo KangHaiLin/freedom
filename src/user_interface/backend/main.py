@@ -4,9 +4,11 @@ FastAPI主程序
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import logging
 from datetime import datetime
+from pathlib import Path
 
 from common.config import settings
 from common.exceptions import BaseAppException
@@ -44,6 +46,11 @@ app.include_router(fundamental.router, prefix="/api/v1/fundamental", tags=["基�
 app.include_router(monitor.router, prefix="/api/v1/monitor", tags=["监控管理"])
 app.include_router(system.router, prefix="/api/v1/system", tags=["系统管理"])
 app.include_router(ws_router)
+
+# 挂载前端静态文件（生产模式）
+frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
 # 全局异常处理
 @app.exception_handler(BaseAppException)
