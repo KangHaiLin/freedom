@@ -13,14 +13,6 @@ const CpuGauge: React.FC<CpuGaugeProps> = ({ metrics }) => {
   const percent = metrics?.cpu.percent || 0;
 
   const getOption = () => {
-    let color = '#52c41a';
-    if (percent > 70) {
-      color = '#faad14';
-    }
-    if (percent > 90) {
-      color = '#ff4d4f';
-    }
-
     return {
       series: [
         {

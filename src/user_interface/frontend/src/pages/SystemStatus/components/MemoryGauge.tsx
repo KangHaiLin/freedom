@@ -16,14 +16,6 @@ const MemoryGauge: React.FC<MemoryGaugeProps> = ({ metrics }) => {
   const total = metrics?.memory.total || 1;
 
   const getOption = () => {
-    let color = '#52c41a';
-    if (percent > 80) {
-      color = '#faad14';
-    }
-    if (percent > 95) {
-      color = '#ff4d4f';
-    }
-
     return {
       series: [
         {

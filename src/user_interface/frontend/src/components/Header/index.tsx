@@ -2,7 +2,7 @@
  * 顶部导航栏
  */
 import React from 'react';
-import { Layout, Menu, Button, Space, Typography } from 'antd';
+import { Layout, Button, Space, Typography } from 'antd';
 import { MenuOutlined, BulbOutlined } from '@ant-design/icons';
 import { useAppContext } from '@/context/AppContext';
 import './index.css';

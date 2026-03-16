@@ -3,22 +3,24 @@
  */
 import React from 'react';
 import { Table } from 'antd';
-import { DailyKline } from '@/api/types';
+import { DailyKline, MinuteKline } from '@/api/types';
 import { formatPrice, formatVolume, formatAmount } from '@/utils/formatters';
 import { getChangeColor } from '@/utils/formatters';
 
 interface DataTableProps {
-  data: DailyKline[];
+  data: (DailyKline | MinuteKline)[];
   loading: boolean;
 }
 
 const DataTable: React.FC<DataTableProps> = ({ data, loading }) => {
   const columns = [
     {
-      title: '日期',
-      dataIndex: 'trade_date',
-      key: 'trade_date',
-      width: 120,
+      title: '时间',
+      key: 'time',
+      width: 140,
+      render: (item: DailyKline | MinuteKline) => {
+        return 'trade_date' in item ? item.trade_date : item.trade_time;
+      },
     },
     {
       title: '开盘',
@@ -50,13 +52,15 @@ const DataTable: React.FC<DataTableProps> = ({ data, loading }) => {
     },
     {
       title: '涨跌幅',
-      dataIndex: 'pct_change',
       key: 'pct_change',
-      render: (pct: number) => {
-        const color = getChangeColor(pct);
-        return <span style={{ color }}>{formatPrice(pct)}%</span>;
-      },
       width: 90,
+      render: (item: DailyKline | MinuteKline) => {
+        if ('pct_change' in item) {
+          const color = getChangeColor(item.pct_change);
+          return <span style={{ color }}>{formatPrice(item.pct_change)}%</span>;
+        }
+        return '-';
+      },
     },
     {
       title: '成交量(手)',
@@ -77,7 +81,7 @@ const DataTable: React.FC<DataTableProps> = ({ data, loading }) => {
       columns={columns}
       dataSource={data}
       loading={loading}
-      rowKey="trade_date"
+      rowKey={(item) => ('trade_date' in item ? item.trade_date : item.trade_time)}
       pagination={{
         pageSize: 20,
         showSizeChanger: true,

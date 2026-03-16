@@ -2,9 +2,9 @@
  * 磁盘存储状态
  */
 import React from 'react';
-import { Progress, List, Card } from 'antd';
+import { Progress, Card } from 'antd';
 import { SystemMetrics } from '@/api/types';
-import { formatBytes, formatPercent } from '@/utils/formatters';
+import { formatBytes } from '@/utils/formatters';
 
 interface StorageStatusProps {
   metrics: SystemMetrics | null;
@@ -16,9 +16,9 @@ const StorageStatus: React.FC<StorageStatusProps> = ({ metrics }) => {
   }
 
   const percent = metrics.disk.percent;
-  let status: 'normal' | 'active' | 'warning' | 'exception' = 'normal';
+  let status: 'normal' | 'active' | 'exception' | undefined = 'normal';
   if (percent > 85) {
-    status = 'warning';
+    status = 'active';
   }
   if (percent > 95) {
     status = 'exception';

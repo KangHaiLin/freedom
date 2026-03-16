@@ -9,7 +9,7 @@ import {
   BarChartOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { MENU_ITEMS } from '@/utils/constants';
 import './index.css';

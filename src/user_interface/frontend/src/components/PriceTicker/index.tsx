@@ -12,7 +12,6 @@ import {
   formatVolume,
   formatAmount,
 } from '@/utils/formatters';
-import { UP_COLOR, DOWN_COLOR } from '@/utils/constants';
 import './index.css';
 
 const { Text } = Typography;

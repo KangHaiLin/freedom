@@ -39,10 +39,10 @@ export const formatVolume = (volume: number | null | undefined): string => {
     return '-';
   }
   if (volume >= 1000000) {
-    return `${(volume / 1000000).toFixed(2)}M';
+    return `${(volume / 1000000).toFixed(2)}M`;
   }
   if (volume >= 1000) {
-    return `${(volume / 1000).toFixed(2)}K';
+    return `${(volume / 1000).toFixed(2)}K`;
   }
   return volume.toString();
 };
@@ -54,11 +54,11 @@ export const formatAmount = (amount: number | null | undefined): string => {
   }
   // 单位：亿元
   if (amount >= 100000000) {
-    return `${(amount / 100000000).toFixed(2)}亿';
+    return `${(amount / 100000000).toFixed(2)}亿`;
   }
   // 单位：万元
   if (amount >= 10000) {
-    return `${(amount / 10000).toFixed(2)}万';
+    return `${(amount / 10000).toFixed(2)}万`;
   }
   return `${amount.toFixed(0)}`;
 };

@@ -129,19 +129,19 @@ const StrategyMonitoring: React.FC = () => {
     {
       title: '收益率',
       key: 'return',
-      render: (_, task) =>
+      render: (_: any, task: BacktestTask) =>
         task.result ? formatPercent(task.result.total_return * 100) : '-',
     },
     {
       title: '夏普比率',
       key: 'sharpe',
-      render: (_, task) =>
+      render: (_: any, task: BacktestTask) =>
         task.result ? formatDecimal(task.result.sharpe_ratio, 2) : '-',
     },
     {
       title: '最大回撤',
       key: 'drawdown',
-      render: (_, task) =>
+      render: (_: any, task: BacktestTask) =>
         task.result ? formatPercent(task.result.max_drawdown * 100) : '-',
     },
   ];

@@ -3,8 +3,8 @@
  * 股票搜索、K线图、数据表格
  */
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Form, DatePicker, Select, Button, Checkbox, Space, Alert } from 'antd';
-import { StockBasic, DailyKline, KlineQueryParams } from '@/api/types';
+import { Row, Col, Card, Form, DatePicker, Select, Button, Alert } from 'antd';
+import { StockBasic, DailyKline, MinuteKline, KlineQueryParams } from '@/api/types';
 import { getDailyKline, getMinuteKline } from '@/api/market';
 import { useWebSocketContext } from '@/context/WebSocketContext';
 import { KLINE_FREQS } from '@/utils/constants';
@@ -21,7 +21,7 @@ const { RangePicker } = DatePicker;
 const MarketData: React.FC = () => {
   const [selectedStocks, setSelectedStocks] = useState<StockBasic[]>([]);
   const [currentCode, setCurrentCode] = useState<string>('');
-  const [klineData, setKlineData] = useState<DailyKline[]>([]);
+  const [klineData, setKlineData] = useState<(DailyKline | MinuteKline)[]>([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
   const { subscribe, unsubscribe, quotes } = useWebSocketContext();
@@ -75,17 +75,17 @@ const MarketData: React.FC = () => {
         params.end_date = dayjs(values.dateRange[1]).format('YYYYMMDD');
       }
 
-      let data: DailyKline[] = [];
+      let data: (DailyKline | MinuteKline)[] = [];
       if (params.freq === '1d') {
         data = await getDailyKline(params);
       } else {
-        data = await getMinuteKline(params) as unknown as DailyKline[];
+        data = await getMinuteKline(params);
       }
 
       // 按日期倒序排列
       data.sort((a, b) => {
-        const dateA = 'trade_date' in a ? a.trade_date : a.trade_time;
-        const dateB = 'trade_date' in b ? b.trade_date : b.trade_time;
+        const dateA = 'trade_date' in a ? a.trade_date : (a as MinuteKline).trade_time;
+        const dateB = 'trade_date' in b ? b.trade_date : (b as MinuteKline).trade_time;
         return dateB.localeCompare(dateA);
       });
 

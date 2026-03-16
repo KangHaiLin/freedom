@@ -10,9 +10,8 @@ import PriceTicker from '@/components/PriceTicker';
 import { useWebSocketContext } from '@/context/WebSocketContext';
 import { useInterval } from '@/hooks/useInterval';
 import { getHealthStatus, getDataSourceStatus } from '@/api/monitor';
-import { RealtimeQuote, HealthStatus, DataSourceStatus } from '@/api/types';
+import { HealthStatus, DataSourceStatus } from '@/api/types';
 import { HEALTH_COLOR } from '@/utils/constants';
-import { formatPercent } from '@/utils/formatters';
 import './index.css';
 
 const { Title } = Typography;
@@ -21,7 +20,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [health, setHealth] = useState<HealthStatus | null>(null);
   const [dataSources, setDataSources] = useState<DataSourceStatus[]>([]);
-  const [watchlist, setWatchlist] = useState<string[]>(['000001', '600000', '000002', '601318']);
+  const [watchlist] = useState<string[]>(['000001', '600000', '000002', '601318']);
 
   const { connected, quotes, subscribe } = useWebSocketContext();
 
@@ -119,12 +118,6 @@ const Dashboard: React.FC = () => {
       ],
     };
   };
-
-  const statusColor = health?.overall_healthy
-    ? alerts.length === 0
-      ? 'success'
-      : 'warning'
-    : 'error';
 
   return (
     <div className="dashboard-page">
