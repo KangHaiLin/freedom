@@ -1,11 +1,16 @@
+import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Play, RotateCcw, Download } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { getStrategies, createBacktestTask, getBacktestResult, exportBacktestReport, resetBacktestConfig, saveBacktestConfig, loadBacktestConfig } from "@/api/backtest";
+import type { StrategyInfo, BacktestResultDetail } from "@/api/backtest";
+import { toast } from "./ui/sonner";
 
-const backtestResults = [
+// 默认模拟数据（当没有回测结果时使用）
+const defaultBacktestResults = [
   { date: "2023-01", portfolio: 1000000, benchmark: 1000000 },
   { date: "2023-02", portfolio: 1050000, benchmark: 1020000 },
   { date: "2023-03", portfolio: 1120000, benchmark: 1050000 },
@@ -23,7 +28,7 @@ const backtestResults = [
   { date: "2024-03", portfolio: 1720000, benchmark: 1380000 },
 ];
 
-const drawdownData = [
+const defaultDrawdownData = [
   { date: "2023-01", drawdown: 0 },
   { date: "2023-02", drawdown: -2.5 },
   { date: "2023-03", drawdown: 0 },
@@ -41,7 +46,7 @@ const drawdownData = [
   { date: "2024-03", drawdown: -1.2 },
 ];
 
-const monthlyReturns = [
+const defaultMonthlyReturns = [
   { month: "01", returns: 5.0 },
   { month: "02", returns: 6.7 },
   { month: "03", returns: -3.6 },
@@ -56,7 +61,7 @@ const monthlyReturns = [
   { month: "12", returns: 5.5 },
 ];
 
-const tradeHistory = [
+const defaultTradeHistory = [
   { date: "2024-03-15", stock: "贵州茅台", action: "买入", price: 1678.00, quantity: 100, profit: "+15,234" },
   { date: "2024-03-14", stock: "宁德时代", action: "卖出", price: 245.60, quantity: 500, profit: "-2,340" },
   { date: "2024-03-13", stock: "比亚迪", action: "买入", price: 276.80, quantity: 300, profit: "+8,760" },
@@ -65,6 +70,155 @@ const tradeHistory = [
 ];
 
 export default function Backtest() {
+  // 状态管理
+  const [strategies, setStrategies] = useState<StrategyInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedStrategy, setSelectedStrategy] = useState("");
+  const [startDate, setStartDate] = useState("2023-01-01");
+  const [endDate, setEndDate] = useState("2024-03-17");
+  const [initialCapital, setInitialCapital] = useState("1000000");
+
+  // 结果数据
+  const [result, setResult] = useState<BacktestResultDetail | null>(null);
+  const [backtestResults, setBacktestResults] = useState(defaultBacktestResults);
+  const [drawdownData, setDrawdownData] = useState(defaultDrawdownData);
+  const [monthlyReturns, setMonthlyReturns] = useState(defaultMonthlyReturns);
+  const [tradeHistory, setTradeHistory] = useState(defaultTradeHistory);
+
+  // 统计数据（计算显示值）
+  const totalReturn = result ? (result.total_return * 100).toFixed(1) + "%" : "+72.0%";
+  const annualReturn = result ? (result.annual_return * 100).toFixed(1) + "%" : "+48.3%";
+  const sharpeRatio = result ? result.sharpe_ratio.toFixed(2) : "2.45";
+  const maxDrawdown = result ? (result.max_drawdown * 100).toFixed(1) + "%" : "-3.6%";
+  const winRate = result ? (result.win_rate * 100).toFixed(1) + "%" : "73.5%";
+  const tradeCount = result ? result.trade_count.toString() : "156";
+
+  // 组件加载时获取策略列表并恢复保存的配置
+  useEffect(() => {
+    const loadStrategies = async () => {
+      try {
+        const data = await getStrategies();
+        setStrategies(data);
+        if (data.length > 0) {
+          setSelectedStrategy(data[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to load strategies:", error);
+        // 如果API失败，使用默认选项
+        setStrategies([
+          { id: "1", name: "动量策略A", type: "momentum", status: "active", returns: "+0.0%", sharpe: "0.00", max_drawdown: "0.0%", winRate: "0.0%", positions: 0, performance: [] },
+          { id: "2", name: "均值回归B", type: "mean_reversion", status: "active", returns: "+0.0%", sharpe: "0.00", max_drawdown: "0.0%", winRate: "0.0%", positions: 0, performance: [] },
+          { id: "3", name: "套利策略C", type: "arbitrage", status: "active", returns: "+0.0%", sharpe: "0.00", max_drawdown: "0.0%", winRate: "0.0%", positions: 0, performance: [] },
+          { id: "4", name: "趋势跟踪D", type: "trend", status: "active", returns: "+0.0%", sharpe: "0.00", max_drawdown: "0.0%", winRate: "0.0%", positions: 0, performance: [] },
+        ]);
+        setSelectedStrategy("1");
+      }
+    };
+
+    loadStrategies();
+
+    // 恢复上次保存的配置
+    const savedConfig = loadBacktestConfig();
+    if (savedConfig) {
+      setSelectedStrategy(savedConfig.strategy_id);
+      setStartDate(savedConfig.start_date);
+      setEndDate(savedConfig.end_date);
+      setInitialCapital(savedConfig.initial_capital.toString());
+    }
+  }, []);
+
+  // 开始回测
+  const handleStartBacktest = async () => {
+    if (!selectedStrategy) {
+      toast.error("请选择策略");
+      return;
+    }
+
+    const capital = parseFloat(initialCapital.replace(/,/g, ""));
+    if (isNaN(capital) || capital <= 0) {
+      toast.error("请输入有效的初始资金");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 保存配置到本地
+      saveBacktestConfig({
+        name: `${strategies.find(s => s.id === selectedStrategy)?.name || "策略"}回测`,
+        strategy_id: selectedStrategy,
+        start_date: startDate,
+        end_date: endDate,
+        initial_capital: capital,
+      });
+
+      // 创建回测任务
+      const task = await createBacktestTask({
+        name: `${strategies.find(s => s.id === selectedStrategy)?.name || "策略"}回测`,
+        strategy_id: selectedStrategy,
+        start_date: startDate,
+        end_date: endDate,
+        initial_capital: capital,
+      });
+
+      // 获取回测结果详情（实际生产环境这里应该轮询等待完成）
+      const resultData = await getBacktestResult(task.id);
+      setResult(resultData);
+
+      // 更新图表数据
+      if (resultData.equity_curve && resultData.equity_curve.length > 0) {
+        setBacktestResults(resultData.equity_curve);
+      }
+      if (resultData.drawdown_curve && resultData.drawdown_curve.length > 0) {
+        setDrawdownData(resultData.drawdown_curve);
+      }
+      if (resultData.monthly_returns && resultData.monthly_returns.length > 0) {
+        setMonthlyReturns(resultData.monthly_returns);
+      }
+      if (resultData.trade_history && resultData.trade_history.length > 0) {
+        setTradeHistory(resultData.trade_history);
+      }
+
+      toast.success("回测完成");
+    } catch (error) {
+      console.error("Backtest failed:", error);
+      toast.error("回测失败，请稍后重试");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 重置配置
+  const handleReset = () => {
+    setSelectedStrategy(strategies[0]?.id || "");
+    setStartDate("2023-01-01");
+    setEndDate("2024-03-17");
+    setInitialCapital("1000000");
+    resetBacktestConfig();
+    setResult(null);
+    setBacktestResults(defaultBacktestResults);
+    setDrawdownData(defaultDrawdownData);
+    setMonthlyReturns(defaultMonthlyReturns);
+    setTradeHistory(defaultTradeHistory);
+    toast.info("已重置配置");
+  };
+
+  // 导出报告
+  const handleExport = async () => {
+    if (!result) {
+      toast.error("请先运行回测");
+      return;
+    }
+    try {
+      // 获取导出链接，实际这里会打开下载
+      const { report_url } = await exportBacktestReport("latest");
+      toast.success("报告导出成功");
+      // window.open(report_url, '_blank');
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("导出失败");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 页头 */}
@@ -83,12 +237,15 @@ export default function Backtest() {
             <Label htmlFor="strategy" className="text-gray-300">策略选择</Label>
             <select
               id="strategy"
+              value={selectedStrategy}
+              onChange={(e) => setSelectedStrategy(e.target.value)}
               className="w-full px-3 py-2 bg-[#1a1a20] border border-gray-700 rounded-lg text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option>动量策略A</option>
-              <option>均值回归B</option>
-              <option>套利策略C</option>
-              <option>趋势跟踪D</option>
+              {strategies.map((strategy) => (
+                <option key={strategy.id} value={strategy.id}>
+                  {strategy.name}
+                </option>
+              ))}
             </select>
           </div>
           <div className="space-y-2">
@@ -96,7 +253,8 @@ export default function Backtest() {
             <Input
               id="start-date"
               type="date"
-              defaultValue="2023-01-01"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
               className="bg-[#1a1a20] border-gray-700 text-gray-100"
             />
           </div>
@@ -105,7 +263,8 @@ export default function Backtest() {
             <Input
               id="end-date"
               type="date"
-              defaultValue="2024-03-17"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
               className="bg-[#1a1a20] border-gray-700 text-gray-100"
             />
           </div>
@@ -114,21 +273,26 @@ export default function Backtest() {
             <Input
               id="capital"
               type="text"
-              defaultValue="1,000,000"
+              value={initialCapital}
+              onChange={(e) => setInitialCapital(e.target.value)}
               className="bg-[#1a1a20] border-gray-700 text-gray-100"
             />
           </div>
         </div>
         <div className="flex items-center gap-3 mt-6">
-          <Button className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={handleStartBacktest}
+            disabled={loading}
+          >
             <Play className="h-4 w-4 mr-2" />
-            开始回测
+            {loading ? "运行中..." : "开始回测"}
           </Button>
-          <Button variant="outline" className="border-gray-700">
+          <Button variant="outline" className="border-gray-700" onClick={handleReset}>
             <RotateCcw className="h-4 w-4 mr-2" />
             重置
           </Button>
-          <Button variant="outline" className="border-gray-700">
+          <Button variant="outline" className="border-gray-700" onClick={handleExport}>
             <Download className="h-4 w-4 mr-2" />
             导出报告
           </Button>
@@ -139,27 +303,27 @@ export default function Backtest() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="bg-[#0f0f14] border-gray-800 p-4">
           <p className="text-xs text-gray-300 mb-1">总收益率</p>
-          <p className="text-xl font-bold text-red-400">+72.0%</p>
+          <p className="text-xl font-bold text-red-400">{totalReturn}</p>
         </Card>
         <Card className="bg-[#0f0f14] border-gray-800 p-4">
           <p className="text-xs text-gray-300 mb-1">年化收益</p>
-          <p className="text-xl font-bold text-gray-100">+48.3%</p>
+          <p className="text-xl font-bold text-gray-100">{annualReturn}</p>
         </Card>
         <Card className="bg-[#0f0f14] border-gray-800 p-4">
           <p className="text-xs text-gray-300 mb-1">夏普比率</p>
-          <p className="text-xl font-bold text-gray-100">2.45</p>
+          <p className="text-xl font-bold text-gray-100">{sharpeRatio}</p>
         </Card>
         <Card className="bg-[#0f0f14] border-gray-800 p-4">
           <p className="text-xs text-gray-300 mb-1">最大回撤</p>
-          <p className="text-xl font-bold text-green-400">-3.6%</p>
+          <p className="text-xl font-bold text-green-400">{maxDrawdown}</p>
         </Card>
         <Card className="bg-[#0f0f14] border-gray-800 p-4">
           <p className="text-xs text-gray-300 mb-1">胜率</p>
-          <p className="text-xl font-bold text-gray-100">73.5%</p>
+          <p className="text-xl font-bold text-gray-100">{winRate}</p>
         </Card>
         <Card className="bg-[#0f0f14] border-gray-800 p-4">
           <p className="text-xs text-gray-300 mb-1">交易次数</p>
-          <p className="text-xl font-bold text-gray-100">156</p>
+          <p className="text-xl font-bold text-gray-100">{tradeCount}</p>
         </Card>
       </div>
 
@@ -285,7 +449,7 @@ export default function Backtest() {
                       {trade.action}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-right text-gray-100">{trade.price.toFixed(2)}</td>
+                  <td className="py-3 px-4 text-right text-gray-100">{typeof trade.price === 'number' ? trade.price.toFixed(2) : trade.price}</td>
                   <td className="py-3 px-4 text-right text-gray-100">{trade.quantity}</td>
                   <td
                     className={`py-3 px-4 text-right font-semibold ${

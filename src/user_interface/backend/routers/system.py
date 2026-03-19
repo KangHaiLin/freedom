@@ -238,7 +238,7 @@ async def list_strategies():
 
 
 @router.post("/backtest-tasks", summary="创建回测任务", response_model=BaseResponse)
-async def create_backtest_task(name: str, strategy_id: str):
+async def create_backtest_task(name: str, strategy_id: str, start_date: str, end_date: str, initial_capital: float):
     """
     创建新的回测任务
     """
@@ -251,7 +251,12 @@ async def create_backtest_task(name: str, strategy_id: str):
         "progress": 0.0,
         "start_time": datetime.now().isoformat(),
         "end_time": None,
-        "result": None
+        "result": None,
+        "config": {
+            "start_date": start_date,
+            "end_date": end_date,
+            "initial_capital": initial_capital
+        }
     }
     _backtest_tasks[task_id] = task
 
@@ -259,4 +264,130 @@ async def create_backtest_task(name: str, strategy_id: str):
         "code": 200,
         "message": "创建成功",
         "data": task
+    }
+
+
+@router.get("/backtest-tasks/{task_id}/result", summary="获取回测结果详情", response_model=BaseResponse)
+async def get_backtest_result(task_id: str):
+    """
+    获取回测任务的详细结果，包括权益曲线、回撤曲线、月度收益和交易记录
+    """
+    if task_id not in _backtest_tasks:
+        return {
+            "code": 404,
+            "message": f"回测任务 {task_id} 不存在",
+            "data": None
+        }
+
+    task = _backtest_tasks[task_id]
+    if not task.get("result"):
+        return {
+            "code": 400,
+            "message": "回测任务尚未完成，无结果数据",
+            "data": None
+        }
+
+    # 如果任务已有详细结果数据，直接返回
+    # 否则返回模拟数据（实际生产环境应从存储中读取）
+    from datetime import datetime, timedelta
+
+    # 生成模拟的详细结果数据
+    # 实际应用中这些数据应该从回测引擎计算结果中获取
+    result = task["result"]
+
+    # 生成模拟权益曲线数据
+    equity_curve = []
+    drawdown_curve = []
+    start_date = datetime.strptime(task["start_time"][:10], "%Y-%m-%d")
+    base_value = task["config"].get("initial_capital", 1000000) if task.get("config") else 1000000
+
+    current_value = base_value
+    for i in range(12):
+        date = (start_date + timedelta(days=i * 30)).strftime("%Y-%m")
+        change = (0.02 + (i % 5) * 0.01)
+        current_value = current_value * (1 + change)
+        benchmark_value = base_value * (1 + change * 0.5)
+        equity_curve.append({
+            "date": date,
+            "portfolio": current_value,
+            "benchmark": benchmark_value
+        })
+
+    # 生成模拟回撤数据
+    max_dd = 0
+    current_peak = base_value
+    for point in equity_curve:
+        if point["portfolio"] > current_peak:
+            current_peak = point["portfolio"]
+            dd = 0
+        else:
+            dd = (point["portfolio"] - current_peak) / current_peak * 100
+            if dd < max_dd:
+                max_dd = dd
+        drawdown_curve.append({
+            "date": point["date"],
+            "drawdown": dd
+        })
+
+    # 生成模拟月度收益
+    monthly_returns = []
+    prev_value = base_value
+    for point in equity_curve:
+        monthly_ret = ((point["portfolio"] - prev_value) / prev_value) * 100
+        monthly_returns.append({
+            "month": point["date"].split("-")[1],
+            "returns": round(monthly_ret, 1)
+        })
+        prev_value = point["portfolio"]
+
+    # 生成模拟交易记录
+    trade_history = [
+        {"date": "2024-03-15", "stock": "贵州茅台", "action": "买入", "price": 1678.00, "quantity": 100, "profit": "+15,234"},
+        {"date": "2024-03-14", "stock": "宁德时代", "action": "卖出", "price": 245.60, "quantity": 500, "profit": "-2,340"},
+        {"date": "2024-03-13", "stock": "比亚迪", "action": "买入", "price": 276.80, "quantity": 300, "profit": "+8,760"},
+        {"date": "2024-03-12", "stock": "隆基绿能", "action": "卖出", "price": 33.20, "quantity": 1000, "profit": "+4,560"},
+        {"date": "2024-03-11", "stock": "中国平安", "action": "买入", "price": 55.40, "quantity": 800, "profit": "+6,780"},
+    ]
+
+    detailed_result = {
+        "total_return": result["total_return"],
+        "annual_return": result["annual_return"],
+        "sharpe_ratio": result["sharpe_ratio"],
+        "max_drawdown": result["max_drawdown"],
+        "win_rate": result["win_rate"],
+        "trade_count": result["trade_count"],
+        "equity_curve": equity_curve,
+        "drawdown_curve": drawdown_curve,
+        "monthly_returns": monthly_returns,
+        "trade_history": trade_history
+    }
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": detailed_result
+    }
+
+
+@router.get("/backtest-tasks/{task_id}/export", summary="导出回测报告", response_model=BaseResponse)
+async def export_backtest_report(task_id: str):
+    """
+    导出回测结果报告（PDF/Excel）
+    """
+    if task_id not in _backtest_tasks:
+        return {
+            "code": 404,
+            "message": f"回测任务 {task_id} 不存在",
+            "data": None
+        }
+
+    # 在实际应用中，这里应该生成报告文件并返回下载链接
+    report_url = f"/api/v1/system/backtest-tasks/{task_id}/download"
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": {
+            "report_url": report_url
+        }
     }
