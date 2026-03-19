@@ -15,6 +15,212 @@ logger = logging.getLogger(__name__)
 router = APIRouter(dependencies=[Depends(verify_api_key)])
 
 
+# ========== 前端对接端点 - 保持与前端API路径一致 ==========
+
+@router.get("/search", summary="搜索股票", response_model=MarketDataResponse)
+async def search_stocks(
+    keyword: str = Query(..., description="搜索关键词（代码或名称）"),
+    limit: int = Query(20, description="返回结果数量限制")
+):
+    """
+    根据关键词搜索股票（支持代码或名称）
+    """
+    # 使用基本面查询服务搜索股票基础信息
+    result = query_manager.get_stock_basic(
+        stock_codes=None,
+        fields=['stock_code', 'name', 'exchange', 'list_status']
+    )
+
+    # 在内存中按关键词过滤
+    if not result.data.empty:
+        df = result.to_df()
+        # 模糊匹配代码或名称
+        mask = df['stock_code'].str.contains(keyword, case=False) | df['name'].str.contains(keyword, case=False)
+        filtered_df = df[mask].head(limit)
+        result.data = filtered_df
+        result.total = len(filtered_df)
+
+    # 转换格式匹配前端期望 {code, name}
+    data_list = result.to_dict()["data"]
+    formatted_data = []
+    for item in data_list:
+        formatted_data.append({
+            "code": item.get("stock_code", ""),
+            "name": item.get("name", ""),
+            "exchange": item.get("exchange", "")
+        })
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": formatted_data,
+        "items": formatted_data,  # 兼容分页格式
+        "total": result.total,
+        "query_time": result.query_time
+    }
+
+
+@router.get("/stocks", summary="获取股票列表", response_model=MarketDataResponse)
+async def get_stock_list(
+    page: int = Query(1, description="页码"),
+    page_size: int = Query(100, description="每页数量")
+):
+    """
+    获取股票列表分页
+    """
+    offset = (page - 1) * page_size
+    result = query_manager.get_stock_basic(
+        stock_codes=None,
+        fields=['stock_code', 'name', 'exchange', 'list_status']
+    )
+
+    # 分页
+    total = result.total
+    if not result.data.empty:
+        df = result.to_df()
+        paginated_df = df.iloc[offset:offset + page_size] if hasattr(df, 'iloc') else df
+        result.data = paginated_df
+        result.total = total
+
+    # 转换格式
+    data_list = result.to_dict()["data"]
+    formatted_data = []
+    for item in data_list:
+        formatted_data.append({
+            "code": item.get("stock_code", ""),
+            "name": item.get("name", ""),
+            "exchange": item.get("exchange", "")
+        })
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": formatted_data,
+        "items": formatted_data,
+        "total": total,
+        "query_time": result.query_time
+    }
+
+
+@router.get("/kline/daily", summary="获取日K线数据", response_model=MarketDataResponse)
+async def get_daily_kline(
+    code: str = Query(..., description="股票代码"),
+    start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYYMMDD"),
+    end_date: Optional[Union[date, str]] = Query(None, description="结束日期，格式：YYYYMMDD")
+):
+    """
+    获取单只股票日K线数据（前端对接端点）
+    """
+    # 转换日期格式，如果是YYYYMMDD格式字符串
+    if isinstance(start_date, str) and len(start_date) == 8:
+        start_date = f"{start_date[:4]}-{start_date[4:6]}-{start_date[6:8]}"
+    if isinstance(end_date, str) and len(end_date) == 8:
+        end_date = f"{end_date[:4]}-{end_date[4:6]}-{end_date[6:8]}"
+
+    result = query_manager.get_daily_quote(
+        stock_codes=[code],
+        start_date=start_date or "1990-01-01",
+        end_date=end_date,
+        fields=['trade_date', 'open', 'high', 'low', 'close', 'volume', 'amount', 'pct_change']
+    )
+
+    # 转换为前端期望的格式
+    data = result.to_dict()["data"]
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": data,
+        "total": result.total,
+        "query_time": result.query_time
+    }
+
+
+@router.get("/kline/minute", summary="获取分钟K线数据", response_model=MarketDataResponse)
+async def get_minute_kline(
+    code: str = Query(..., description="股票代码"),
+    freq: str = Query("1", description="分钟周期：1/5/15/30/60"),
+    start_date: Optional[Union[date, str]] = Query(None, description="开始日期，格式：YYYYMMDD"),
+    end_date: Optional[Union[date, str]] = Query(None, description="结束日期，格式：YYYYMMDD")
+):
+    """
+    获取单只股票分钟K线数据（前端对接端点）
+    """
+    # 转换日期格式，如果是YYYYMMDD格式字符串
+    if isinstance(start_date, str) and len(start_date) == 8:
+        start_date = f"{start_date[:4]}-{start_date[4:6]}-{start_date[6:8]}"
+    if isinstance(end_date, str) and len(end_date) == 8:
+        end_date = f"{end_date[:4]}-{end_date[4:6]}-{end_date[6:8]}"
+
+    # 转换freq为period整数
+    period = int(freq.replace('m', '')) if 'm' in freq else int(freq)
+
+    result = query_manager.get_minute_quote(
+        stock_codes=[code],
+        start_date=start_date or "1990-01-01",
+        end_date=end_date,
+        period=period,
+        fields=['trade_time', 'open', 'high', 'low', 'close', 'volume', 'amount']
+    )
+
+    # 转换为前端期望的格式
+    data = result.to_dict()["data"]
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": data,
+        "total": result.total,
+        "query_time": result.query_time
+    }
+
+
+@router.get("/quotes", summary="获取多股票实时行情", response_model=MarketDataResponse)
+async def get_realtime_quotes(
+    codes: str = Query(..., description="股票代码列表，逗号分隔")
+):
+    """
+    获取多只股票实时行情（前端对接端点）
+    """
+    code_list = [c.strip() for c in codes.split(',') if c.strip()]
+    result = query_manager.get_realtime_quote(
+        stock_codes=code_list
+    )
+
+    data = result.to_dict()["data"]
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": data,
+        "total": result.total,
+        "query_time": result.query_time
+    }
+
+
+@router.get("/quote/{code}", summary="获取单股票实时行情", response_model=MarketDataResponse)
+async def get_realtime_quote_by_code(
+    code: str
+):
+    """
+    获取单只股票实时行情（前端对接端点）
+    """
+    result = query_manager.get_realtime_quote(
+        stock_codes=[code]
+    )
+
+    data = result.to_dict()["data"]
+    single_data = data[0] if data else None
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": single_data,
+        "total": result.total,
+        "query_time": result.query_time
+    }
+
+
 @router.get("/realtime", summary="获取实时行情", response_model=MarketDataResponse)
 async def get_realtime_quote(
     stock_codes: List[str] = Query(..., description="股票代码列表，例如：['000001.SZ', '600000.SH']"),
