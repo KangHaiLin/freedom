@@ -194,3 +194,47 @@ export interface StockSearchParams {
   keyword: string;
   limit?: number;
 }
+
+// 投资组合/账户相关
+export interface PositionInfo {
+  ts_code: string;
+  name?: string;
+  quantity: number;
+  avg_cost: number;
+  last_price: number;
+  market_value: number;
+  cost: number;
+  unrealized_pnl: number;
+  unrealized_pnl_pct: number;
+  realized_pnl: number;
+}
+
+export interface AccountSummary {
+  initial_cash: number;
+  current_cash: number;
+  total_asset: number;
+  total_market_value: number;
+  total_pnl: number;
+  total_pnl_pct: number;
+  daily_pnl: number;
+  daily_pnl_pct: number;
+  position_count: number;
+}
+
+export interface AssetAllocation {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+export interface EquityCurvePoint {
+  date: string;
+  value: number;
+}
+
+export interface PortfolioDashboard {
+  account_summary: AccountSummary;
+  asset_allocation: AssetAllocation[];
+  top_holdings: PositionInfo[];
+  equity_curve: EquityCurvePoint[];
+}

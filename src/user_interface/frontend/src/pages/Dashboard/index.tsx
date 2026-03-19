@@ -9,37 +9,25 @@ import PriceTicker from '@/components/PriceTicker';
 import { useWebSocketContext } from '@/context/WebSocketContext';
 import { useInterval } from '@/hooks/useInterval';
 import { getHealthStatus } from '@/api/monitor';
-import { HealthStatus } from '@/api/types';
+import { getPortfolioDashboard } from '@/api/portfolio';
+import { HealthStatus, PortfolioDashboard, AssetAllocation, EquityCurvePoint } from '@/api/types';
 import { ArrowUpRight, ArrowDownRight, DollarSign, TrendingUp, Activity, Target } from 'lucide-react';
 import './index.css';
 
-// 模拟账户概览数据
-const accountData = [
-  { name: '账户总值', value: '¥2,456,789', change: '+12.5%', trend: 'up', icon: DollarSign },
-  { name: '今日收益', value: '¥15,234', change: '+2.3%', trend: 'up', icon: TrendingUp },
-  { name: '持仓市值', value: '¥1,987,654', change: '-0.8%', trend: 'down', icon: Activity },
-  { name: '可用资金', value: '¥469,135', change: '0%', trend: 'neutral', icon: Target },
-];
+// 默认图标映射
+const iconMap: Record<string, React.ElementType> = {
+  '账户总值': DollarSign,
+  '今日收益': TrendingUp,
+  '持仓市值': Activity,
+  '可用资金': Target,
+};
 
-// 资产配置饼图数据
-const pieData = [
-  { name: '股票', value: 65, color: '#3b82f6' },
-  { name: '现金', value: 20, color: '#10b981' },
-  { name: '债券', value: 10, color: '#f59e0b' },
-  { name: '其他', value: 5, color: '#8b5cf6' },
-];
-
-// 重仓持股数据
-const topHoldings = [
-  { name: '贵州茅台', code: '600519', value: 285000, profit: '+15.2%' },
-  { name: '宁德时代', code: '300750', value: 245000, profit: '+8.7%' },
-  { name: '比亚迪', code: '002594', value: 198000, profit: '-2.3%' },
-  { name: '隆基绿能', code: '601012', value: 156000, profit: '+5.1%' },
-  { name: '中国平安', code: '601318', value: 134000, profit: '+3.4%' },
-];
+// 默认颜色映射（资产配置）
+const defaultColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
 const Dashboard: React.FC = () => {
   const [health, setHealth] = useState<HealthStatus | null>(null);
+  const [dashboardData, setDashboardData] = useState<PortfolioDashboard | null>(null);
   const [watchlist] = useState<string[]>(['000001', '600000', '000002', '601318']);
 
   const { connected, quotes, subscribe } = useWebSocketContext();
@@ -50,6 +38,16 @@ const Dashboard: React.FC = () => {
       subscribe(watchlist);
     }
   }, [connected, subscribe, watchlist]);
+
+  // 获取仪表盘数据
+  const fetchDashboardData = async () => {
+    try {
+      const data = await getPortfolioDashboard();
+      setDashboardData(data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    }
+  };
 
   // 定时刷新健康状态
   const fetchHealth = async () => {
@@ -62,11 +60,13 @@ const Dashboard: React.FC = () => {
   };
 
   useEffect(() => {
+    fetchDashboardData();
     fetchHealth();
   }, []);
 
   useInterval(() => {
     fetchHealth();
+    fetchDashboardData();
   }, 30000);
 
   // 获取告警列表
@@ -89,22 +89,112 @@ const Dashboard: React.FC = () => {
 
   const alerts = getAlerts();
 
+  // 格式化账户概览数据
+  const getAccountData = () => {
+    if (!dashboardData?.account_summary) {
+      // 返回默认占位数据
+      return [
+        { name: '账户总值', value: '¥0', change: '0%', trend: 'neutral', icon: DollarSign },
+        { name: '今日收益', value: '¥0', change: '0%', trend: 'neutral', icon: TrendingUp },
+        { name: '持仓市值', value: '¥0', change: '0%', trend: 'neutral', icon: Activity },
+        { name: '可用资金', value: '¥0', change: '0%', trend: 'neutral', icon: Target },
+      ];
+    }
+
+    const summary = dashboardData.account_summary;
+    return [
+      {
+        name: '账户总值',
+        value: `¥${summary.total_asset.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        change: `${summary.total_pnl_pct >= 0 ? '+' : ''}${(summary.total_pnl_pct * 100).toFixed(1)}%`,
+        trend: summary.total_pnl_pct >= 0 ? 'up' : 'down',
+        icon: iconMap['账户总值'] || DollarSign,
+      },
+      {
+        name: '今日收益',
+        value: `¥${summary.daily_pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        change: `${summary.daily_pnl_pct >= 0 ? '+' : ''}${(summary.daily_pnl_pct * 100).toFixed(1)}%`,
+        trend: summary.daily_pnl_pct >= 0 ? 'up' : 'down',
+        icon: iconMap['今日收益'] || TrendingUp,
+      },
+      {
+        name: '持仓市值',
+        value: `¥${summary.total_market_value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        change: '',
+        trend: 'neutral',
+        icon: iconMap['持仓市值'] || Activity,
+      },
+      {
+        name: '可用资金',
+        value: `¥${summary.current_cash.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+        change: '0%',
+        trend: 'neutral',
+        icon: iconMap['可用资金'] || Target,
+      },
+    ];
+  };
+
+  // 获取资产配置数据
+  const getPieData = (): AssetAllocation[] => {
+    if (!dashboardData?.asset_allocation || dashboardData.asset_allocation.length === 0) {
+      // 默认数据
+      return [
+        { name: '股票', value: 0, color: '#3b82f6' },
+        { name: '现金', value: 100, color: '#10b981' },
+      ];
+    }
+    // 确保有颜色
+    return dashboardData.asset_allocation.map((item, index) => ({
+      ...item,
+      color: item.color || defaultColors[index % defaultColors.length],
+    }));
+  };
+
+  // 获取重仓持股数据
+  const getTopHoldingsData = () => {
+    if (!dashboardData?.top_holdings || dashboardData.top_holdings.length === 0) {
+      return [];
+    }
+
+    // 补充股票名称（实际应该从基本面数据获取）
+    const nameMap: Record<string, string> = {
+      '600519': '贵州茅台',
+      '300750': '宁德时代',
+      '002594': '比亚迪',
+      '601012': '隆基绿能',
+      '601318': '中国平安',
+    };
+
+    return dashboardData.top_holdings.slice(0, 5).map(pos => ({
+      name: nameMap[pos.ts_code] || pos.ts_code,
+      code: pos.ts_code,
+      value: Math.round(pos.market_value),
+      profit: `${pos.unrealized_pnl_pct >= 0 ? '+' : ''}${(pos.unrealized_pnl_pct * 100).toFixed(1)}%`,
+    }));
+  };
+
   // 权益曲线图表选项
   const getEquityCurveOption = () => {
-    const equityCurve = [
-      { date: '01/01', value: 1000000 },
-      { date: '01/08', value: 1050000 },
-      { date: '01/15', value: 1120000 },
-      { date: '01/22', value: 1080000 },
-      { date: '01/29', value: 1150000 },
-      { date: '02/05', value: 1200000 },
-      { date: '02/12', value: 1280000 },
-      { date: '02/19', value: 1350000 },
-      { date: '02/26', value: 1420000 },
-      { date: '03/05', value: 1480000 },
-      { date: '03/12', value: 1520000 },
-      { date: '03/17', value: 1587654 },
-    ];
+    let equityCurve: EquityCurvePoint[] = [];
+    if (dashboardData?.equity_curve && dashboardData.equity_curve.length > 0) {
+      equityCurve = dashboardData.equity_curve;
+    } else {
+      // 默认数据
+      equityCurve = [
+        { date: '01/01', value: 1000000 },
+        { date: '01/08', value: 1050000 },
+        { date: '01/15', value: 1120000 },
+        { date: '01/22', value: 1080000 },
+        { date: '01/29', value: 1150000 },
+        { date: '02/05', value: 1200000 },
+        { date: '02/12', value: 1280000 },
+        { date: '02/19', value: 1350000 },
+        { date: '02/26', value: 1420000 },
+        { date: '03/05', value: 1480000 },
+        { date: '03/12', value: 1520000 },
+        { date: '03/17', value: 1587654 },
+      ];
+    }
 
     return {
       backgroundColor: 'transparent',
@@ -180,6 +270,10 @@ const Dashboard: React.FC = () => {
       ],
     };
   };
+
+  const accountData = getAccountData();
+  const pieData = getPieData();
+  const topHoldings = getTopHoldingsData();
 
   return (
     <div className="dashboard-page space-y-6">

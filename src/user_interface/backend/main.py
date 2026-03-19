@@ -13,7 +13,7 @@ from pathlib import Path
 from common.config import settings
 from common.exceptions import BaseAppException
 from .middleware import RequestLogMiddleware, RateLimitMiddleware
-from .routers import market, fundamental, monitor, system
+from .routers import market, fundamental, monitor, system, portfolio
 from .websocket import ws_router
 
 logger = logging.getLogger(__name__)
@@ -45,6 +45,7 @@ app.include_router(market.router, prefix="/api/v1/market", tags=["行情数据"]
 app.include_router(fundamental.router, prefix="/api/v1/fundamental", tags=["基本面数据"])
 app.include_router(monitor.router, prefix="/api/v1/monitor", tags=["监控管理"])
 app.include_router(system.router, prefix="/api/v1/system", tags=["系统管理"])
+app.include_router(portfolio.router, prefix="/api/v1/portfolio", tags=["投资组合"])
 app.include_router(ws_router)
 
 # 挂载前端静态文件（生产模式）
