@@ -1,8 +1,24 @@
 .market-data-page {
 }
 
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #e5e7eb;
+  margin: 0 0 4px 0;
+}
+
+.page-description {
+  color: #9ca3af;
+  margin: 0;
+}
+
 .search-card {
-  height: calc(100vh - 250px);
+  height: calc(100vh - 200px);
   overflow-y: auto;
 }
 
@@ -10,11 +26,57 @@
   margin-top: 16px;
 }
 
-.stock-item {
-  cursor: pointer;
-  margin-bottom: 8px;
+.selected-label {
+  color: #d1d5db;
+  margin: 0 0 8px 0;
 }
 
-.stock-item.active .price-ticker {
-  border-color: #1890ff;
+.empty-hint {
+  color: #6b7280;
+  padding: 16px;
+  text-align: center;
+}
+
+.stock-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stock-item {
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 0.5rem;
+  border: 1px solid #2a2a33;
+  background: #1a1a20;
+  transition: all 0.2s;
+}
+
+.stock-item:hover {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.stock-item.active {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+}
+
+.stock-item-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stock-code {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.query-form {
+  flex-wrap: wrap;
+}
+
+.quote-card {
+  overflow: visible;
 }

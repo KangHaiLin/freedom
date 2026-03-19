@@ -1,6 +1,7 @@
 /**
  * 行情数据查询页面
  * 股票搜索、K线图、数据表格
+ * 借鉴example设计：卡片式布局，深色主题
  */
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Form, DatePicker, Select, Button, Alert } from 'antd';
@@ -99,7 +100,11 @@ const MarketData: React.FC = () => {
 
   return (
     <div className="market-data-page">
-      <h1>行情数据查询</h1>
+      <div className="page-header">
+        <h2 className="page-title">行情数据查询</h2>
+        <p className="page-description">搜索股票，查看实时行情和历史K线数据</p>
+      </div>
+
       <Row gutter={[16, 16]}>
         <Col xs={24} md={8}>
           <Card title="股票搜索" className="search-card">
@@ -108,28 +113,33 @@ const MarketData: React.FC = () => {
               selectedCodes={selectedStocks.map((s) => s.code)}
             />
             <div className="selected-stocks">
-              <p style={{ marginTop: 16 }}>已选股票:</p>
+              <p className="selected-label">已选股票:</p>
               {selectedStocks.length === 0 ? (
-                <div style={{ color: '#999' }}>未选择股票</div>
+                <div className="empty-hint">未选择股票</div>
               ) : (
-                selectedStocks.map((stock) => {
-                  const quote = quotes.get(stock.code);
-                  return (
-                    <div
-                      key={stock.code}
-                      onClick={() => handleStockClick(stock)}
-                      className={`stock-item ${
-                        currentCode === stock.code ? 'active' : ''
-                      }`}
-                    >
-                      {quote ? (
-                        <PriceTicker quote={quote} selected={currentCode === stock.code} />
-                      ) : (
-                        <Card size="small">{stock.code} - {stock.name}</Card>
-                      )}
-                    </div>
-                  );
-                })
+                <div className="stock-list">
+                  {selectedStocks.map((stock) => {
+                    const quote = quotes.get(stock.code);
+                    return (
+                      <div
+                        key={stock.code}
+                        onClick={() => handleStockClick(stock)}
+                        className={`stock-item ${
+                          currentCode === stock.code ? 'active' : ''
+                        }`}
+                      >
+                        {quote ? (
+                          <PriceTicker quote={quote} selected={currentCode === stock.code} />
+                        ) : (
+                          <div className="stock-item-name">
+                            <span>{stock.name}</span>
+                            <span className="stock-code">{stock.code}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </Card>
@@ -141,6 +151,7 @@ const MarketData: React.FC = () => {
               layout="inline"
               onFinish={handleQuery}
               initialValues={{ freq: '1d' }}
+              className="query-form"
             >
               <Form.Item label="K线周期" name="freq">
                 <Select style={{ width: 120 }} options={KLINE_FREQS} />
@@ -171,7 +182,7 @@ const MarketData: React.FC = () => {
           )}
 
           {currentQuote && (
-            <Card title="实时行情" style={{ marginTop: 16 }}>
+            <Card title="实时行情" style={{ marginTop: 16 }} className="quote-card">
               <PriceTicker quote={currentQuote} />
             </Card>
           )}

@@ -1,17 +1,146 @@
 .app-header {
-  background: #001529;
+  background: #0f0f14;
   padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 64px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.menu-toggle {
+  color: #e5e7eb;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-text {
+  color: #fff;
+  font-weight: bold;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.logo-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(135deg, #60a5fa 0%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.market-index {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.index-name {
+  font-size: 14px;
+  color: #d1d5db;
+}
+
+.index-value {
+  font-size: 15px;
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+.index-change {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.index-change.up {
+  color: #f87171;
+}
+
+.index-change.down {
+  color: #4ade80;
 }
 
 .header-right {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.header-btn {
+  position: relative;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 0.5rem;
+  color: #d1d5db;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.2s;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.notification-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+}
+
+.user-name {
+  font-size: 14px;
+  color: #e5e7eb;
+}
+
+@media (max-width: 1024px) {
+  .header-center {
+    display: none;
+  }
 }

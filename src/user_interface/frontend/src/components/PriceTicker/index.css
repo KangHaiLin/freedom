@@ -1,12 +1,21 @@
+/* 价格Ticker - 适配深色主题 */
+
 .price-ticker {
   margin-bottom: 8px;
   cursor: pointer;
   transition: all 0.2s;
+  background-color: #0f0f14 !important;
+  border: 1px solid #2a2a33;
 }
 
 .price-ticker.selected {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
+}
+
+.price-ticker:hover {
+  border-color: #3b82f6;
+  background-color: #1a1a20;
 }
 
 .price-ticker-header {
@@ -14,6 +23,10 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
+}
+
+.price-ticker-header .ant-typography {
+  color: #e5e7eb;
 }
 
 .price-ticker-price {
@@ -33,5 +46,5 @@
   display: flex;
   justify-content: space-between;
   font-size: 12px;
-  color: #999;
+  color: #9ca3af;
 }

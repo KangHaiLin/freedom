@@ -1,5 +1,6 @@
 /**
  * 侧边栏导航
+ * 借鉴example设计：清晰的导航项，活跃状态渐变背景
  */
 import React from 'react';
 import { Layout, Menu } from 'antd';
@@ -31,13 +32,26 @@ const Sidebar: React.FC = () => {
   const selectedKey = location.pathname;
 
   return (
-    <Sider width={200} collapsed={sidebarCollapsed} className="app-sidebar">
-      <div className="sidebar-logo">
-        {!sidebarCollapsed && <span>Quant Trading</span>}
-      </div>
+    <Sider width={220} collapsed={sidebarCollapsed} className="app-sidebar">
+      {!sidebarCollapsed && (
+        <div className="sidebar-logo">
+          <div className="logo-icon">
+            <span>Q</span>
+          </div>
+          <span>Quant Trading</span>
+        </div>
+      )}
+      {sidebarCollapsed && (
+        <div className="sidebar-logo-collapsed">
+          <div className="logo-icon">
+            <span>Q</span>
+          </div>
+        </div>
+      )}
       <Menu
         mode="inline"
         selectedKeys={[selectedKey]}
+        className="sidebar-menu"
         items={MENU_ITEMS.map((item) => ({
           key: item.key,
           icon: iconMap[item.icon],

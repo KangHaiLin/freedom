@@ -10,7 +10,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f2f5;
+  background-color: #0a0a0f;
+  color: #e5e7eb;
 }
 
 code {
@@ -20,4 +21,56 @@ code {
 
 #root {
   min-height: 100vh;
+  background-color: #0a0a0f;
+}
+
+.app-root {
+  min-height: 100vh;
+  background-color: #0a0a0f;
+}
+
+.ant-card {
+  border: 1px solid #2a2a33;
+}
+
+.ant-table {
+  background-color: transparent;
+}
+
+.ant-table-thead > tr > th {
+  background-color: transparent;
+  color: #9ca3af;
+  border-bottom: 1px solid #2a2a33;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid #2a2a33;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background-color: #1a1a20;
+}
+
+.ant-input {
+  background-color: #1a1a20;
+  border-color: #2a2a33;
+}
+
+.ant-select-selector {
+  background-color: #1a1a20 !important;
+  border-color: #2a2a33 !important;
+}
+
+.ant-picker {
+  background-color: #1a1a20;
+  border-color: #2a2a33;
+}
+
+.ant-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  border: none;
+}
+
+.ant-btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
 }

@@ -1,6 +1,7 @@
 /**
  * 根组件
  * 配置路由
+ * 完全模仿example设计
  */
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -14,13 +15,29 @@ import StrategyMonitoring from './pages/StrategyMonitoring';
 import SystemStatus from './pages/SystemStatus';
 import { AppProvider } from './context/AppContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import './index.css';
 
 const App: React.FC = () => {
   return (
     <ConfigProvider
       locale={zhCN}
       theme={{
-        algorithm: theme.defaultAlgorithm,
+        algorithm: theme.darkAlgorithm,
+        token: {
+          colorBgContainer: '#0f0f14',
+          colorBgElevated: '#1a1a20',
+          colorBorder: '#2a2a33',
+          colorText: '#e5e7eb',
+          colorTextSecondary: '#9ca3af',
+          borderRadius: 10,
+          fontSize: 16,
+          fontFamily: 'inherit',
+        },
+        components: {
+          Card: {
+            colorBgContainer: '#0f0f14',
+          },
+        },
       }}
     >
       <AppProvider>
