@@ -10,6 +10,7 @@ import logging
 from ..dependencies import verify_api_key
 from src.trading_engine.trading_manager import TradingManager
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
+from src.trading_engine.base.base_order import OrderStatus
 from ..schemas import BaseResponse
 
 logger = logging.getLogger(__name__)
@@ -246,3 +247,171 @@ def generate_mock_equity_curve(days: int) -> List[dict]:
         })
 
     return result
+
+
+# ========== 订单管理接口 ==========
+
+@router.get("/orders/today", summary="获取今日订单列表", response_model=BaseResponse)
+async def get_today_orders():
+    """获取今日所有订单"""
+    tm = get_trading_manager()
+    om = tm.get_order_manager()
+
+    # 获取今日订单
+    today = datetime.now().date()
+    start_of_day = datetime.combine(today, datetime.min.time())
+    end_of_day = datetime.combine(today, datetime.max.time())
+
+    orders = om.query_orders(start_time=start_of_day, end_time=end_of_day)
+    result = [order.to_dict() for order in orders]
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": result
+    }
+
+
+@router.get("/orders/pending", summary="获取待成交订单列表", response_model=BaseResponse)
+async def get_pending_orders():
+    """获取所有待成交订单（待成交、部分成交）"""
+    tm = get_trading_manager()
+    om = tm.get_order_manager()
+
+    pending_status = [OrderStatus.PENDING, OrderStatus.SUBMITTED, OrderStatus.PARTIAL]
+    orders = om.query_orders(status=pending_status)
+    result = [order.to_dict() for order in orders]
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": result
+    }
+
+
+@router.get("/orders/history", summary="获取历史订单列表", response_model=BaseResponse)
+async def get_history_orders(
+    page: int = Query(1, description="页码"),
+    page_size: int = Query(20, description="每页数量")):
+    """获取历史订单（已成交、已取消、已拒绝），分页返回"""
+    tm = get_trading_manager()
+    om = tm.get_order_manager()
+
+    # 历史订单状态：已成交、已取消、已拒绝
+    history_status = [OrderStatus.FILLED, OrderStatus.CANCELLED, OrderStatus.REJECTED]
+    orders = om.query_orders(status=history_status)
+
+    # 按创建时间倒序排序
+    orders.sort(key=lambda o: o.created_at if o.created_at else datetime.min, reverse=True)
+
+    # 分页
+    total = len(orders)
+    start = (page - 1) * page_size
+    end = start + page_size
+    page_orders = orders[start:end]
+
+    result = [order.to_dict() for order in page_orders]
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": {
+            "items": result,
+            "total": total,
+            "page": page,
+            "page_size": page_size
+        },
+        "total": total
+    }
+
+
+@router.get("/orders/statistics", summary="获取订单统计信息", response_model=BaseResponse)
+async def get_order_statistics():
+    """获取订单统计信息，用于页面统计卡片"""
+    tm = get_trading_manager()
+    om = tm.get_order_manager()
+
+    # 今日统计
+    today = datetime.now().date()
+    start_of_day = datetime.combine(today, datetime.min.time())
+    end_of_day = datetime.combine(today, datetime.max.time())
+
+    today_orders = om.query_orders(start_time=start_of_day, end_time=end_of_day)
+    filled_today = [o for o in today_orders if o.status == OrderStatus.FILLED or o.status == OrderStatus.PARTIAL]
+
+    # 计算今日成交额和手续费
+    today_amount = sum(o.get_filled_notional() for o in filled_today)
+    today_commission = sum(o.commission for o in filled_today if o.commission)
+
+    # 待成交订单数
+    pending_status = [OrderStatus.PENDING, OrderStatus.SUBMITTED, OrderStatus.PARTIAL]
+    pending_orders = om.query_orders(status=pending_status)
+
+    stats = {
+        "total": om.get_order_count(),
+        "today_total": len(today_orders),
+        "today_filled": len([o for o in today_orders if o.status == OrderStatus.FILLED]),
+        "today_amount": today_amount,
+        "today_commission": today_commission,
+        "pending": len(pending_orders)
+    }
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": stats
+    }
+
+
+@router.post("/orders/cancel", summary="取消订单", response_model=BaseResponse)
+async def cancel_order(order_id: str):
+    """取消指定订单"""
+    tm = get_trading_manager()
+    om = tm.get_order_manager()
+
+    success, error = om.cancel_order(order_id)
+
+    if not success:
+        return {
+            "code": 400,
+            "message": error or "取消订单失败",
+            "data": None
+        }
+
+    return {
+        "code": 200,
+        "message": "取消成功",
+        "data": {"success": True}
+    }
+
+
+@router.get("/orders/search", summary="搜索订单", response_model=BaseResponse)
+async def search_orders(
+    keyword: str = Query(..., description="搜索关键词（股票代码或名称）")):
+    """搜索订单，按股票代码或名称模糊匹配"""
+    tm = get_trading_manager()
+    om = tm.get_order_manager()
+
+    # 获取所有订单，简单模糊匹配
+    all_orders = om.get_all_orders()
+    keyword_lower = keyword.lower()
+    matched = []
+
+    for order in all_orders:
+        # 匹配股票代码
+        if keyword_lower in order.ts_code.lower():
+            matched.append(order)
+        # 如果有股票名称信息，也匹配名称
+        # 这里Order对象中没有存储名称，只匹配代码
+        matched.append(order)
+
+    # 按时间倒序
+    matched.sort(key=lambda o: o.created_at if o.created_at else datetime.min, reverse=True)
+
+    result = [order.to_dict() for order in matched]
+
+    return {
+        "code": 200,
+        "message": "success",
+        "data": result
+    }

@@ -238,3 +238,40 @@ export interface PortfolioDashboard {
   top_holdings: PositionInfo[];
   equity_curve: EquityCurvePoint[];
 }
+
+// 订单相关类型
+export interface OrderInfo {
+  order_id: string;
+  ts_code: string;
+  stock_name?: string;
+  side: string;
+  side_code: number;
+  quantity: number;
+  filled_quantity: number;
+  remaining_quantity: number;
+  order_type: string;
+  price: number | null;
+  stop_price: number | null;
+  filled_avg_price: number | null;
+  status: string;
+  strategy_id: string | null;
+  created_at: string | null;
+  submitted_at: string | null;
+  filled_at: string | null;
+  updated_at: string | null;
+  commission: number;
+  slippage: number | null;
+  notional: number;
+  filled_notional: number;
+  extra_info?: Record<string, any>;
+}
+
+// 订单统计信息
+export interface OrderStatistics {
+  total: number;
+  today_total: number;
+  today_filled: number;
+  today_amount: number;
+  today_commission: number;
+  pending: number;
+}
