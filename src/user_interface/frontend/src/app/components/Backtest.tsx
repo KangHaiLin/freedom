@@ -7,7 +7,7 @@ import { Play, RotateCcw, Download } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { getStrategies, createBacktestTask, getBacktestResult, exportBacktestReport, resetBacktestConfig, saveBacktestConfig, loadBacktestConfig } from "@/api/backtest";
 import type { StrategyInfo, BacktestResultDetail } from "@/api/backtest";
-import { toast } from "./ui/sonner";
+import { toast } from "sonner";
 
 // 默认模拟数据（当没有回测结果时使用）
 const defaultBacktestResults = [
@@ -210,9 +210,8 @@ export default function Backtest() {
     }
     try {
       // 获取导出链接，实际这里会打开下载
-      const { report_url } = await exportBacktestReport("latest");
+      await exportBacktestReport("latest");
       toast.success("报告导出成功");
-      // window.open(report_url, '_blank');
     } catch (error) {
       console.error("Export failed:", error);
       toast.error("导出失败");
