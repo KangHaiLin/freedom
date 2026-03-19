@@ -275,3 +275,68 @@ export interface OrderStatistics {
   today_commission: number;
   pending: number;
 }
+
+// 告警/通知相关类型
+export interface AlertRecord {
+  monitor_name: string;
+  success: boolean;
+  message: string;
+  level: 'info' | 'warning' | 'error' | 'critical';
+  metrics?: Record<string, any>;
+  details?: Record<string, any>;
+  timestamp: string;
+}
+
+export interface MonitorDashboard {
+  monitor_count: number;
+  running: boolean;
+  monitor_status: any[];
+  recent_alerts: AlertRecord[];
+  alert_count_24h: number;
+  error_count: number;
+  warning_count: number;
+}
+
+// 系统状态类型
+export interface SystemStatus {
+  system_info: {
+    os: string;
+    os_version: string;
+    architecture: string;
+    hostname: string;
+    python_version: string;
+  };
+  cpu_info: {
+    physical_cores: number;
+    logical_cores: number;
+    cpu_usage: number;
+    load_average: number[];
+  };
+  memory_info: {
+    total: number;
+    available: number;
+    used: number;
+    usage_percent: number;
+  };
+  disk_info: {
+    total: number;
+    used: number;
+    free: number;
+    usage_percent: number;
+  };
+  storage_status: Record<string, any>;
+  data_source_status: {
+    total_sources: number;
+    available_sources: number;
+    sources: any[];
+  };
+  timestamp: string;
+}
+
+// 当前用户信息类型
+export interface UserInfo {
+  username: string;
+  role: string;
+  api_key_valid: boolean;
+}
+
