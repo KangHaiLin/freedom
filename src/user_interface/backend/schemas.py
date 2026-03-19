@@ -202,3 +202,41 @@ class SystemStatusResponse(BaseModel):
     storage_status: dict = Field(..., description="存储状态")
     data_source_status: dict = Field(..., description="数据源状态")
     timestamp: datetime = Field(..., description="查询时间")
+
+
+# 回测任务模型
+class BacktestResultResponse(BaseModel):
+    """回测结果响应模型"""
+    total_return: float = Field(..., description="总收益率")
+    annual_return: float = Field(..., description="年化收益率")
+    sharpe_ratio: float = Field(..., description="夏普比率")
+    max_drawdown: float = Field(..., description="最大回撤")
+    win_rate: float = Field(..., description="胜率")
+    trade_count: int = Field(..., description="交易次数")
+
+
+class BacktestTaskResponse(BaseModel):
+    """回测任务响应模型"""
+    id: str = Field(..., description="任务ID")
+    name: str = Field(..., description="任务名称")
+    strategy: str = Field(..., description="策略名称")
+    status: str = Field(..., description="任务状态")
+    progress: float = Field(..., description="进度百分比")
+    start_time: str = Field(..., description="开始时间")
+    end_time: Optional[str] = Field(None, description="结束时间")
+    result: Optional[BacktestResultResponse] = Field(None, description="回测结果")
+
+
+# 策略信息模型
+class StrategyInfoResponse(BaseModel):
+    """策略信息响应模型"""
+    id: str = Field(..., description="策略ID")
+    name: str = Field(..., description="策略名称")
+    type: str = Field(..., description="策略类型")
+    status: str = Field(..., description="运行状态")
+    returns: str = Field(..., description="收益率")
+    sharpe: str = Field(..., description="夏普比率")
+    max_drawdown: str = Field(description="最大回撤")
+    win_rate: str = Field(description="胜率")
+    positions: int = Field(description="持仓数量")
+    performance: List[dict] = Field(..., description="性能数据")
