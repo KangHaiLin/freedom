@@ -161,17 +161,17 @@ class HistoricalSyncTask(BaseTask, ABC):
 
             # 查询最大交易日期
             sql = f"SELECT MAX(trade_date) FROM {self.table_name}"
-            result = self.clickhouse_storage.execute_sql(sql)
+            df = self.clickhouse_storage.execute_sql(sql)
 
-            if result and len(result) > 0 and len(result[0]) > 0:
-                latest_date = result[0][0]
-                if latest_date:
+            if df is not None and not df.empty:
+                latest_date = df.iloc[0, 0]
+                if latest_date is not None and not pd.isna(latest_date):
                     if isinstance(latest_date, datetime):
                         return latest_date
+                    elif isinstance(latest_date, pd.Timestamp):
+                        return latest_date.to_pydatetime()
                     elif isinstance(latest_date, str):
                         return datetime.strptime(latest_date, "%Y-%m-%d")
-                    elif pd.isna(latest_date):
-                        return None
 
             return None
 
