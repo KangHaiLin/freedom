@@ -28,7 +28,7 @@ class ClickHouseStorage(BaseStorage):
         self.chunk_size = config.get('chunk_size', 10000)
         self.settings = config.get('settings', {
             'max_insert_block_size': 100000,
-            'use_numpy': True
+            'use_numpy': False
         })
 
     def connect(self) -> bool:
@@ -80,12 +80,10 @@ class ClickHouseStorage(BaseStorage):
                 logger.warning("写入数据为空")
                 return 0
 
-            # 处理日期时间类型
-            for col in df.columns:
-                if pd.api.types.is_datetime64_any_dtype(df[col]):
-                    df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            # ClickHouse driver可以直接处理pandas datetime类型，不需要转换
+            # 保持原始数据类型可以避免类型错误
 
-            # 批量插入
+            # 批量插入 - 转为行式字典列表
             rows_written = 0
             for i in range(0, len(df), self.chunk_size):
                 chunk = df.iloc[i:i + self.chunk_size]

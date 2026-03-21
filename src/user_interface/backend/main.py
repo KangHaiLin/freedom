@@ -6,7 +6,7 @@ import os
 
 # 添加src目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, '../../../..'))
+project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
 src_dir = os.path.join(project_root, 'src')
 sys.path.insert(0, project_root)
 sys.path.insert(0, src_dir)
@@ -20,12 +20,31 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+# 初始化日志配置
+from common.config import settings
+
+# 确保日志目录存在
+log_path = Path(settings.log_path)
+log_path.mkdir(parents=True, exist_ok=True)
+
+# 配置日志
+logging.basicConfig(
+    level=getattr(logging, settings.log_level.upper()),
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # 输出到控制台
+        logging.FileHandler(log_path / 'app.log', encoding='utf-8'),  # 输出到文件
+    ]
+)
+
 from common.config import settings
 from common.exceptions import BaseAppException
 from .middleware import RequestLogMiddleware, RateLimitMiddleware
 from .routers import market, fundamental, monitor, system, portfolio
 from .websocket import ws_router
 from data_management.data_ingestion import init_all_data_sources
+from data_management.data_ingestion import register_sync_tasks_to_scheduler
+from system_management.task_scheduler.scheduler_manager import get_scheduler_manager
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +64,41 @@ async def startup_event():
     logger.info("应用启动，开始初始化数据源...")
     init_all_data_sources()
     logger.info("数据源初始化完成")
+
+    # 初始化调度器并注册数据同步任务
+    logger.info("初始化任务调度器，注册数据同步任务...")
+    scheduler = get_scheduler_manager()
+    if not scheduler.is_running:
+        # 从配置读取最大并发异步任务数
+        max_concurrent = settings.SYSTEM_CONFIG.get('max_concurrent_async_tasks', 10)
+        scheduler.initialize(max_concurrent_async=max_concurrent)
+        scheduler.start()
+    # 注册同步任务
+    register_sync_tasks_to_scheduler()
+    logger.info("数据同步任务注册完成")
+
+    # 应用启动后，自动检测是否需要第一次全量同步
+    # 如果daily_market_data表为空，说明是第一次运行，立即异步启动全量同步
+    if settings.enable_daily_sync:
+        logger.info("检测是否需要第一次全量同步...")
+
+        def check_and_trigger_initial_sync():
+            from data_management.data_ingestion import trigger_manual_sync
+            try:
+                result = trigger_manual_sync("daily")
+                if result.get("success"):
+                    logger.info(f"初始全量同步完成: {result.get('message', '')}，共写入{result.get('total_records', 0)}条记录")
+                else:
+                    logger.error(f"初始全量同步失败: {result.get('message', '')}")
+            except Exception as e:
+                logger.error(f"初始全量同步执行异常: {e}", exc_info=True)
+
+        # 提交为异步任务，不阻塞应用启动
+        scheduler.submit_async(
+            check_and_trigger_initial_sync,
+            task_name="初始日线全量同步"
+        )
+        logger.info("已提交初始全量同步任务到异步队列")
 
 # 配置CORS
 app.add_middleware(
@@ -124,10 +178,21 @@ async def health_check():
     }
 
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host=settings.API_HOST,
-        port=settings.API_PORT,
-        reload=settings.DEBUG,
-        workers=settings.API_WORKERS
-    )
+    if settings.debug:
+        # 调试模式下使用reload需要传入字符串模块路径
+        uvicorn.run(
+            "src.user_interface.backend.main:app",
+            host=settings.host,
+            port=settings.port,
+            reload=True,
+            workers=1
+        )
+    else:
+        # 生产模式直接传入app
+        uvicorn.run(
+            app,
+            host=settings.host,
+            port=settings.port,
+            reload=False,
+            workers=1
+        )

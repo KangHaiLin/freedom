@@ -22,6 +22,21 @@ from .init_data_sources import (
     get_market_data_source_manager,
     get_fundamentals_manager,
 )
+from .historical_sync_task import (
+    HistoricalSyncTask,
+    DailyHistoricalSyncTask,
+    Minute1HistoricalSyncTask,
+    Minute5HistoricalSyncTask,
+    TickHistoricalSyncTask,
+    SyncResult,
+    DataFrequency,
+)
+from .sync_task_registry import (
+    SyncTaskFactory,
+    register_sync_tasks_to_scheduler,
+    trigger_manual_sync,
+    get_sync_task_status,
+)
 
 __all__ = [
     'MarketDataCollector',
@@ -45,4 +60,16 @@ __all__ = [
     'init_all_data_sources',
     'get_market_data_source_manager',
     'get_fundamentals_manager',
+    # 历史同步任务
+    'HistoricalSyncTask',
+    'DailyHistoricalSyncTask',
+    'Minute1HistoricalSyncTask',
+    'Minute5HistoricalSyncTask',
+    'TickHistoricalSyncTask',
+    'SyncResult',
+    'DataFrequency',
+    'SyncTaskFactory',
+    'register_sync_tasks_to_scheduler',
+    'trigger_manual_sync',
+    'get_sync_task_status',
 ]

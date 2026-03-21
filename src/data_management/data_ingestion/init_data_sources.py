@@ -28,59 +28,59 @@ def init_market_data_sources() -> None:
 
     # 初始化AKShare（不需要API Key，总是可用）
     akshare_config = {
-        'priority': ds_config.akshare_priority,
-        'weight': ds_config.akshare_weight,
+        'priority': ds_config['akshare_priority'],
+        'weight': ds_config['akshare_weight'],
         'rate_limit': 200,  # 每分钟请求次数限制
     }
     try:
         akshare = AKShareCollector(akshare_config)
         data_source_manager.add_source(akshare)
-        logger.info(f"行情数据源AKShare注册成功，优先级={ds_config.akshare_priority}, 权重={ds_config.akshare_weight}")
+        logger.info(f"行情数据源AKShare注册成功，优先级={ds_config['akshare_priority']}, 权重={ds_config['akshare_weight']}")
     except Exception as e:
         logger.error(f"行情数据源AKShare初始化失败: {e}")
 
     # 初始化Tushare（如果配置了API Key）
-    if ds_config.tushare_api_key:
+    if ds_config['tushare_api_key']:
         tushare_config = {
-            'api_key': ds_config.tushare_api_key,
-            'priority': ds_config.tushare_priority,
-            'weight': ds_config.tushare_weight,
+            'api_key': ds_config['tushare_api_key'],
+            'priority': ds_config['tushare_priority'],
+            'weight': ds_config['tushare_weight'],
             'rate_limit': 100,
         }
         try:
             tushare = TushareCollector(tushare_config)
             data_source_manager.add_source(tushare)
-            logger.info(f"行情数据源Tushare注册成功，优先级={ds_config.tushare_priority}, 权重={ds_config.tushare_weight}")
+            logger.info(f"行情数据源Tushare注册成功，优先级={ds_config['tushare_priority']}, 权重={ds_config['tushare_weight']}")
         except Exception as e:
             logger.error(f"行情数据源Tushare初始化失败: {e}")
 
     # 初始化Wind（如果配置了API Key）
-    if ds_config.wind_api_key:
+    if ds_config['wind_api_key']:
         wind_config = {
-            'api_key': ds_config.wind_api_key,
-            'priority': ds_config.wind_priority,
-            'weight': ds_config.wind_weight,
+            'api_key': ds_config['wind_api_key'],
+            'priority': ds_config['wind_priority'],
+            'weight': ds_config['wind_weight'],
             'rate_limit': 80,
         }
         try:
             wind = WindCollector(wind_config)
             data_source_manager.add_source(wind)
-            logger.info(f"行情数据源Wind注册成功，优先级={ds_config.wind_priority}, 权重={ds_config.wind_weight}")
+            logger.info(f"行情数据源Wind注册成功，优先级={ds_config['wind_priority']}, 权重={ds_config['wind_weight']}")
         except Exception as e:
             logger.error(f"行情数据源Wind初始化失败: {e}")
 
     # 初始化JoinQuant（如果配置了API Key）
-    if ds_config.joinquant_api_key:
+    if ds_config['joinquant_api_key']:
         joinquant_config = {
-            'api_key': ds_config.joinquant_api_key,
-            'priority': ds_config.joinquant_priority,
-            'weight': ds_config.joinquant_weight,
+            'api_key': ds_config['joinquant_api_key'],
+            'priority': ds_config['joinquant_priority'],
+            'weight': ds_config['joinquant_weight'],
             'rate_limit': 50,
         }
         try:
             joinquant = JoinQuantCollector(joinquant_config)
             data_source_manager.add_source(joinquant)
-            logger.info(f"行情数据源JoinQuant注册成功，优先级={ds_config.joinquant_priority}, 权重={ds_config.joinquant_weight}")
+            logger.info(f"行情数据源JoinQuant注册成功，优先级={ds_config['joinquant_priority']}, 权重={ds_config['joinquant_weight']}")
         except Exception as e:
             logger.error(f"行情数据源JoinQuant初始化失败: {e}")
 
@@ -93,59 +93,59 @@ def init_fundamentals_data_sources() -> None:
 
     # 初始化AKShare基本面数据（不需要API Key）
     akshare_config = {
-        'priority': ds_config.akshare_priority,
-        'weight': ds_config.akshare_weight,
+        'priority': ds_config['akshare_priority'],
+        'weight': ds_config['akshare_weight'],
         'rate_limit': 100,
     }
     try:
         akshare = AKShareFundamentalsCollector(akshare_config)
         fundamentals_manager.add_source(akshare)
-        logger.info(f"基本面数据源AKShare注册成功，优先级={ds_config.akshare_priority}, 权重={ds_config.akshare_weight}")
+        logger.info(f"基本面数据源AKShare注册成功，优先级={ds_config['akshare_priority']}, 权重={ds_config['akshare_weight']}")
     except Exception as e:
         logger.error(f"基本面数据源AKShare初始化失败: {e}")
 
     # 初始化Tushare基本面数据（如果配置了API Key）
-    if ds_config.tushare_api_key:
+    if ds_config['tushare_api_key']:
         tushare_config = {
-            'api_key': ds_config.tushare_api_key,
-            'priority': ds_config.tushare_priority,
-            'weight': ds_config.tushare_weight,
+            'api_key': ds_config['tushare_api_key'],
+            'priority': ds_config['tushare_priority'],
+            'weight': ds_config['tushare_weight'],
             'rate_limit': 80,
         }
         try:
             tushare = TushareFundamentalsCollector(tushare_config)
             fundamentals_manager.add_source(tushare)
-            logger.info(f"基本面数据源Tushare注册成功，优先级={ds_config.tushare_priority}, 权重={ds_config.tushare_weight}")
+            logger.info(f"基本面数据源Tushare注册成功，优先级={ds_config['tushare_priority']}, 权重={ds_config['tushare_weight']}")
         except Exception as e:
             logger.error(f"基本面数据源Tushare初始化失败: {e}")
 
     # 初始化Wind基本面数据（如果配置了API Key）
-    if ds_config.wind_api_key:
+    if ds_config['wind_api_key']:
         wind_config = {
-            'api_key': ds_config.wind_api_key,
-            'priority': ds_config.wind_priority,
-            'weight': ds_config.wind_weight,
+            'api_key': ds_config['wind_api_key'],
+            'priority': ds_config['wind_priority'],
+            'weight': ds_config['wind_weight'],
             'rate_limit': 50,
         }
         try:
             wind = WindFundamentalsCollector(wind_config)
             fundamentals_manager.add_source(wind)
-            logger.info(f"基本面数据源Wind注册成功，优先级={ds_config.wind_priority}, 权重={ds_config.wind_weight}")
+            logger.info(f"基本面数据源Wind注册成功，优先级={ds_config['wind_priority']}, 权重={ds_config['wind_weight']}")
         except Exception as e:
             logger.error(f"基本面数据源Wind初始化失败: {e}")
 
     # 初始化JoinQuant基本面数据（如果配置了API Key）
-    if ds_config.joinquant_api_key:
+    if ds_config['joinquant_api_key']:
         joinquant_config = {
-            'api_key': ds_config.joinquant_api_key,
-            'priority': ds_config.joinquant_priority,
-            'weight': ds_config.joinquant_weight,
+            'api_key': ds_config['joinquant_api_key'],
+            'priority': ds_config['joinquant_priority'],
+            'weight': ds_config['joinquant_weight'],
             'rate_limit': 30,
         }
         try:
             joinquant = JoinQuantFundamentalsCollector(joinquant_config)
             fundamentals_manager.add_source(joinquant)
-            logger.info(f"基本面数据源JoinQuant注册成功，优先级={ds_config.joinquant_priority}, 权重={ds_config.joinquant_weight}")
+            logger.info(f"基本面数据源JoinQuant注册成功，优先级={ds_config['joinquant_priority']}, 权重={ds_config['joinquant_weight']}")
         except Exception as e:
             logger.error(f"基本面数据源JoinQuant初始化失败: {e}")
 

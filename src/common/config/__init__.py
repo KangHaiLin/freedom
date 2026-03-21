@@ -3,7 +3,7 @@
 基于Pydantic实现多环境配置管理
 """
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, BaseModel
 from typing import Dict, Optional
 import os
 from functools import lru_cache
@@ -116,12 +116,137 @@ class AppConfig(BaseSettings):
     RATE_LIMIT: int = Field(default=1000, env='RATE_LIMIT')  # 每分钟请求次数限制
     RATE_LIMIT_ENABLED: bool = Field(default=False, env='RATE_LIMIT_ENABLED')  # 是否启用限流
 
-    # 子配置
-    database: DatabaseConfig = DatabaseConfig()
-    kafka: KafkaConfig = KafkaConfig()
-    data_sources: DataSourceConfig = DataSourceConfig()
-    jaeger: JaegerConfig = JaegerConfig()
-    alert: AlertConfig = AlertConfig()
+    # PostgreSQL配置
+    postgres_host: str = Field(default='localhost', env='POSTGRES_HOST')
+    postgres_port: int = Field(default=5432, env='POSTGRES_PORT')
+    postgres_user: str = Field(default='postgres', env='POSTGRES_USER')
+    postgres_password: str = Field(default='postgres', env='POSTGRES_PASSWORD')
+    postgres_db: str = Field(default='quant', env='POSTGRES_DB')
+
+    # ClickHouse配置
+    clickhouse_host: str = Field(default='localhost', env='CLICKHOUSE_HOST')
+    clickhouse_port: int = Field(default=9000, env='CLICKHOUSE_PORT')
+    clickhouse_user: str = Field(default='default', env='CLICKHOUSE_USER')
+    clickhouse_password: str = Field(default='', env='CLICKHOUSE_PASSWORD')
+    clickhouse_db: str = Field(default='quant', env='CLICKHOUSE_DB')
+
+    # InfluxDB配置
+    influxdb_url: str = Field(default='http://localhost:8086', env='INFLUXDB_URL')
+    influxdb_token: str = Field(default='your-influxdb-token', env='INFLUXDB_TOKEN')
+    influxdb_org: str = Field(default='quant', env='INFLUXDB_ORG')
+    influxdb_bucket: str = Field(default='realtime', env='INFLUXDB_BUCKET')
+
+    # Redis配置
+    redis_host: str = Field(default='localhost', env='REDIS_HOST')
+    redis_port: int = Field(default=6379, env='REDIS_PORT')
+    redis_password: str = Field(default='', env='REDIS_PASSWORD')
+    redis_db: int = Field(default=0, env='REDIS_DB')
+
+    # Kafka配置
+    kafka_bootstrap_servers: str = Field(default='localhost:9092', env='KAFKA_BOOTSTRAP_SERVERS')
+    kafka_group_id: str = Field(default='quant-group', env='KAFKA_GROUP_ID')
+    kafka_auto_offset_reset: str = Field(default='earliest', env='KAFKA_AUTO_OFFSET_RESET')
+    kafka_enable_auto_commit: bool = Field(default=True, env='KAFKA_ENABLE_AUTO_COMMIT')
+    kafka_auto_commit_interval_ms: int = Field(default=5000, env='KAFKA_AUTO_COMMIT_INTERVAL_MS')
+
+    # 数据源配置
+    tushare_api_key: str = Field(default='', env='TUSHARE_API_KEY')
+    wind_api_key: str = Field(default='', env='WIND_API_KEY')
+    joinquant_api_key: str = Field(default='', env='JOINQUANT_API_KEY')
+    akshare_priority: int = Field(default=1, env='AKSHARE_PRIORITY')
+    tushare_priority: int = Field(default=5, env='TUSHARE_PRIORITY')
+    wind_priority: int = Field(default=10, env='WIND_PRIORITY')
+    joinquant_priority: int = Field(default=15, env='JOINQUANT_PRIORITY')
+    akshare_weight: float = Field(default=2.0, env='AKSHARE_WEIGHT')
+    tushare_weight: float = Field(default=1.5, env='TUSHARE_WEIGHT')
+    wind_weight: float = Field(default=1.0, env='WIND_WEIGHT')
+    joinquant_weight: float = Field(default=1.0, env='JOINQUANT_WEIGHT')
+
+    # Jaeger链路追踪
+    jaeger_agent_host: str = Field(default='localhost', env='JAEGER_AGENT_HOST')
+    jaeger_agent_port: int = Field(default=6831, env='JAEGER_AGENT_PORT')
+    jaeger_sampler_type: str = Field(default='const', env='JAEGER_SAMPLER_TYPE')
+    jaeger_sampler_param: float = Field(default=1.0, env='JAEGER_SAMPLER_PARAM')
+    jaeger_service_name: str = Field(default='quant-trading-system', env='SERVICE_NAME')
+
+    # 告警配置
+    wechat_webhook: str = Field(default='', env='WECHAT_WEBHOOK')
+    sms_api_key: str = Field(default='', env='SMS_API_KEY')
+    email_smtp_server: str = Field(default='smtp.example.com', env='EMAIL_SMTP_SERVER')
+    email_smtp_port: int = Field(default=587, env='EMAIL_SMTP_PORT')
+    email_user: str = Field(default='your-email@example.com', env='EMAIL_USER')
+    email_password: str = Field(default='your-email-password', env='EMAIL_PASSWORD')
+
+    # 子配置保持兼容引用
+    @property
+    def database(self) -> Dict:
+        return {
+            "postgres_host": self.postgres_host,
+            "postgres_port": self.postgres_port,
+            "postgres_user": self.postgres_user,
+            "postgres_password": self.postgres_password,
+            "postgres_db": self.postgres_db,
+            "clickhouse_host": self.clickhouse_host,
+            "clickhouse_port": self.clickhouse_port,
+            "clickhouse_user": self.clickhouse_user,
+            "clickhouse_password": self.clickhouse_password,
+            "clickhouse_db": self.clickhouse_db,
+            "influxdb_url": self.influxdb_url,
+            "influxdb_token": self.influxdb_token,
+            "influxdb_org": self.influxdb_org,
+            "influxdb_bucket": self.influxdb_bucket,
+            "redis_host": self.redis_host,
+            "redis_port": self.redis_port,
+            "redis_password": self.redis_password,
+            "redis_db": self.redis_db,
+        }
+
+    @property
+    def kafka(self) -> Dict:
+        return {
+            "bootstrap_servers": self.kafka_bootstrap_servers,
+            "group_id": self.kafka_group_id,
+            "auto_offset_reset": self.kafka_auto_offset_reset,
+            "enable_auto_commit": self.kafka_enable_auto_commit,
+            "auto_commit_interval_ms": self.kafka_auto_commit_interval_ms,
+        }
+
+    @property
+    def data_sources(self) -> Dict:
+        return {
+            "tushare_api_key": self.tushare_api_key,
+            "wind_api_key": self.wind_api_key,
+            "joinquant_api_key": self.joinquant_api_key,
+            "akshare_priority": self.akshare_priority,
+            "tushare_priority": self.tushare_priority,
+            "wind_priority": self.wind_priority,
+            "joinquant_priority": self.joinquant_priority,
+            "akshare_weight": self.akshare_weight,
+            "tushare_weight": self.tushare_weight,
+            "wind_weight": self.wind_weight,
+            "joinquant_weight": self.joinquant_weight,
+        }
+
+    @property
+    def jaeger(self) -> Dict:
+        return {
+            "agent_host": self.jaeger_agent_host,
+            "agent_port": self.jaeger_agent_port,
+            "sampler_type": self.jaeger_sampler_type,
+            "sampler_param": self.jaeger_sampler_param,
+            "service_name": self.jaeger_service_name,
+        }
+
+    @property
+    def alert(self) -> Dict:
+        return {
+            "wechat_webhook": self.wechat_webhook,
+            "sms_api_key": self.sms_api_key,
+            "email_smtp_server": self.email_smtp_server,
+            "email_smtp_port": self.email_smtp_port,
+            "email_user": self.email_user,
+            "email_password": self.email_password,
+        }
 
     # JWT配置
     jwt_algorithm: str = Field(default='HS256', env='JWT_ALGORITHM')
@@ -140,6 +265,72 @@ class AppConfig(BaseSettings):
     enable_docs: bool = Field(default=True, env='ENABLE_DOCS')
     enable_cors: bool = Field(default=True, env='ENABLE_CORS')
     cors_origins: list = Field(default=["*"], env='CORS_ORIGINS')
+
+    # 数据同步任务配置
+    # Cron 表达式：分 时 日 月 周
+    daily_sync_cron: str = Field(default='0 16 * * *', env='DAILY_SYNC_CRON')
+    minute_sync_cron: str = Field(default='0 17 * * *', env='MINUTE_SYNC_CRON')
+    tick_sync_cron: str = Field(default='0 18 * * *', env='TICK_SYNC_CRON')
+
+    # 是否启用各频率同步
+    enable_daily_sync: bool = Field(default=True, env='ENABLE_DAILY_SYNC')
+    enable_minute_sync: bool = Field(default=False, env='ENABLE_MINUTE_SYNC')
+    enable_tick_sync: bool = Field(default=False, env='ENABLE_TICK_SYNC')
+
+    # 同步参数配置
+    sync_batch_size: int = Field(default=10, env='SYNC_BATCH_SIZE')
+    sync_max_retries: int = Field(default=3, env='SYNC_MAX_RETRIES')
+    sync_default_start_date: str = Field(default='2020-01-01', env='SYNC_DEFAULT_START_DATE')
+
+    # 股票过滤配置
+    filter_only_listed: bool = Field(default=True, env='FILTER_ONLY_LISTED')
+    filter_exclude_st: bool = Field(default=True, env='FILTER_EXCLUDE_ST')
+
+    @property
+    # 兼容大写别名
+    @property
+    def DAILY_SYNC_CRON(self) -> str:
+        return self.daily_sync_cron
+
+    @property
+    def MINUTE_SYNC_CRON(self) -> str:
+        return self.minute_sync_cron
+
+    @property
+    def TICK_SYNC_CRON(self) -> str:
+        return self.tick_sync_cron
+
+    @property
+    def ENABLE_DAILY_SYNC(self) -> bool:
+        return self.enable_daily_sync
+
+    @property
+    def ENABLE_MINUTE_SYNC(self) -> bool:
+        return self.enable_minute_sync
+
+    @property
+    def ENABLE_TICK_SYNC(self) -> bool:
+        return self.enable_tick_sync
+
+    @property
+    def SYNC_BATCH_SIZE(self) -> int:
+        return self.sync_batch_size
+
+    @property
+    def SYNC_MAX_RETRIES(self) -> int:
+        return self.sync_max_retries
+
+    @property
+    def SYNC_DEFAULT_START_DATE(self) -> str:
+        return self.sync_default_start_date
+
+    @property
+    def FILTER_ONLY_LISTED(self) -> bool:
+        return self.filter_only_listed
+
+    @property
+    def FILTER_EXCLUDE_ST(self) -> bool:
+        return self.filter_exclude_st
 
     @property
     def is_production(self) -> bool:
@@ -162,34 +353,34 @@ class AppConfig(BaseSettings):
         return {
             "postgresql": {
                 "type": "postgresql",
-                "host": self.database.postgres_host,
-                "port": self.database.postgres_port,
-                "user": self.database.postgres_user,
-                "password": self.database.postgres_password,
-                "database": self.database.postgres_db,
+                "host": self.postgres_host,
+                "port": self.postgres_port,
+                "user": self.postgres_user,
+                "password": self.postgres_password,
+                "database": self.postgres_db,
                 "default": True
             },
             "clickhouse": {
                 "type": "clickhouse",
-                "host": self.database.clickhouse_host,
-                "port": self.database.clickhouse_port,
-                "user": self.database.clickhouse_user,
-                "password": self.database.clickhouse_password,
-                "database": self.database.clickhouse_db
+                "host": self.clickhouse_host,
+                "port": self.clickhouse_port,
+                "user": self.clickhouse_user,
+                "password": self.clickhouse_password,
+                "database": self.clickhouse_db
             },
             "influxdb": {
                 "type": "influxdb",
-                "url": self.database.influxdb_url,
-                "token": self.database.influxdb_token,
-                "org": self.database.influxdb_org,
-                "bucket": self.database.influxdb_bucket
+                "url": self.influxdb_url,
+                "token": self.influxdb_token,
+                "org": self.influxdb_org,
+                "bucket": self.influxdb_bucket
             },
             "redis": {
                 "type": "redis",
-                "host": self.database.redis_host,
-                "port": self.database.redis_port,
-                "password": self.database.redis_password,
-                "db": self.database.redis_db
+                "host": self.redis_host,
+                "port": self.redis_port,
+                "password": self.redis_password,
+                "db": self.redis_db
             }
         }
 
@@ -212,12 +403,12 @@ class AppConfig(BaseSettings):
             "channels": ["log"],
             "default_level": "WARNING",
             "cooldown_seconds": 300,
-            "webhook_url": self.alert.wechat_webhook,
+            "webhook_url": self.wechat_webhook,
             "email_config": {
-                "smtp_server": self.alert.email_smtp_server,
-                "smtp_port": self.alert.email_smtp_port,
-                "user": self.alert.email_user,
-                "password": self.alert.email_password
+                "smtp_server": self.email_smtp_server,
+                "smtp_port": self.email_smtp_port,
+                "user": self.email_user,
+                "password": self.email_password
             }
         }
 
@@ -238,10 +429,10 @@ class AppConfig(BaseSettings):
     def REDIS_CONFIG(self) -> Dict:
         """Redis配置（兼容旧代码）"""
         return {
-            "host": self.database.redis_host,
-            "port": self.database.redis_port,
-            "password": self.database.redis_password,
-            "db": self.database.redis_db
+            "host": self.redis_host,
+            "port": self.redis_port,
+            "password": self.redis_password,
+            "db": self.redis_db
         }
 
     @property
