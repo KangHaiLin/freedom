@@ -123,6 +123,7 @@ class BusinessConstants:
     DATA_SOURCE_TUSHARE = 'tushare'
     DATA_SOURCE_WIND = 'wind'
     DATA_SOURCE_JOINQUANT = 'joinquant'
+    DATA_SOURCE_AKSHARE = 'akshare'
     DATA_SOURCE_EXCHANGE = 'exchange'
 
     # 数据粒度

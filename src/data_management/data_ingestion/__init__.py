@@ -10,6 +10,8 @@ from .wind_collector import WindCollector
 from .wind_fundamentals import WindFundamentalsCollector
 from .joinquant_collector import JoinQuantCollector
 from .joinquant_fundamentals import JoinQuantFundamentalsCollector
+from .akshare_collector import AKShareCollector
+from .akshare_fundamentals import AKShareFundamentalsCollector
 from .data_source_manager import DataSourceManager, data_source_manager
 from .data_cleaner import DataCleaner, data_cleaner
 from .fundamentals_manager import FundamentalsManager, fundamentals_manager
@@ -23,6 +25,8 @@ __all__ = [
     'WindFundamentalsCollector',
     'JoinQuantCollector',
     'JoinQuantFundamentalsCollector',
+    'AKShareCollector',
+    'AKShareFundamentalsCollector',
     'DataSourceManager',
     'data_source_manager',
     'DataCleaner',
