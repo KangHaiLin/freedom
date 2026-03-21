@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 
 from .market_collector import MarketDataCollector
+from common.constants import BusinessConstants
 from common.utils import StockCodeUtils, DateTimeUtils
 from common.exceptions import DataSourceException
 import logging
