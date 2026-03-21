@@ -87,6 +87,8 @@ class AlertConfig(BaseSettings):
 
 class AppConfig(BaseSettings):
     """应用主配置"""
+    model_config = {"extra": "allow"}
+
     env: str = Field(default='development', env='ENV')
     debug: bool = Field(default=True, env='DEBUG')
     port: int = Field(default=8000, env='PORT')

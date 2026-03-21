@@ -29,8 +29,9 @@ class InfluxDBStorage(BaseStorage):
         self.timeout = config.get('timeout', 30000)
         self.precision = config.get('precision', WritePrecision.NS)
 
-        # 测试环境下不强制检查token
-        if not self.token and not settings.is_test:
+        # 测试环境和开发环境下不强制检查token（允许未配置）
+        token_is_empty = not self.token or self.token == 'your-influxdb-token'
+        if token_is_empty and not (settings.is_test or settings.is_development):
             raise StorageException("InfluxDB Token未配置")
 
     def connect(self) -> bool:
