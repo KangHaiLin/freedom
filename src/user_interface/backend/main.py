@@ -25,6 +25,7 @@ from common.exceptions import BaseAppException
 from .middleware import RequestLogMiddleware, RateLimitMiddleware
 from .routers import market, fundamental, monitor, system, portfolio
 from .websocket import ws_router
+from data_management.data_ingestion import init_all_data_sources
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,14 @@ app = FastAPI(
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None
 )
+
+# 应用启动事件：初始化所有数据源
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时初始化数据源"""
+    logger.info("应用启动，开始初始化数据源...")
+    init_all_data_sources()
+    logger.info("数据源初始化完成")
 
 # 配置CORS
 app.add_middleware(

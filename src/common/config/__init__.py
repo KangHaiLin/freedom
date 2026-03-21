@@ -64,6 +64,16 @@ class DataSourceConfig(BaseSettings):
     tushare_api_key: str = Field(default='', env='TUSHARE_API_KEY')
     wind_api_key: str = Field(default='', env='WIND_API_KEY')
     joinquant_api_key: str = Field(default='', env='JOINQUANT_API_KEY')
+    # 数据源优先级配置，数字越小优先级越高
+    akshare_priority: int = Field(default=1, env='AKSHARE_PRIORITY')
+    tushare_priority: int = Field(default=5, env='TUSHARE_PRIORITY')
+    wind_priority: int = Field(default=10, env='WIND_PRIORITY')
+    joinquant_priority: int = Field(default=15, env='JOINQUANT_PRIORITY')
+    # 数据源权重配置
+    akshare_weight: float = Field(default=2.0, env='AKSHARE_WEIGHT')
+    tushare_weight: float = Field(default=1.5, env='TUSHARE_WEIGHT')
+    wind_weight: float = Field(default=1.0, env='WIND_WEIGHT')
+    joinquant_weight: float = Field(default=1.0, env='JOINQUANT_WEIGHT')
 
 
 class JaegerConfig(BaseSettings):

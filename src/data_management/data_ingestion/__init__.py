@@ -15,6 +15,13 @@ from .akshare_fundamentals import AKShareFundamentalsCollector
 from .data_source_manager import DataSourceManager, data_source_manager
 from .data_cleaner import DataCleaner, data_cleaner
 from .fundamentals_manager import FundamentalsManager, fundamentals_manager
+from .init_data_sources import (
+    init_market_data_sources,
+    init_fundamentals_data_sources,
+    init_all_data_sources,
+    get_market_data_source_manager,
+    get_fundamentals_manager,
+)
 
 __all__ = [
     'MarketDataCollector',
@@ -32,5 +39,10 @@ __all__ = [
     'DataCleaner',
     'data_cleaner',
     'FundamentalsManager',
-    'fundamentals_manager'
+    'fundamentals_manager',
+    'init_market_data_sources',
+    'init_fundamentals_data_sources',
+    'init_all_data_sources',
+    'get_market_data_source_manager',
+    'get_fundamentals_manager',
 ]
