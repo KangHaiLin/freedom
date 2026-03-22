@@ -6,7 +6,7 @@ from typing import List, Dict, Optional, Any, Union
 import pandas as pd
 from clickhouse_driver import Client
 import logging
-from datetime import datetime
+from datetime import datetime, date
 
 from .base_storage import BaseStorage
 from common.exceptions import StorageException
@@ -114,31 +114,59 @@ class ClickHouseStorage(BaseStorage):
                 params = []
                 for key, value in query.items():
                     if isinstance(value, list):
-                        placeholders = ', '.join(['%s'] * len(value))
-                        conditions.append(f"{key} IN ({placeholders})")
-                        params.extend(value)
+                        # clickhouse-driver requires string formatting for IN clause
+                        if len(value) == 1:
+                            conditions.append(f"{key} = '{value[0]}'")
+                        else:
+                            placeholders = ', '.join([f"'{v}'" for v in value])
+                            conditions.append(f"{key} IN ({placeholders})")
+                    elif isinstance(value, tuple) and len(value) == 2:
+                        # 范围查询 (start, end)
+                        start_val, end_val = value
+                        if isinstance(start_val, datetime):
+                            # 如果列是 Date 类型，只需要日期部分
+                            start_str = start_val.strftime('%Y-%m-%d')
+                            end_str = end_val.strftime('%Y-%m-%d')
+                        elif isinstance(start_val, date):
+                            start_str = start_val.strftime('%Y-%m-%d')
+                            end_str = end_val.strftime('%Y-%m-%d')
+                        else:
+                            # 字符串，已经是正确格式了
+                            start_str = str(start_val)[:10] if ' ' in str(start_val) else str(start_val)
+                            end_str = str(end_val)[:10] if ' ' in str(end_val) else str(end_val)
+                        conditions.append(f"{key} >= '{start_str}' AND {key} <= '{end_str}'")
                     elif isinstance(value, str) and ('%' in value or '_' in value):
-                        conditions.append(f"{key} LIKE %s")
-                        params.append(value)
+                        conditions.append(f"{key} LIKE '{value}'")
                     else:
-                        conditions.append(f"{key} = %s")
-                        params.append(value)
+                        conditions.append(f"{key} = '{value}'")
 
                 if conditions:
                     sql += " WHERE " + " AND ".join(conditions)
 
             # 添加排序和限制
             if 'order_by' in kwargs:
-                sql += f" ORDER BY {kwargs['order_by']}"
-            if 'limit' in kwargs:
+                order_by = kwargs['order_by']
+                if isinstance(order_by, list):
+                    # 处理列表形式的排序，支持-前缀表示降序
+                    order_parts = []
+                    for col in order_by:
+                        if col.startswith('-'):
+                            order_parts.append(f"{col[1:]} DESC")
+                        else:
+                            order_parts.append(f"{col} ASC")
+                    order_by_str = ', '.join(order_parts)
+                else:
+                    order_by_str = str(order_by)
+                sql += f" ORDER BY {order_by_str}"
+            if 'limit' in kwargs and kwargs['limit'] is not None:
                 sql += f" LIMIT {kwargs['limit']}"
-            if 'offset' in kwargs:
+            if 'offset' in kwargs and kwargs['offset'] is not None:
                 sql += f" OFFSET {kwargs['offset']}"
 
             logger.debug(f"ClickHouse查询SQL：{sql}")
 
             # 执行查询
-            result = self.connection.execute(sql, params, with_column_types=True)
+            result = self.connection.execute(sql, with_column_types=True)
             columns = [col[0] for col in result[1]]
             df = pd.DataFrame(result[0], columns=columns)
 

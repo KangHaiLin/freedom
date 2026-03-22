@@ -39,8 +39,12 @@ class DateTimeUtils:
         return cls.today().strftime(format_str)
 
     @classmethod
-    def to_str(cls, dt: datetime, format_str: str = '%Y-%m-%d %H:%M:%S') -> str:
-        """将datetime对象转换为字符串"""
+    def to_str(cls, dt: Union[datetime, date, str], format_str: str = '%Y-%m-%d %H:%M:%S') -> str:
+        """将日期时间对象转换为字符串，如果已经是字符串直接返回"""
+        if isinstance(dt, str):
+            return dt
+        if isinstance(dt, date):
+            return dt.strftime('%Y-%m-%d')
         return dt.strftime(format_str)
 
     @classmethod

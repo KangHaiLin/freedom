@@ -137,6 +137,13 @@ class PostgreSQLStorage(BaseStorage):
                         placeholders = ', '.join(['%s'] * len(value))
                         conditions.append(f"{key} IN ({placeholders})")
                         params.extend(value)
+                    elif isinstance(value, tuple) and len(value) == 2:
+                        # 范围查询 (start, end)
+                        conditions.append(f"{key} >= %s AND {key} <= %s")
+                        params.extend(value)
+                    elif isinstance(value, str) and ('%' in value or '_' in value):
+                        conditions.append(f"{key} LIKE %s")
+                        params.append(value)
                     else:
                         conditions.append(f"{key} = %s")
                         params.append(value)
@@ -146,10 +153,22 @@ class PostgreSQLStorage(BaseStorage):
 
             # 添加排序和限制
             if 'order_by' in kwargs:
-                sql += f" ORDER BY {kwargs['order_by']}"
-            if 'limit' in kwargs:
+                order_by = kwargs['order_by']
+                if isinstance(order_by, list):
+                    # 处理列表形式的排序，支持-前缀表示降序
+                    order_parts = []
+                    for col in order_by:
+                        if col.startswith('-'):
+                            order_parts.append(f"{col[1:]} DESC")
+                        else:
+                            order_parts.append(f"{col} ASC")
+                    order_by_str = ', '.join(order_parts)
+                else:
+                    order_by_str = str(order_by)
+                sql += f" ORDER BY {order_by_str}"
+            if 'limit' in kwargs and kwargs['limit'] is not None:
                 sql += f" LIMIT {kwargs['limit']}"
-            if 'offset' in kwargs:
+            if 'offset' in kwargs and kwargs['offset'] is not None:
                 sql += f" OFFSET {kwargs['offset']}"
 
             logger.debug(f"PostgreSQL查询SQL：{sql}")
@@ -173,6 +192,10 @@ class PostgreSQLStorage(BaseStorage):
                 if isinstance(value, list):
                     placeholders = ', '.join(['%s'] * len(value))
                     conditions.append(f"{key} IN ({placeholders})")
+                    params.extend(value)
+                elif isinstance(value, tuple) and len(value) == 2:
+                    # 范围查询 (start, end)
+                    conditions.append(f"{key} >= %s AND {key} <= %s")
                     params.extend(value)
                 else:
                     conditions.append(f"{key} = %s")

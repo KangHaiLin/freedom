@@ -5,7 +5,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any, Union
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 from common.exceptions import QueryException
 from common.utils import DateTimeUtils, StockCodeUtils

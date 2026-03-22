@@ -38,7 +38,6 @@ export default function Orders() {
   const [historyOrders, setHistoryOrders] = useState<OrderInfo[]>([]);
   const [statistics, setStatistics] = useState<OrderStatistics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState('');
 
   // 加载所有数据
   const loadAllData = async () => {

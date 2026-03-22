@@ -24,12 +24,12 @@ class MarketDataQuery(BaseQuery):
         self.postgresql_storage = storage_manager.get_storage_by_type('postgresql')
         self.redis_storage = storage_manager.get_storage_by_type('redis')
 
-        # 表名配置
+        # 表名配置 - 与同步任务保持一致
         self.table_config = {
             'realtime': 'market_realtime_quote',
-            'daily': 'market_daily_quote',
-            'minute': 'market_minute_quote',
-            'tick': 'market_tick_quote'
+            'daily': 'daily_market_data',
+            'minute': 'minute1_market_data',
+            'tick': 'tick_market_data'
         }
 
     def query(self, condition: QueryCondition) -> QueryResult:
@@ -61,7 +61,12 @@ class MarketDataQuery(BaseQuery):
             if not storage:
                 raise QueryException(f"无可用存储引擎查询{data_type}数据")
 
-            table_name = self.table_config[data_type]
+            # 确定表名 - 分钟线根据周期选择不同的表
+            if data_type == 'minute' and 'period' in condition.filters:
+                period = condition.filters['period']
+                table_name = f"minute{period}_market_data"
+            else:
+                table_name = self.table_config[data_type]
             query_dict = self._build_query_dict(condition, data_type)
 
             # 执行查询
