@@ -161,8 +161,20 @@ class AKShareCollector(MarketDataCollector):
 
                     if not df.empty:
                         df['stock_code'] = code
-                        df.index.name = 'trade_date'
-                        df = df.reset_index()
+                        # 处理不同返回格式：
+                        # 1. 沪市深市：日期是index，名为trade_date
+                        # 2. 北交所：日期是列，名为date
+                        if 'date' in df.columns:
+                            # 北交所格式，date列 → trade_date
+                            df.rename(columns={'date': 'trade_date'}, inplace=True)
+                        elif 'trade_date' not in df.columns and df.index.name != 'trade_date':
+                            # AKShare某些版本将日期放在第一列
+                            df = df.reset_index()
+                            df.rename(columns={df.columns[0]: 'trade_date'}, inplace=True)
+                        elif df.index.name == 'trade_date':
+                            # 标准沪市深市格式，日期是index
+                            df = df.reset_index()
+                        # 确保trade_date是datetime类型
                         df['trade_date'] = pd.to_datetime(df['trade_date'])
                         all_data.append(df)
                 except Exception as e:
