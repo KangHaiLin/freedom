@@ -117,9 +117,10 @@ def register_sync_tasks_to_scheduler() -> None:
         def daily_sync_callback():
             task = SyncTaskFactory.create_daily_sync()
             result = task.execute()
-            if result:
-                logger.info(f"日线同步任务执行完成: {result.get('success', False)}")
-            return result
+            result_dict = result.to_dict()
+            if result_dict:
+                logger.info(f"日线同步任务执行完成: success={result_dict.get('success', False)}")
+            return result_dict
 
         scheduler_manager.add_cron(
             cron_expr,
@@ -135,9 +136,10 @@ def register_sync_tasks_to_scheduler() -> None:
         def minute_sync_callback():
             task = SyncTaskFactory.create_minute1_sync()
             result = task.execute()
-            if result:
-                logger.info(f"分钟线同步任务执行完成: {result.get('success', False)}")
-            return result
+            result_dict = result.to_dict()
+            if result_dict:
+                logger.info(f"分钟线同步任务执行完成: success={result_dict.get('success', False)}")
+            return result_dict
 
         scheduler_manager.add_cron(
             cron_expr,
@@ -153,9 +155,10 @@ def register_sync_tasks_to_scheduler() -> None:
         def tick_sync_callback():
             task = SyncTaskFactory.create_tick_sync()
             result = task.execute()
-            if result:
-                logger.info(f"Tick同步任务执行完成: {result.get('success', False)}")
-            return result
+            result_dict = result.to_dict()
+            if result_dict:
+                logger.info(f"Tick同步任务执行完成: success={result_dict.get('success', False)}")
+            return result_dict
 
         scheduler_manager.add_cron(
             cron_expr,
@@ -190,7 +193,7 @@ def trigger_manual_sync(frequency: str) -> Dict[str, Any]:
         raise ValueError(f"不支持的频率: {frequency}")
 
     result = task.execute()
-    return result
+    return result.to_dict()
 
 
 def get_sync_task_status() -> Dict[str, Any]:
