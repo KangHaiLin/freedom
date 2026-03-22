@@ -170,6 +170,8 @@ class HistoricalSyncTask(BaseTask, ABC):
                         return latest_date
                     elif isinstance(latest_date, pd.Timestamp):
                         return latest_date.to_pydatetime()
+                    elif isinstance(latest_date, datetime.date):
+                        return datetime(latest_date.year, latest_date.month, latest_date.day)
                     elif isinstance(latest_date, str):
                         return datetime.strptime(latest_date, "%Y-%m-%d")
 
