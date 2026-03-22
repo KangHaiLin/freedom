@@ -7,7 +7,7 @@
 """
 import akshare as ak
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Any, List, Dict, Optional, Tuple
 from abc import ABC
 import logging
@@ -170,7 +170,7 @@ class HistoricalSyncTask(BaseTask, ABC):
                         return latest_date
                     elif isinstance(latest_date, pd.Timestamp):
                         return latest_date.to_pydatetime()
-                    elif isinstance(latest_date, datetime.date):
+                    elif isinstance(latest_date, date):
                         return datetime(latest_date.year, latest_date.month, latest_date.day)
                     elif isinstance(latest_date, str):
                         return datetime.strptime(latest_date, "%Y-%m-%d")
