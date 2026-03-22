@@ -515,7 +515,12 @@ class HistoricalSyncTask(BaseTask, ABC):
             f"耗时{elapsed:.2f}秒"
         )
 
-        return result.to_dict()
+        # 将所有统计信息展开到顶层，方便调用者获取
+        result_dict = result.to_dict()
+        if result.result is not None and isinstance(result.result, dict):
+            # 合并统计信息到顶层
+            result_dict.update(result.result)
+        return result_dict
 
 
 class DailyHistoricalSyncTask(HistoricalSyncTask):
