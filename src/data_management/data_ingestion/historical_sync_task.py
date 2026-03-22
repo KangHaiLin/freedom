@@ -314,6 +314,12 @@ class HistoricalSyncTask(BaseTask, ABC):
 
             stock_info["stock_code"] = stock_info["代码"].apply(_convert_code)
 
+            # 只保留股票，过滤掉指数、基金、债券等
+            from common.utils import StockCodeUtils
+            stock_info = stock_info[stock_info["stock_code"].apply(
+                lambda code: StockCodeUtils.get_stock_type(code) == '股票'
+            )]
+
             stock_list = stock_info["stock_code"].tolist()
 
             logger.info(f"获取过滤后股票列表完成，共{len(stock_list)}只股票")
@@ -323,7 +329,12 @@ class HistoricalSyncTask(BaseTask, ABC):
             logger.error(f"获取过滤股票列表失败：{e}")
             # 降级：使用基础列表
             try:
+                from common.utils import StockCodeUtils
                 basic_df = self.fundamentals_collector.get_stock_basic(list_status="L")
+                # 只保留股票，过滤掉指数、基金、债券等
+                basic_df = basic_df[basic_df["stock_code"].apply(
+                    lambda code: StockCodeUtils.get_stock_type(code) == '股票'
+                )]
                 stock_list = basic_df["stock_code"].tolist()
                 logger.warning(f"降级使用基础股票列表，共{len(stock_list)}只股票")
                 return stock_list

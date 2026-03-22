@@ -76,9 +76,10 @@ class StockCodeUtils:
             return cls.EXCHANGE_SZ
 
         # 北交所：
-        # 8开头：新三板精选层、创新层
-        # 4开头：新三板基础层
-        elif code.startswith(('8', '4')):
+        # 8开头：精选层、创新层
+        # 4开头：基础层
+        # 9开头：北交所上市股票（如连城数控 920368）
+        elif code.startswith(('8', '4', '9')):
             return cls.EXCHANGE_BJ
 
         else:
