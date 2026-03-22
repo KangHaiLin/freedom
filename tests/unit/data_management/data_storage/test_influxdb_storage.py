@@ -1,14 +1,15 @@
 """
 Unit tests for influxdb_storage.py
 """
-from unittest.mock import Mock, patch, MagicMock
+
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 from common.exceptions import StorageException
 from data_management.data_storage.influxdb_storage import InfluxDBStorage
-from influxdb_client.client.write_api import SYNCHRONOUS
 
 
 class TestInfluxDBStorage:
@@ -41,7 +42,7 @@ class TestInfluxDBStorage:
         assert storage.bucket == "my-bucket"
         assert storage.timeout == 60000
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_connect_success(self, mock_client_cls):
         """测试连接成功"""
         mock_client = Mock()
@@ -68,7 +69,7 @@ class TestInfluxDBStorage:
         assert storage.query_api is mock_query_api
         mock_client.health.assert_called_once()
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_connect_health_check_fails_raises_exception(self, mock_client_cls):
         """测试健康检查失败抛出异常"""
         mock_client = Mock()
@@ -84,7 +85,7 @@ class TestInfluxDBStorage:
             storage.connect()
         assert not storage.is_connected
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_connect_failure_raises_exception(self, mock_client_cls):
         """测试连接失败抛出异常"""
         mock_client_cls.side_effect = Exception("Connection refused")
@@ -94,7 +95,7 @@ class TestInfluxDBStorage:
         with pytest.raises(StorageException, match="InfluxDB连接失败"):
             storage.connect()
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_disconnect_success(self, mock_client_cls):
         """测试断开连接成功"""
         mock_client = Mock()
@@ -112,7 +113,7 @@ class TestInfluxDBStorage:
         assert not storage.is_connected
         mock_client.close.assert_called_once()
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_disconnect_throws_exception_returns_false(self, mock_client_cls):
         """测试断开连接异常返回False"""
         mock_client = Mock()
@@ -129,7 +130,7 @@ class TestInfluxDBStorage:
 
         assert result is False
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_write_empty_data_returns_zero(self, mock_client_cls):
         """测试写入空数据返回0"""
         mock_client = Mock()
@@ -150,7 +151,7 @@ class TestInfluxDBStorage:
         assert result == 0
         mock_write_api.write.assert_not_called()
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_write_no_time_column_raises_exception(self, mock_client_cls):
         """测试没有time列抛出异常"""
         mock_client = Mock()
@@ -169,7 +170,7 @@ class TestInfluxDBStorage:
         with pytest.raises(StorageException, match="InfluxDB写入数据必须包含time字段"):
             storage.write("measurement", df)
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_write_data_with_tags_success(self, mock_client_cls):
         """测试带标签写入成功"""
         mock_client = Mock()
@@ -186,12 +187,14 @@ class TestInfluxDBStorage:
         storage = InfluxDBStorage(config)
         storage.connect()
 
-        df = pd.DataFrame({
-            "time": [1620000000000000000, 1620000001000000000],
-            "symbol": ["000001.SZ", "600000.SH"],
-            "price": [10.5, 20.3],
-            "volume": [1000000, 2000000],
-        })
+        df = pd.DataFrame(
+            {
+                "time": [1620000000000000000, 1620000001000000000],
+                "symbol": ["000001.SZ", "600000.SH"],
+                "price": [10.5, 20.3],
+                "volume": [1000000, 2000000],
+            }
+        )
         result = storage.write("market_data", df, tags=["symbol"])
 
         assert result == 2
@@ -200,7 +203,7 @@ class TestInfluxDBStorage:
         assert call_args[1]["bucket"] == "test-bucket"
         assert len(call_args[1]["record"]) == 2
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_write_list_converts_to_df(self, mock_client_cls):
         """测试列表数据转换为DataFrame"""
         mock_client = Mock()
@@ -223,7 +226,7 @@ class TestInfluxDBStorage:
 
         assert result == 2
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_write_throws_exception_raises_storage_exception(self, mock_client_cls):
         """测试写入异常抛出StorageException"""
         mock_client = Mock()
@@ -243,7 +246,7 @@ class TestInfluxDBStorage:
         with pytest.raises(StorageException, match="InfluxDB写入失败"):
             storage.write("measurement", df)
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_read_with_default_time_range(self, mock_client_cls):
         """测试默认时间范围查询"""
         mock_client = Mock()
@@ -251,10 +254,12 @@ class TestInfluxDBStorage:
         mock_health.status = "pass"
         mock_client.health.return_value = mock_health
         mock_query_api = Mock()
-        mock_df = pd.DataFrame({
-            "time": ["2024-01-01T00:00:00Z", "2024-01-01T00:01:00Z"],
-            "price": [10.5, 10.6],
-        })
+        mock_df = pd.DataFrame(
+            {
+                "time": ["2024-01-01T00:00:00Z", "2024-01-01T00:01:00Z"],
+                "price": [10.5, 10.6],
+            }
+        )
         mock_query_api.query_data_frame.return_value = mock_df
         mock_client.query_api.return_value = mock_query_api
         mock_client_cls.return_value = mock_client
@@ -270,10 +275,10 @@ class TestInfluxDBStorage:
         call_args = mock_query_api.query_data_frame.call_args
         flux_query = call_args[0][0]
         assert 'from(bucket: "test-bucket")' in flux_query
-        assert 'range(start: -1h, stop: now())' in flux_query
+        assert "range(start: -1h, stop: now())" in flux_query
         assert 'r._measurement == "market_data"' in flux_query
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_read_with_tag_filters(self, mock_client_cls):
         """测试带标签过滤查询"""
         mock_client = Mock()
@@ -296,7 +301,7 @@ class TestInfluxDBStorage:
         flux_query = call_args[0][0]
         assert 'r.symbol == "000001.SZ"' in flux_query
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_read_with_list_tag_filter(self, mock_client_cls):
         """测试列表标签过滤查询"""
         mock_client = Mock()
@@ -319,7 +324,7 @@ class TestInfluxDBStorage:
         flux_query = call_args[0][0]
         assert 'r.symbol == "000001.SZ" or r.symbol == "600000.SH"' in flux_query
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_read_with_fields_filter(self, mock_client_cls):
         """测试字段过滤查询"""
         mock_client = Mock()
@@ -342,7 +347,7 @@ class TestInfluxDBStorage:
         flux_query = call_args[0][0]
         assert 'r._field == "price" or r._field == "volume"' in flux_query
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_read_throws_exception_raises_storage_exception(self, mock_client_cls):
         """测试查询异常抛出StorageException"""
         mock_client = Mock()
@@ -361,7 +366,7 @@ class TestInfluxDBStorage:
         with pytest.raises(StorageException, match="InfluxDB查询失败"):
             storage.read("market_data")
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_delete_returns_one(self, mock_client_cls):
         """测试删除返回1"""
         mock_client = Mock()
@@ -381,7 +386,7 @@ class TestInfluxDBStorage:
         assert result == 1
         mock_delete_api.delete.assert_called_once()
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_delete_with_multiple_conditions(self, mock_client_cls):
         """测试多条件删除"""
         mock_client = Mock()
@@ -405,7 +410,7 @@ class TestInfluxDBStorage:
         assert 'and (symbol="000001.SZ" or symbol="600000.SH")' in predicate
         assert 'and source="tushare"' in predicate
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_delete_throws_exception_raises_storage_exception(self, mock_client_cls):
         """测试删除异常抛出StorageException"""
         mock_client = Mock()
@@ -424,7 +429,7 @@ class TestInfluxDBStorage:
         with pytest.raises(StorageException, match="InfluxDB删除失败"):
             storage.delete("market_data", {})
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_execute_sql_returns_df(self, mock_client_cls):
         """测试执行原生Flux查询返回DataFrame"""
         mock_client = Mock()
@@ -447,7 +452,7 @@ class TestInfluxDBStorage:
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 2
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_execute_sql_throws_exception_raises_storage_exception(self, mock_client_cls):
         """测试执行Flux异常抛出StorageException"""
         mock_client = Mock()
@@ -466,7 +471,7 @@ class TestInfluxDBStorage:
         with pytest.raises(StorageException, match="InfluxDB执行Flux失败"):
             storage.execute_sql("invalid flux")
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_table_exists_with_data_returns_true(self, mock_client_cls):
         """测试存在数据返回True"""
         mock_client = Mock()
@@ -487,7 +492,7 @@ class TestInfluxDBStorage:
 
         assert result is True
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_table_exists_no_data_returns_false(self, mock_client_cls):
         """测试不存在数据返回False"""
         mock_client = Mock()
@@ -507,7 +512,7 @@ class TestInfluxDBStorage:
 
         assert result is False
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_table_exists_exception_returns_false(self, mock_client_cls):
         """测试检查存在异常返回False"""
         mock_client = Mock()
@@ -538,7 +543,7 @@ class TestInfluxDBStorage:
 
         assert result is True
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_health_check_healthy(self, mock_client_cls):
         """测试健康检查健康状态"""
         mock_client = Mock()
@@ -564,7 +569,7 @@ class TestInfluxDBStorage:
         assert result["version"] == "2.7.0"
         assert result["is_connected"] is True
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_health_check_unhealthy(self, mock_client_cls):
         """测试健康检查不健康状态"""
         mock_client = Mock()
@@ -587,7 +592,7 @@ class TestInfluxDBStorage:
 
         assert result["status"] == "unhealthy"
 
-    @patch('data_management.data_storage.influxdb_storage.InfluxDBClient')
+    @patch("data_management.data_storage.influxdb_storage.InfluxDBClient")
     def test_health_check_throws_exception(self, mock_client_cls):
         """测试健康检查抛出异常"""
         mock_client = Mock()

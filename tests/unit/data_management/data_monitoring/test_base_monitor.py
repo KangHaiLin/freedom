@@ -73,9 +73,7 @@ class TestMonitorResult:
 
     def test_to_dict(self):
         """测试转换为字典"""
-        result = MonitorResult.success(
-            "test_monitor", metrics={"records": 100}, message="check passed"
-        )
+        result = MonitorResult.success("test_monitor", metrics={"records": 100}, message="check passed")
         dict_result = result.to_dict()
 
         assert dict_result["monitor_name"] == "test_monitor"
@@ -188,10 +186,7 @@ class TestBaseMonitor:
 
     def test_run_failure_reaches_threshold(self):
         """测试失败达到阈值"""
-        monitor = ConcreteTestMonitor(
-            should_fail=True,
-            config={"alert_threshold": 3}
-        )
+        monitor = ConcreteTestMonitor(should_fail=True, config={"alert_threshold": 3})
         # 连续失败3次
         for _ in range(3):
             result = monitor.run()
@@ -211,9 +206,7 @@ class TestBaseMonitor:
 
     def test_success_after_failure_resets_counter(self):
         """测试失败后成功会重置计数器"""
-        monitor = ConcreteTestMonitor(
-            config={"alert_threshold": 3}
-        )
+        monitor = ConcreteTestMonitor(config={"alert_threshold": 3})
         # 两次失败
         monitor._record_failure()
         monitor._record_failure()
@@ -240,6 +233,7 @@ class TestBaseMonitor:
     def test_can_send_alert_after_cooldown(self):
         """测试冷却时间过后允许发送"""
         from common.utils import DateTimeUtils
+
         monitor = ConcreteTestMonitor(alert_cooldown=300)
         # 上次告警是10分钟前
         monitor.last_alert_time = DateTimeUtils.now() - timedelta(minutes=10)
@@ -248,6 +242,7 @@ class TestBaseMonitor:
     def test_can_send_alert_before_cooldown(self):
         """测试冷却时间内不允许发送"""
         from common.utils import DateTimeUtils
+
         monitor = ConcreteTestMonitor(alert_cooldown=300)
         # 上次告警是1分钟前
         monitor.last_alert_time = DateTimeUtils.now() - timedelta(minutes=1)
@@ -266,6 +261,7 @@ class TestBaseMonitor:
     def test_alert_cooldown_prevents_alert(self):
         """测试告警冷却阻止重复告警"""
         from common.utils import DateTimeUtils
+
         monitor = ConcreteTestMonitor(
             should_fail=True,
             config={"alert_threshold": 1},

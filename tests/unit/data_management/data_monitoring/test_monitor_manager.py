@@ -4,8 +4,8 @@ Unit tests for monitor_manager.py
 
 from unittest.mock import Mock, patch
 
+from data_management.data_monitoring.base_monitor import AlertLevel, BaseMonitor, MonitorResult
 from data_management.data_monitoring.monitor_manager import MonitorManager
-from data_management.data_monitoring.base_monitor import BaseMonitor, MonitorResult, AlertLevel
 
 
 class ConcreteTestMonitor(BaseMonitor):
@@ -227,5 +227,6 @@ class TestMonitorManager:
 def test_global_instance_exists():
     """测试全局实例存在"""
     from data_management.data_monitoring.monitor_manager import monitor_manager
+
     assert monitor_manager is not None
     assert isinstance(monitor_manager, MonitorManager)

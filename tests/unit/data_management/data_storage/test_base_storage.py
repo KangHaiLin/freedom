@@ -1,6 +1,7 @@
 """
 Unit tests for base_storage.py
 """
+
 from unittest.mock import Mock, patch
 
 import pytest
@@ -29,6 +30,7 @@ class ConcreteTestStorage(BaseStorage):
 
     def read(self, table_name: str, query=None, **kwargs):
         import pandas as pd
+
         return pd.DataFrame()
 
     def delete(self, table_name: str, query, **kwargs):
@@ -85,9 +87,11 @@ class TestBaseStorage:
     def test_ensure_connection_connect_throws_exception(self):
         """测试ensure_connection当connect抛出异常时包装为StorageException"""
         storage = ConcreteTestStorage({})
+
         # Override connect to throw
         def mock_connect():
             raise ConnectionError("Network error")
+
         storage.connect = mock_connect
 
         with pytest.raises(StorageException, match="存储连接失败：Network error"):

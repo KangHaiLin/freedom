@@ -6,12 +6,12 @@
 import logging
 import time
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import pandas as pd
 
 from common.exceptions import QueryException
-from common.utils import DateTimeUtils, StockCodeUtils
+from common.utils import DateTimeUtils
 
 from .base_query import BaseQuery, QueryCondition, QueryResult
 
@@ -48,20 +48,28 @@ class MarketDataQuery(BaseQuery):
 
             # 先尝试从缓存查询
             cache_key = self._build_cache_key(condition)
-            if self.redis_storage:
+            if self.redis_storage is not None:
                 cache_result = self.redis_storage.read("query_cache", {"key": cache_key})
-                if cache_result:
+                if cache_result is not None:
                     logger.debug(f"缓存命中：{cache_key}")
-                    return QueryResult(
-                        data=pd.DataFrame(cache_result),
-                        query_time=time.time() - start_time,
-                        success=True,
-                        message="缓存命中",
-                    )
+                    if isinstance(cache_result, pd.DataFrame):
+                        return QueryResult(
+                            data=cache_result,
+                            query_time=time.time() - start_time,
+                            success=True,
+                            message="缓存命中",
+                        )
+                    else:
+                        return QueryResult(
+                            data=pd.DataFrame(cache_result),
+                            query_time=time.time() - start_time,
+                            success=True,
+                            message="缓存命中",
+                        )
 
             # 根据数据类型选择合适的存储
             storage = self.clickhouse_storage if data_type in ["daily", "minute", "tick"] else self.postgresql_storage
-            if not storage:
+            if storage is None:
                 raise QueryException(f"无可用存储引擎查询{data_type}数据")
 
             # 确定表名 - 分钟线根据周期选择不同的表
@@ -87,7 +95,7 @@ class MarketDataQuery(BaseQuery):
             df = self._select_fields(df, condition.fields)
 
             # 缓存结果
-            if self.redis_storage and not df.empty and len(df) < 10000:
+            if self.redis_storage is not None and not df.empty and len(df) < 10000:
                 self.redis_storage.write("query_cache", df, key=cache_key, ttl=300)  # 缓存5分钟
 
             query_time = time.time() - start_time

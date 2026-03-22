@@ -34,11 +34,7 @@ class TestCollectionMonitor:
             "task_timeout": 600,
         }
         mock_ds_manager = Mock()
-        monitor = CollectionMonitor(
-            name="my_collection",
-            config=config,
-            data_source_manager=mock_ds_manager
-        )
+        monitor = CollectionMonitor(name="my_collection", config=config, data_source_manager=mock_ds_manager)
         assert monitor.name == "my_collection"
         assert monitor.collection_rules["success_rate_threshold"] == 0.90
         assert monitor.collection_rules["speed_threshold"] == 500
@@ -58,15 +54,14 @@ class TestCollectionMonitor:
         class MockSource:
             def is_available(self):
                 return True
+
             availability = 1.0
             avg_response_time = 100
 
         mock_ds_manager.sources = [MockSource(), MockSource()]
 
         monitor = CollectionMonitor(
-            name="collection",
-            config={"success_rate_threshold": 0.95},
-            data_source_manager=mock_ds_manager
+            name="collection", config={"success_rate_threshold": 0.95}, data_source_manager=mock_ds_manager
         )
 
         result = monitor.run_check()
@@ -87,15 +82,14 @@ class TestCollectionMonitor:
         class MockSource:
             def is_available(self):
                 return True
+
             availability = 1.0
             avg_response_time = 100
 
         mock_ds_manager.sources = [MockSource(), MockSource()]
 
         monitor = CollectionMonitor(
-            name="collection",
-            config={"success_rate_threshold": 0.95},
-            data_source_manager=mock_ds_manager
+            name="collection", config={"success_rate_threshold": 0.95}, data_source_manager=mock_ds_manager
         )
 
         result = monitor.run_check()
@@ -116,15 +110,13 @@ class TestCollectionMonitor:
         class MockSource:
             def is_available(self):
                 return False
+
             availability = 0.0
             avg_response_time = 100
 
         mock_ds_manager.sources = [MockSource(), MockSource()]
 
-        monitor = CollectionMonitor(
-            name="collection",
-            data_source_manager=mock_ds_manager
-        )
+        monitor = CollectionMonitor(name="collection", data_source_manager=mock_ds_manager)
 
         result = monitor.run_check()
         assert result.success is False
@@ -138,10 +130,7 @@ class TestCollectionMonitor:
             {"source": "akshare", "is_available": True},
         ]
 
-        monitor = CollectionMonitor(
-            name="collection",
-            data_source_manager=mock_ds_manager
-        )
+        monitor = CollectionMonitor(name="collection", data_source_manager=mock_ds_manager)
 
         result = monitor._check_data_source_status()
         assert result["success"] is True
@@ -157,10 +146,7 @@ class TestCollectionMonitor:
             {"source": "wind", "is_available": False},
         ]
 
-        monitor = CollectionMonitor(
-            name="collection",
-            data_source_manager=mock_ds_manager
-        )
+        monitor = CollectionMonitor(name="collection", data_source_manager=mock_ds_manager)
 
         result = monitor._check_data_source_status()
         assert result["success"] is False
@@ -171,10 +157,12 @@ class TestCollectionMonitor:
     def test_check_collection_success_rate_all_success(self):
         """测试采集成功率检查 - 全部成功"""
         mock_clickhouse = Mock()
-        df = pd.DataFrame([
-            {"status": "success", "cnt": 95},
-            {"status": "fail", "cnt": 5},
-        ])
+        df = pd.DataFrame(
+            [
+                {"status": "success", "cnt": 95},
+                {"status": "fail", "cnt": 5},
+            ]
+        )
         mock_clickhouse.execute_sql.return_value = df
 
         mock_storage = Mock()
@@ -191,10 +179,12 @@ class TestCollectionMonitor:
     def test_check_collection_success_rate_below_threshold(self):
         """测试采集成功率检查 - 低于阈值"""
         mock_clickhouse = Mock()
-        df = pd.DataFrame([
-            {"status": "success", "cnt": 80},
-            {"status": "fail", "cnt": 20},
-        ])
+        df = pd.DataFrame(
+            [
+                {"status": "success", "cnt": 80},
+                {"status": "fail", "cnt": 20},
+            ]
+        )
         mock_clickhouse.execute_sql.return_value = df
 
         monitor = CollectionMonitor(name="collection")
@@ -208,10 +198,12 @@ class TestCollectionMonitor:
     def test_check_collection_success_rate_error_rate_too_high(self):
         """测试错误率过高"""
         mock_clickhouse = Mock()
-        df = pd.DataFrame([
-            {"status": "success", "cnt": 90},
-            {"status": "fail", "cnt": 10},
-        ])
+        df = pd.DataFrame(
+            [
+                {"status": "success", "cnt": 90},
+                {"status": "fail", "cnt": 10},
+            ]
+        )
         mock_clickhouse.execute_sql.return_value = df
 
         monitor = CollectionMonitor(name="collection")
@@ -324,21 +316,20 @@ class TestCollectionMonitor:
         class Source1:
             def is_available(self):
                 return True
+
             availability = 1.0
             avg_response_time = 100
 
         class Source2:
             def is_available(self):
                 return False
+
             availability = 0.0
             avg_response_time = 200
 
         mock_ds_manager.sources = [Source1(), Source2()]
 
-        monitor = CollectionMonitor(
-            name="collection",
-            data_source_manager=mock_ds_manager
-        )
+        monitor = CollectionMonitor(name="collection", data_source_manager=mock_ds_manager)
 
         result = monitor._check_data_source_health()
         assert result["total_sources"] == 2
@@ -351,10 +342,7 @@ class TestCollectionMonitor:
         mock_ds_manager = Mock()
         mock_ds_manager.sources = []
 
-        monitor = CollectionMonitor(
-            name="collection",
-            data_source_manager=mock_ds_manager
-        )
+        monitor = CollectionMonitor(name="collection", data_source_manager=mock_ds_manager)
 
         result = monitor._check_data_source_health()
         assert result["total_sources"] == 0

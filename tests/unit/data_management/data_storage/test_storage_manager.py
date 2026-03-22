@@ -1,14 +1,15 @@
 """
 Unit tests for storage_manager.py
 """
+
 from unittest.mock import Mock, patch
 
 import pandas as pd
 import pytest
 
 from common.exceptions import StorageException
-from data_management.data_storage.storage_manager import StorageManager
 from data_management.data_storage.base_storage import BaseStorage
+from data_management.data_storage.storage_manager import StorageManager
 
 
 class TestStorageManager:
@@ -30,9 +31,9 @@ class TestStorageManager:
                 "port": 6379,
             },
         }
-        with patch('data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect') as mock_connect:
+        with patch("data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect") as mock_connect:
             mock_connect.return_value = True
-            with patch('data_management.data_storage.redis_storage.RedisStorage.connect') as mock_connect_redis:
+            with patch("data_management.data_storage.redis_storage.RedisStorage.connect") as mock_connect_redis:
                 mock_connect_redis.return_value = True
                 manager = StorageManager()
                 # Override configs after creation to avoid patching pydantic
@@ -57,7 +58,7 @@ class TestStorageManager:
                 "host": "localhost",
             },
         }
-        with patch('data_management.data_storage.postgresql_storage.PostgreSQLStorage.connect') as mock_connect:
+        with patch("data_management.data_storage.postgresql_storage.PostgreSQLStorage.connect") as mock_connect:
             mock_connect.return_value = True
             manager = StorageManager()
             # Override configs after creation
@@ -81,9 +82,9 @@ class TestStorageManager:
                 "host": "localhost",
             },
         }
-        with patch('data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect') as mock_connect:
+        with patch("data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect") as mock_connect:
             mock_connect.return_value = True
-            with patch('data_management.data_storage.redis_storage.RedisStorage.connect') as mock_connect_redis:
+            with patch("data_management.data_storage.redis_storage.RedisStorage.connect") as mock_connect_redis:
                 mock_connect_redis.return_value = True
                 manager = StorageManager()
                 # Override configs after creation
@@ -111,7 +112,7 @@ class TestStorageManager:
                 "default": True,
             },
         }
-        with patch('data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect') as mock_connect:
+        with patch("data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect") as mock_connect:
             mock_connect.return_value = True
             manager = StorageManager()
             manager.storages = {}
@@ -133,9 +134,9 @@ class TestStorageManager:
                 "type": "redis",
             },
         }
-        with patch('data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect') as mock_connect_ch:
+        with patch("data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect") as mock_connect_ch:
             mock_connect_ch.return_value = True
-            with patch('data_management.data_storage.redis_storage.RedisStorage.connect') as mock_connect_rd:
+            with patch("data_management.data_storage.redis_storage.RedisStorage.connect") as mock_connect_rd:
                 mock_connect_rd.return_value = True
                 manager = StorageManager()
                 manager.storages = {}
@@ -154,7 +155,7 @@ class TestStorageManager:
                 "default": True,
             },
         }
-        with patch('data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect') as mock_connect:
+        with patch("data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect") as mock_connect:
             mock_connect.return_value = True
             manager = StorageManager()
             manager.storages = {}
@@ -359,7 +360,7 @@ class TestStorageManager:
                 "type": "clickhouse",
             },
         }
-        with patch('data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect') as mock_connect:
+        with patch("data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect") as mock_connect:
             mock_connect.return_value = True
             manager = StorageManager()
             manager.storages = {}
@@ -378,7 +379,7 @@ class TestStorageManager:
                 "type": "clickhouse",
             },
         }
-        with patch('data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect') as mock_connect:
+        with patch("data_management.data_storage.clickhouse_storage.ClickHouseStorage.connect") as mock_connect:
             mock_connect.return_value = True
             manager = StorageManager()
             manager.storages = {}
@@ -393,5 +394,6 @@ class TestStorageManager:
     def test_global_instance_exists(self):
         """测试全局实例存在"""
         from data_management.data_storage.storage_manager import storage_manager
+
         assert storage_manager is not None
         assert isinstance(storage_manager, StorageManager)

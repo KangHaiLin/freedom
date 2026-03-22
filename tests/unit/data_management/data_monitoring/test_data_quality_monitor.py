@@ -63,20 +63,24 @@ class TestDataQualityMonitor:
     def test_check_completeness_static_no_missing(self):
         """测试静态完整性检查 - 没有缺失值"""
         monitor = DataQualityMonitor(name="quality")
-        df = pd.DataFrame({
-            "col1": [1, 2, 3, 4, 5],
-            "col2": [10, 20, 30, 40, 50],
-        })
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3, 4, 5],
+                "col2": [10, 20, 30, 40, 50],
+            }
+        )
         completeness = monitor._check_completeness(df)
         assert completeness == 1.0
 
     def test_check_completeness_static_with_missing(self):
         """测试静态完整性检查 - 有缺失值"""
         monitor = DataQualityMonitor(name="quality")
-        df = pd.DataFrame({
-            "col1": [1, None, 3, None, 5],
-            "col2": [10, 20, None, 40, 50],
-        })
+        df = pd.DataFrame(
+            {
+                "col1": [1, None, 3, None, 5],
+                "col2": [10, 20, None, 40, 50],
+            }
+        )
         # 总共有 5 * 2 = 10 个值，缺失 3 个，完整度 7/10 = 0.7
         completeness = monitor._check_completeness(df)
         assert completeness == pytest.approx(0.7)
@@ -91,44 +95,52 @@ class TestDataQualityMonitor:
     def test_check_accuracy_static_all_valid(self):
         """测试静态准确性检查 - 全部有效"""
         monitor = DataQualityMonitor(name="quality")
-        df = pd.DataFrame({
-            "stock_code": ["600000.SH", "000001.SZ"],
-            "close": [10.5, 20.3],
-            "volume": [1000000, 2000000],
-        })
+        df = pd.DataFrame(
+            {
+                "stock_code": ["600000.SH", "000001.SZ"],
+                "close": [10.5, 20.3],
+                "volume": [1000000, 2000000],
+            }
+        )
         accuracy = monitor._check_accuracy(df)
         assert accuracy == 1.0
 
     def test_check_accuracy_static_invalid_price(self):
         """测试静态准确性检查 - 有无效价格"""
         monitor = DataQualityMonitor(name="quality")
-        df = pd.DataFrame({
-            "stock_code": ["600000.SH", "000001.SZ"],
-            "close": [10.5, -1.0],  # 负数价格无效
-            "volume": [1000000, 2000000],
-        })
+        df = pd.DataFrame(
+            {
+                "stock_code": ["600000.SH", "000001.SZ"],
+                "close": [10.5, -1.0],  # 负数价格无效
+                "volume": [1000000, 2000000],
+            }
+        )
         accuracy = monitor._check_accuracy(df)
         assert accuracy < 1.0
 
     def test_check_accuracy_static_invalid_code(self):
         """测试静态准确性检查 - 有无效股票代码"""
         monitor = DataQualityMonitor(name="quality")
-        df = pd.DataFrame({
-            "stock_code": ["600000", "BADCODE"],  # 缺少后缀，长度不对
-            "close": [10.5, 20.3],
-            "volume": [1000000, 2000000],
-        })
+        df = pd.DataFrame(
+            {
+                "stock_code": ["600000", "BADCODE"],  # 缺少后缀，长度不对
+                "close": [10.5, 20.3],
+                "volume": [1000000, 2000000],
+            }
+        )
         accuracy = monitor._check_accuracy(df)
         assert accuracy < 1.0
 
     def test_check_accuracy_static_invalid_volume(self):
         """测试静态准确性检查 - 有负成交量"""
         monitor = DataQualityMonitor(name="quality")
-        df = pd.DataFrame({
-            "stock_code": ["600000.SH", "000001.SZ"],
-            "close": [10.5, 20.3],
-            "volume": [1000000, -1000],  # 成交量负数
-        })
+        df = pd.DataFrame(
+            {
+                "stock_code": ["600000.SH", "000001.SZ"],
+                "close": [10.5, 20.3],
+                "volume": [1000000, -1000],  # 成交量负数
+            }
+        )
         accuracy = monitor._check_accuracy(df)
         assert accuracy < 1.0
 
@@ -142,12 +154,15 @@ class TestDataQualityMonitor:
     def test_check_timeliness_static_on_time(self):
         """测试静态时效性检查 - 数据及时"""
         from common.utils import DateTimeUtils
+
         monitor = DataQualityMonitor(name="quality")
         now = DateTimeUtils.now()
         five_minutes_ago = now - timedelta(minutes=5)
-        df = pd.DataFrame({
-            "time": [five_minutes_ago],
-        })
+        df = pd.DataFrame(
+            {
+                "time": [five_minutes_ago],
+            }
+        )
         timeliness = monitor._check_timeliness(df, max_delay_minutes=10)
         # 5分钟 < 10分钟，得分 = 1 - 5/10 = 0.5
         assert timeliness == 0.5
@@ -155,12 +170,15 @@ class TestDataQualityMonitor:
     def test_check_timeliness_static_late(self):
         """测试静态时效性检查 - 数据延迟"""
         from common.utils import DateTimeUtils
+
         monitor = DataQualityMonitor(name="quality")
         now = DateTimeUtils.now()
         twenty_minutes_ago = now - timedelta(minutes=20)
-        df = pd.DataFrame({
-            "time": [twenty_minutes_ago],
-        })
+        df = pd.DataFrame(
+            {
+                "time": [twenty_minutes_ago],
+            }
+        )
         timeliness = monitor._check_timeliness(df, max_delay_minutes=10)
         # 20分钟 > 10分钟，得分 = max(0, 1 - 20/10) = 0
         assert timeliness == 0.0
@@ -168,9 +186,11 @@ class TestDataQualityMonitor:
     def test_check_timeliness_static_no_time_column(self):
         """测试静态时效性检查 - 没有时间列"""
         monitor = DataQualityMonitor(name="quality")
-        df = pd.DataFrame({
-            "close": [10.5, 20.3],
-        })
+        df = pd.DataFrame(
+            {
+                "close": [10.5, 20.3],
+            }
+        )
         timeliness = monitor._check_timeliness(df)
         assert timeliness == 0.0
 
@@ -210,11 +230,13 @@ class TestDataQualityMonitor:
         """测试全部检查通过"""
         mock_storage = Mock()
         mock_clickhouse = Mock()
-        mock_clickhouse.read.return_value = pd.DataFrame({
-            "stock_code": ["600000.SH", "000001.SZ"],
-            "close": [10.5, 20.3],
-            "volume": [1000000, 2000000],
-        })
+        mock_clickhouse.read.return_value = pd.DataFrame(
+            {
+                "stock_code": ["600000.SH", "000001.SZ"],
+                "close": [10.5, 20.3],
+                "volume": [1000000, 2000000],
+            }
+        )
         mock_storage.get_storage = Mock(return_value=mock_clickhouse)
 
         config = {
@@ -233,11 +255,13 @@ class TestDataQualityMonitor:
         """测试完整性不通过"""
         mock_storage = Mock()
         mock_clickhouse = Mock()
-        mock_clickhouse.read.return_value = pd.DataFrame({
-            "stock_code": ["600000.SH", None],
-            "close": [10.5, 20.3],
-            "volume": [1000000, 2000000],
-        })
+        mock_clickhouse.read.return_value = pd.DataFrame(
+            {
+                "stock_code": ["600000.SH", None],
+                "close": [10.5, 20.3],
+                "volume": [1000000, 2000000],
+            }
+        )
         mock_storage.get_storage = Mock(return_value=mock_clickhouse)
 
         config = {
@@ -257,11 +281,13 @@ class TestDataQualityMonitor:
         """测试准确性不通过"""
         mock_storage = Mock()
         mock_clickhouse = Mock()
-        mock_clickhouse.read.return_value = pd.DataFrame({
-            "stock_code": ["600000.SH", "BAD"],
-            "close": [10.5, -1.0],
-            "volume": [1000000, 2000000],
-        })
+        mock_clickhouse.read.return_value = pd.DataFrame(
+            {
+                "stock_code": ["600000.SH", "BAD"],
+                "close": [10.5, -1.0],
+                "volume": [1000000, 2000000],
+            }
+        )
         mock_storage.get_storage = Mock(return_value=mock_clickhouse)
 
         config = {
@@ -280,10 +306,12 @@ class TestDataQualityMonitor:
         """测试综合得分低于阈值"""
         mock_storage = Mock()
         mock_clickhouse = Mock()
-        mock_clickhouse.read.return_value = pd.DataFrame({
-            "stock_code": ["600000.SH"] * 10 + [None] * 5,
-            "close": [10.5] * 10 + [20.3] * 5,
-        })
+        mock_clickhouse.read.return_value = pd.DataFrame(
+            {
+                "stock_code": ["600000.SH"] * 10 + [None] * 5,
+                "close": [10.5] * 10 + [20.3] * 5,
+            }
+        )
         mock_storage.get_storage = Mock(return_value=mock_clickhouse)
 
         config = {
@@ -332,11 +360,13 @@ class TestDataQualityMonitor:
         """测试多项问题都不通过"""
         mock_storage = Mock()
         mock_clickhouse = Mock()
-        mock_clickhouse.read.return_value = pd.DataFrame({
-            "stock_code": ["600000", None],
-            "close": [10.5, -1.0],
-            "volume": [1000000, -1000],
-        })
+        mock_clickhouse.read.return_value = pd.DataFrame(
+            {
+                "stock_code": ["600000", None],
+                "close": [10.5, -1.0],
+                "volume": [1000000, -1000],
+            }
+        )
         mock_storage.get_storage = Mock(return_value=mock_clickhouse)
 
         config = {

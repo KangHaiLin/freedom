@@ -2,9 +2,10 @@
 Unit tests for fundamental_data_query.py
 """
 
+from unittest.mock import Mock, patch
+
 import pandas as pd
 import pytest
-from unittest.mock import Mock, patch
 
 from data_management.data_query.base_query import QueryCondition
 from data_management.data_query.fundamental_data_query import FundamentalDataQuery
@@ -109,13 +110,15 @@ def test_select_fields():
 
     query = FundamentalDataQuery(mock_storage)
 
-    df = pd.DataFrame({
-        "stock_code": ["600000.SH", "000001.SZ"],
-        "report_date": ["2023-12-31", "2023-12-31"],
-        "pe": [15.5, 25.3],
-        "pb": [1.5, 2.8],
-        "roe": [12.5, 15.2],
-    })
+    df = pd.DataFrame(
+        {
+            "stock_code": ["600000.SH", "000001.SZ"],
+            "report_date": ["2023-12-31", "2023-12-31"],
+            "pe": [15.5, 25.3],
+            "pb": [1.5, 2.8],
+            "roe": [12.5, 15.2],
+        }
+    )
 
     result = query._select_fields(df, ["stock_code", "report_date", "pe"])
     assert list(result.columns) == ["stock_code", "report_date", "pe"]
@@ -153,11 +156,13 @@ def test_get_stock_basic_shortcut():
     mock_clickhouse = Mock()
     mock_postgresql = Mock()
     mock_redis = Mock()
-    mock_postgresql.read.return_value = pd.DataFrame({
-        "stock_code": ["600000.SH", "000001.SZ"],
-        "name": ["浦发银行", "平安银行"],
-        "list_date": ["1999-11-10", "1991-04-03"],
-    })
+    mock_postgresql.read.return_value = pd.DataFrame(
+        {
+            "stock_code": ["600000.SH", "000001.SZ"],
+            "name": ["浦发银行", "平安银行"],
+            "list_date": ["1999-11-10", "1991-04-03"],
+        }
+    )
     mock_clickhouse.read.return_value = pd.DataFrame()
     mock_redis.read.return_value = None
 
@@ -181,12 +186,14 @@ def test_get_financial_indicator_shortcut():
     mock_clickhouse = Mock()
     mock_postgresql = Mock()
     mock_redis = Mock()
-    mock_clickhouse.read.return_value = pd.DataFrame({
-        "stock_code": ["600000.SH"] * 4,
-        "report_date": ["2022Q1", "2022Q2", "2022Q3", "2022Q4"],
-        "pe": [12.5, 13.2, 14.1, 15.5],
-        "roe": [3.1, 6.2, 9.5, 12.8],
-    })
+    mock_clickhouse.read.return_value = pd.DataFrame(
+        {
+            "stock_code": ["600000.SH"] * 4,
+            "report_date": ["2022Q1", "2022Q2", "2022Q3", "2022Q4"],
+            "pe": [12.5, 13.2, 14.1, 15.5],
+            "roe": [3.1, 6.2, 9.5, 12.8],
+        }
+    )
     mock_postgresql.read.return_value = pd.DataFrame()
     mock_redis.read.return_value = None
 
@@ -216,11 +223,13 @@ def test_get_latest_financial_report():
     data = []
     for stock in ["600000.SH", "000001.SZ"]:
         for i in range(10):
-            data.append({
-                "stock_code": stock,
-                "report_date": f"202{i//2}Q{i%2+1}",
-                "pe": 15 + i,
-            })
+            data.append(
+                {
+                    "stock_code": stock,
+                    "report_date": f"202{i//2}Q{i%2+1}",
+                    "pe": 15 + i,
+                }
+            )
 
     mock_clickhouse.read.return_value = pd.DataFrame(data)
     mock_storage.get_storage_by_type.side_effect = lambda t: {

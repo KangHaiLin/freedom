@@ -2,12 +2,13 @@
 Unit tests for base_query.py
 """
 
+from datetime import date, datetime
+
 import pandas as pd
 import pytest
-from datetime import datetime, date
 
 from common.exceptions import QueryException
-from data_management.data_query.base_query import QueryCondition, QueryResult, BaseQuery
+from data_management.data_query.base_query import BaseQuery, QueryCondition, QueryResult
 
 
 class TestQueryCondition:
@@ -134,12 +135,14 @@ class TestBaseQuery:
 
     class ConcreteQuery(BaseQuery):
         """具体查询实现用于测试"""
+
         def query(self, condition):
             return QueryResult(data=pd.DataFrame())
 
     def test__apply_pagination(self):
         """测试分页应用"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
         df = pd.DataFrame({"id": list(range(100))})
 
@@ -162,6 +165,7 @@ class TestBaseQuery:
     def test__apply_order_by_ascending(self):
         """测试升序排序"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
         df = pd.DataFrame({"value": [3, 1, 4, 2]})
 
@@ -171,6 +175,7 @@ class TestBaseQuery:
     def test__apply_order_by_descending(self):
         """测试降序排序（-前缀）"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
         df = pd.DataFrame({"value": [3, 1, 4, 2]})
 
@@ -180,11 +185,14 @@ class TestBaseQuery:
     def test__apply_order_by_multiple(self):
         """测试多列排序"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
-        df = pd.DataFrame({
-            "category": ["B", "A", "B", "A"],
-            "value": [2, 1, 1, 2],
-        })
+        df = pd.DataFrame(
+            {
+                "category": ["B", "A", "B", "A"],
+                "value": [2, 1, 1, 2],
+            }
+        )
 
         result = query._apply_order_by(df, ["category", "value"])
         assert list(result["category"]) == ["A", "A", "B", "B"]
@@ -193,6 +201,7 @@ class TestBaseQuery:
     def test__apply_order_by_ignore_nonexistent(self):
         """测试忽略不存在的排序列"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
         df = pd.DataFrame({"value": [3, 1, 4, 2]})
 
@@ -203,6 +212,7 @@ class TestBaseQuery:
     def test__apply_filters_list(self):
         """测试列表in过滤"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
         df = pd.DataFrame({"category": ["A", "B", "A", "C"], "value": [1, 2, 3, 4]})
 
@@ -213,6 +223,7 @@ class TestBaseQuery:
     def test__apply_filters_equal(self):
         """测试等值过滤"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
         df = pd.DataFrame({"category": ["A", "B", "A", "C"], "value": [1, 2, 3, 4]})
 
@@ -223,6 +234,7 @@ class TestBaseQuery:
     def test__apply_filters_ignore_nonexistent(self):
         """测试忽略不存在的过滤列"""
         from unittest.mock import Mock
+
         query = self.ConcreteQuery(Mock())
         df = pd.DataFrame({"category": ["A", "B"], "value": [1, 2]})
 

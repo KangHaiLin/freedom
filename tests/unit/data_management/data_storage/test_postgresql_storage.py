@@ -1,7 +1,8 @@
 """
 Unit tests for postgresql_storage.py
 """
-from unittest.mock import Mock, patch, MagicMock
+
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
@@ -45,8 +46,8 @@ class TestPostgreSQLStorage:
         assert storage.schema == "public"
         assert storage.chunk_size == 1000
 
-    @patch('data_management.data_storage.postgresql_storage.psycopg2.connect')
-    @patch('data_management.data_storage.postgresql_storage.create_engine')
+    @patch("data_management.data_storage.postgresql_storage.psycopg2.connect")
+    @patch("data_management.data_storage.postgresql_storage.create_engine")
     def test_connect_success(self, mock_create_engine, mock_connect):
         """测试连接成功"""
         mock_conn = Mock()
@@ -72,7 +73,7 @@ class TestPostgreSQLStorage:
         mock_create_engine.assert_called_once()
         assert mock_conn.autocommit is True
 
-    @patch('data_management.data_storage.postgresql_storage.psycopg2.connect')
+    @patch("data_management.data_storage.postgresql_storage.psycopg2.connect")
     def test_connect_failure_raises_exception(self, mock_connect):
         """测试连接失败抛出异常"""
         mock_connect.side_effect = Exception("Connection refused")
@@ -83,8 +84,8 @@ class TestPostgreSQLStorage:
             storage.connect()
         assert not storage.is_connected
 
-    @patch('data_management.data_storage.postgresql_storage.psycopg2.connect')
-    @patch('data_management.data_storage.postgresql_storage.create_engine')
+    @patch("data_management.data_storage.postgresql_storage.psycopg2.connect")
+    @patch("data_management.data_storage.postgresql_storage.create_engine")
     def test_disconnect_success(self, mock_create_engine, mock_connect):
         """测试断开连接成功"""
         mock_conn = Mock()
@@ -102,8 +103,8 @@ class TestPostgreSQLStorage:
         mock_conn.close.assert_called_once()
         mock_engine.dispose.assert_called_once()
 
-    @patch('data_management.data_storage.postgresql_storage.psycopg2.connect')
-    @patch('data_management.data_storage.postgresql_storage.create_engine')
+    @patch("data_management.data_storage.postgresql_storage.psycopg2.connect")
+    @patch("data_management.data_storage.postgresql_storage.create_engine")
     def test_disconnect_throws_exception_returns_false(self, mock_create_engine, mock_connect):
         """测试断开连接异常返回False"""
         mock_conn = Mock()
@@ -132,7 +133,7 @@ class TestPostgreSQLStorage:
 
         assert result == 0
 
-    @patch('pandas.DataFrame.to_sql')
+    @patch("pandas.DataFrame.to_sql")
     def test_write_small_data_uses_to_sql(self, mock_to_sql):
         """测试小数据量使用to_sql"""
         config = {"database": "stock", "user": "postgres", "password": "postgres"}
@@ -156,14 +157,14 @@ class TestPostgreSQLStorage:
         storage.connection = Mock()
         storage.engine = Mock()
 
-        with patch.object(pd.DataFrame, 'to_sql') as mock_to_sql:
+        with patch.object(pd.DataFrame, "to_sql") as mock_to_sql:
             data = [{"col1": 1, "col2": "a"}, {"col1": 2, "col2": "b"}]
             result = storage.write("test_table", data)
 
             assert result == 2
             mock_to_sql.assert_called_once()
 
-    @patch('data_management.data_storage.postgresql_storage.execute_values')
+    @patch("data_management.data_storage.postgresql_storage.execute_values")
     def test_write_large_data_uses_execute_values(self, mock_execute_values):
         """测试大数据量使用execute_values"""
         config = {"database": "stock", "user": "postgres", "password": "postgres"}
@@ -196,12 +197,12 @@ class TestPostgreSQLStorage:
         storage.engine = Mock()
 
         df = pd.DataFrame({"col1": [1, 2, 3]})
-        with patch.object(df, 'to_sql') as mock_to_sql:
+        with patch.object(df, "to_sql") as mock_to_sql:
             mock_to_sql.side_effect = Exception("Write failed")
             with pytest.raises(StorageException, match="PostgreSQL写入失败"):
                 storage.write("test_table", df)
 
-    @patch('pandas.read_sql')
+    @patch("pandas.read_sql")
     def test_read_no_query_returns_all(self, mock_read_sql):
         """测试无查询条件返回全部"""
         mock_read_sql.return_value = pd.DataFrame({"col1": [1, 2, 3]})
@@ -219,7 +220,7 @@ class TestPostgreSQLStorage:
         call_args = mock_read_sql.call_args
         assert "SELECT * FROM public.test_table" in call_args[0][0]
 
-    @patch('pandas.read_sql')
+    @patch("pandas.read_sql")
     def test_read_with_query_conditions(self, mock_read_sql):
         """测试带查询条件"""
         mock_read_sql.return_value = pd.DataFrame()
@@ -244,7 +245,7 @@ class TestPostgreSQLStorage:
         assert "status = %s" in sql
         assert "price >= %s AND price <= %s" in sql
 
-    @patch('pandas.read_sql')
+    @patch("pandas.read_sql")
     def test_read_with_order_by_limit_offset(self, mock_read_sql):
         """测试带排序分页"""
         mock_read_sql.return_value = pd.DataFrame()
@@ -272,7 +273,7 @@ class TestPostgreSQLStorage:
         storage.connection = Mock()
         storage.engine = Mock()
 
-        with patch('pandas.read_sql') as mock_read_sql:
+        with patch("pandas.read_sql") as mock_read_sql:
             mock_read_sql.side_effect = Exception("Query failed")
             with pytest.raises(StorageException, match="PostgreSQL查询失败"):
                 storage.read("test_table")
@@ -337,7 +338,7 @@ class TestPostgreSQLStorage:
         with pytest.raises(StorageException, match="PostgreSQL删除失败"):
             storage.delete("test_table", {"id": 1})
 
-    @patch('pandas.read_sql')
+    @patch("pandas.read_sql")
     def test_execute_sql_select_returns_df(self, mock_read_sql):
         """测试执行SELECT返回DataFrame"""
         mock_read_sql.return_value = pd.DataFrame({"id": [1, 2, 3]})
@@ -490,10 +491,7 @@ class TestPostgreSQLStorage:
             "stock_code": "VARCHAR(10)",
             "close": "NUMERIC(10,2)",
         }
-        result = storage.create_table(
-            "test_table", schema,
-            primary_key=["trade_date", "stock_code"]
-        )
+        result = storage.create_table("test_table", schema, primary_key=["trade_date", "stock_code"])
 
         assert result is True
         call_args = mock_cursor.execute.call_args
@@ -555,7 +553,7 @@ class TestPostgreSQLStorage:
         storage = PostgreSQLStorage(config)
         storage.is_connected = False
 
-        with patch('psycopg2.connect') as mock_connect:
+        with patch("psycopg2.connect") as mock_connect:
             mock_connect.side_effect = Exception("Connection failed")
             result = storage.health_check()
 

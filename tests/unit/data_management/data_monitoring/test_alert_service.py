@@ -14,6 +14,7 @@ from data_management.data_monitoring.base_monitor import AlertLevel, MonitorResu
 def test_init_default():
     """测试默认初始化 - 当没有配置项时使用正确的默认值"""
     from data_management.data_monitoring.alert_service import AlertService
+
     # 传递配置只包含部分项，测试默认值正确 fallback
     service = AlertService(config={"enabled": True})
     # 检查默认值正确
@@ -61,7 +62,7 @@ def test_send_alert_log_channel():
     """测试日志渠道发送"""
     service = AlertService(config={"enabled": True, "default_channels": ["log"]})
     result = MonitorResult.failure("test_monitor", alert_level=AlertLevel.ERROR)
-    with patch('logging.Logger.warning') as mock_log:
+    with patch("logging.Logger.warning") as mock_log:
         success = service.send_alert(result)
         assert success is True
         # 日志会被调用
@@ -92,10 +93,12 @@ def test_format_alert_message():
 def test_format_alert_message_unknown_level():
     """测试未知级别格式化"""
     service = AlertService()
+
     # 创建一个不存在的级别（模拟）
     class FakeAlertLevel:
         value = 999
         name = "FAKE"
+
     result = MonitorResult("test", success=False, level=FakeAlertLevel())
     message = service._format_alert_message(result)
     assert "未知" in message
@@ -104,7 +107,7 @@ def test_format_alert_message_unknown_level():
 def test_send_alert_unsupported_channel():
     """测试不支持的渠道"""
     service = AlertService(config={"enabled": True, "default_channels": ["unsupported"]})
-    result =MonitorResult.failure("test", alert_level=AlertLevel.ERROR)
+    result = MonitorResult.failure("test", alert_level=AlertLevel.ERROR)
     success = service.send_alert(result)
     assert success is False
 
@@ -150,7 +153,7 @@ def test_send_webhook_alert_unconfigured():
         service._send_webhook_alert(result)
 
 
-@patch('smtplib.SMTP_SSL')
+@patch("smtplib.SMTP_SSL")
 def test_send_email_alert_success(mock_smtp):
     """测试邮件发送成功"""
     config = {
@@ -178,7 +181,7 @@ def test_send_email_alert_success(mock_smtp):
     mock_server.quit.assert_called_once()
 
 
-@patch('requests.post')
+@patch("requests.post")
 def test_send_wecom_alert_success(mock_post):
     """测试企业微信发送成功"""
     mock_post.return_value.raise_for_status = Mock()
@@ -199,7 +202,7 @@ def test_send_wecom_alert_success(mock_post):
     assert "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=testkey" in call_args[0][0]
 
 
-@patch('requests.post')
+@patch("requests.post")
 def test_send_dingtalk_alert_success(mock_post):
     """测试钉钉发送成功"""
     mock_post.return_value.raise_for_status = Mock()
@@ -218,7 +221,7 @@ def test_send_dingtalk_alert_success(mock_post):
     mock_post.assert_called_once()
 
 
-@patch('requests.post')
+@patch("requests.post")
 def test_send_webhook_alert_success(mock_post):
     """测试自定义webhook发送成功"""
     mock_post.return_value.raise_for_status = Mock()
@@ -245,7 +248,7 @@ def test_send_webhook_alert_success(mock_post):
 def test_send_test_alert():
     """测试发送测试告警"""
     service = AlertService(config={"enabled": True, "default_channels": ["log"]})
-    with patch('logging.Logger.warning') as mock_log:
+    with patch("logging.Logger.warning") as mock_log:
         success = service.send_test_alert()
         assert success is True
         assert mock_log.called
@@ -254,5 +257,6 @@ def test_send_test_alert():
 def test_global_instance_exists():
     """测试全局实例存在"""
     from data_management.data_monitoring.alert_service import alert_service
+
     assert alert_service is not None
     assert isinstance(alert_service, AlertService)

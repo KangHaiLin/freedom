@@ -1,6 +1,7 @@
 """
 Unit tests for redis_storage.py
 """
+
 import json
 import pickle
 from unittest.mock import Mock, patch
@@ -43,7 +44,7 @@ class TestRedisStorage:
         assert storage.decode_responses is False
         assert storage.default_ttl == 1800
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_connect_success(self, mock_redis_cls):
         """测试连接成功"""
         mock_redis = Mock()
@@ -57,7 +58,7 @@ class TestRedisStorage:
         assert storage.connection is mock_redis
         mock_redis.ping.assert_called_once()
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_connect_failure_raises_exception(self, mock_redis_cls):
         """测试连接失败抛出异常"""
         mock_redis = Mock()
@@ -69,7 +70,7 @@ class TestRedisStorage:
             storage.connect()
         assert not storage.is_connected
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_disconnect_success(self, mock_redis_cls):
         """测试断开连接成功"""
         mock_redis = Mock()
@@ -83,7 +84,7 @@ class TestRedisStorage:
         assert not storage.is_connected
         mock_redis.close.assert_called_once()
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_disconnect_throws_exception_returns_false(self, mock_redis_cls):
         """测试断开连接异常返回False"""
         mock_redis = Mock()
@@ -96,7 +97,7 @@ class TestRedisStorage:
 
         assert result is False
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_write_dataframe_json_serialized(self, mock_redis_cls):
         """测试写入DataFrame序列化为JSON"""
         mock_redis = Mock()
@@ -118,7 +119,7 @@ class TestRedisStorage:
         serialized = call_args[0][2]
         assert '"col1":1' in serialized
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_write_list_dict_json_serialized(self, mock_redis_cls):
         """测试写入列表字典序列化为JSON"""
         mock_redis = Mock()
@@ -138,7 +139,7 @@ class TestRedisStorage:
         parsed = json.loads(serialized)
         assert parsed == data
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_write_pickle_other_objects(self, mock_redis_cls):
         """测试其他对象使用pickle序列化"""
         mock_redis = Mock()
@@ -149,6 +150,7 @@ class TestRedisStorage:
         storage.connection = mock_redis
 
         from datetime import datetime
+
         # datetime object is not list/dict/DataFrame, so it will use pickle
         dt = datetime.now()
         result = storage.write("test", dt, key="test:datetime")
@@ -156,7 +158,7 @@ class TestRedisStorage:
         # 验证调用了setex
         assert mock_redis.setex.called or mock_redis.set.called
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_write_no_ttl_uses_set(self, mock_redis_cls):
         """测试无过期时间使用set"""
         mock_redis = Mock()
@@ -171,7 +173,7 @@ class TestRedisStorage:
         assert result == 1
         mock_redis.set.assert_called_once()
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_write_throws_exception_raises_storage_exception(self, mock_redis_cls):
         """测试写入异常抛出StorageException"""
         mock_redis = Mock()
@@ -185,7 +187,7 @@ class TestRedisStorage:
         with pytest.raises(StorageException, match="Redis写入失败"):
             storage.write("test", {"data": 1}, key="test:key")
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_read_single_key_json_data(self, mock_redis_cls):
         """测试读取单个键JSON数据"""
         mock_redis = Mock()
@@ -201,7 +203,7 @@ class TestRedisStorage:
         assert result == {"key": "value", "data": [1, 2, 3]}
         mock_redis.get.assert_called_once_with("test:key")
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_read_single_key_dataframe(self, mock_redis_cls):
         """测试读取单个键DataFrame数据"""
         mock_redis = Mock()
@@ -218,7 +220,7 @@ class TestRedisStorage:
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 3
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_read_single_key_pickle_object(self, mock_redis_cls):
         """测试读取单个键pickle对象"""
         mock_redis = Mock()
@@ -234,7 +236,7 @@ class TestRedisStorage:
         result = storage.read("test", {"key": "test:pickle"})
         assert result == obj
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_read_single_key_not_exists_returns_none(self, mock_redis_cls):
         """测试读取不存在的键返回None"""
         mock_redis = Mock()
@@ -248,7 +250,7 @@ class TestRedisStorage:
         result = storage.read("test", {"key": "not_exists"})
         assert result is None
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_read_pattern_matches_multiple_keys(self, mock_redis_cls):
         """测试模式匹配多个键"""
         mock_redis = Mock()
@@ -271,7 +273,7 @@ class TestRedisStorage:
         assert result["test:key1"]["value"] == 1
         assert result["test:key2"]["value"] == 2
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_read_no_query_returns_all_keys_with_prefix(self, mock_redis_cls):
         """测试无查询返回前缀所有键"""
         mock_redis = Mock()
@@ -286,7 +288,7 @@ class TestRedisStorage:
 
         assert result == ["test:1", "test:2", "test:3"]
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_read_throws_exception_raises_storage_exception(self, mock_redis_cls):
         """测试读取异常抛出StorageException"""
         mock_redis = Mock()
@@ -300,7 +302,7 @@ class TestRedisStorage:
         with pytest.raises(StorageException, match="Redis读取失败"):
             storage.read("test", {"key": "test:key"})
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_delete_single_key(self, mock_redis_cls):
         """测试删除单个键"""
         mock_redis = Mock()
@@ -316,7 +318,7 @@ class TestRedisStorage:
         assert result == 1
         mock_redis.delete.assert_called_once_with("test:key")
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_delete_by_pattern(self, mock_redis_cls):
         """测试按模式删除"""
         mock_redis = Mock()
@@ -333,7 +335,7 @@ class TestRedisStorage:
         assert result == 2
         mock_redis.delete.assert_called_once()
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_delete_by_prefix(self, mock_redis_cls):
         """测试按前缀删除"""
         mock_redis = Mock()
@@ -349,7 +351,7 @@ class TestRedisStorage:
 
         assert result == 3
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_delete_no_matching_keys_returns_zero(self, mock_redis_cls):
         """测试无匹配键返回0"""
         mock_redis = Mock()
@@ -364,7 +366,7 @@ class TestRedisStorage:
 
         assert result == 0
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_delete_throws_exception_raises_storage_exception(self, mock_redis_cls):
         """测试删除异常抛出StorageException"""
         mock_redis = Mock()
@@ -378,7 +380,7 @@ class TestRedisStorage:
         with pytest.raises(StorageException, match="Redis删除失败"):
             storage.delete("test", {"key": "test:key"})
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_execute_sql_command(self, mock_redis_cls):
         """测试执行Redis命令"""
         mock_redis = Mock()
@@ -394,7 +396,7 @@ class TestRedisStorage:
         assert result == b"PONG"
         mock_redis.execute_command.assert_called_once_with("PING")
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_execute_sql_empty_command_raises_exception(self, mock_redis_cls):
         """测试空命令抛出异常"""
         mock_redis = Mock()
@@ -407,7 +409,7 @@ class TestRedisStorage:
         with pytest.raises(StorageException, match="Redis命令为空"):
             storage.execute_sql("")
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_execute_sql_throws_exception_raises_storage_exception(self, mock_redis_cls):
         """测试执行命令异常抛出StorageException"""
         mock_redis = Mock()
@@ -421,7 +423,7 @@ class TestRedisStorage:
         with pytest.raises(StorageException, match="Redis执行命令失败"):
             storage.execute_sql("INVALID")
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_table_exists_with_keys_returns_true(self, mock_redis_cls):
         """测试前缀存在键返回True"""
         mock_redis = Mock()
@@ -436,7 +438,7 @@ class TestRedisStorage:
 
         assert result is True
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_table_exists_no_keys_returns_false(self, mock_redis_cls):
         """测试无前缀键返回False"""
         mock_redis = Mock()
@@ -451,7 +453,7 @@ class TestRedisStorage:
 
         assert result is False
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_table_exists_exception_returns_false(self, mock_redis_cls):
         """测试检查存在异常返回False"""
         mock_redis = Mock()
@@ -476,18 +478,20 @@ class TestRedisStorage:
 
         assert result is True
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_health_check_healthy(self, mock_redis_cls):
         """测试健康检查健康状态"""
         mock_redis = Mock()
         mock_redis.info.return_value = {"redis_version": "7.0.0"}
         mock_redis_cls.return_value = mock_redis
 
-        storage = RedisStorage({
-            "host": "localhost",
-            "port": 6379,
-            "db": 0,
-        })
+        storage = RedisStorage(
+            {
+                "host": "localhost",
+                "port": 6379,
+                "db": 0,
+            }
+        )
         storage.is_connected = True
         storage.connection = mock_redis
 
@@ -497,18 +501,20 @@ class TestRedisStorage:
         assert result["version"] == "7.0.0"
         assert result["is_connected"] is True
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_health_check_unhealthy(self, mock_redis_cls):
         """测试健康检查不健康状态"""
         mock_redis = Mock()
         mock_redis.ping.side_effect = Exception("Connection failed")
         mock_redis_cls.return_value = mock_redis
 
-        storage = RedisStorage({
-            "host": "badhost",
-            "port": 6379,
-            "db": 0,
-        })
+        storage = RedisStorage(
+            {
+                "host": "badhost",
+                "port": 6379,
+                "db": 0,
+            }
+        )
         storage.is_connected = False
 
         result = storage.health_check()
@@ -516,7 +522,7 @@ class TestRedisStorage:
         assert result["status"] == "unhealthy"
         assert "error" in result
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_hset_with_ttl(self, mock_redis_cls):
         """测试hset带过期时间"""
         mock_redis = Mock()
@@ -533,7 +539,7 @@ class TestRedisStorage:
         mock_redis.hset.assert_called_once()
         mock_redis.expire.assert_called_once_with("myhash", 60)
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_hgetall(self, mock_redis_cls):
         """测试hgetall"""
         mock_redis = Mock()
@@ -548,7 +554,7 @@ class TestRedisStorage:
 
         assert result == {"field1": "value1", "field2": "value2"}
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_lpush(self, mock_redis_cls):
         """测试lpush"""
         mock_redis = Mock()
@@ -564,7 +570,7 @@ class TestRedisStorage:
         assert result == 3
         mock_redis.lpush.assert_called_once_with("mylist", "a", "b", "c")
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_rpop(self, mock_redis_cls):
         """测试rpop"""
         mock_redis = Mock()
@@ -579,7 +585,7 @@ class TestRedisStorage:
 
         assert result == "c"
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_publish_dict_message_json_serialized(self, mock_redis_cls):
         """测试发布字典消息序列化为JSON"""
         mock_redis = Mock()
@@ -599,7 +605,7 @@ class TestRedisStorage:
         parsed = json.loads(published)
         assert parsed == message
 
-    @patch('data_management.data_storage.redis_storage.redis.Redis')
+    @patch("data_management.data_storage.redis_storage.redis.Redis")
     def test_get_ttl(self, mock_redis_cls):
         """测试获取ttl"""
         mock_redis = Mock()

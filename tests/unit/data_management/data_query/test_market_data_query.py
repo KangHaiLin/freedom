@@ -2,9 +2,10 @@
 Unit tests for market_data_query.py
 """
 
+from unittest.mock import Mock, patch
+
 import pandas as pd
 import pytest
-from unittest.mock import Mock, patch
 
 from data_management.data_query.base_query import QueryCondition
 from data_management.data_query.market_data_query import MarketDataQuery
@@ -110,14 +111,16 @@ def test_select_fields():
     mock_storage.get_storage_by_type.return_value = Mock()
     query = MarketDataQuery(mock_storage)
 
-    df = pd.DataFrame({
-        "trade_date": ["2024-01-01", "2024-01-02"],
-        "open": [10, 11],
-        "high": [11, 12],
-        "low": [9, 10],
-        "close": [10.5, 11.5],
-        "volume": [1000, 1200],
-    })
+    df = pd.DataFrame(
+        {
+            "trade_date": ["2024-01-01", "2024-01-02"],
+            "open": [10, 11],
+            "high": [11, 12],
+            "low": [9, 10],
+            "close": [10.5, 11.5],
+            "volume": [1000, 1200],
+        }
+    )
 
     # 选择部分字段
     result = query._select_fields(df, ["trade_date", "close", "volume"])
@@ -153,9 +156,7 @@ def test_query_cached_result():
     mock_clickhouse = Mock()
     mock_redis = Mock()
 
-    cached_data = [
-        {"trade_date": "2024-01-01", "stock_code": "600000.SH", "close": 10.5}
-    ]
+    cached_data = [{"trade_date": "2024-01-01", "stock_code": "600000.SH", "close": 10.5}]
     mock_redis.read.return_value = cached_data
 
     mock_storage.get_storage_by_type.side_effect = lambda t: {
@@ -182,11 +183,13 @@ def test_get_daily_quote_shortcut():
     mock_clickhouse = Mock()
     mock_postgresql = Mock()
     mock_redis = Mock()
-    mock_clickhouse.read.return_value = pd.DataFrame({
-        "trade_date": pd.date_range("2024-01-01", "2024-01-10"),
-        "stock_code": ["600000.SH"] * 10,
-        "close": [10 + i for i in range(10)],
-    })
+    mock_clickhouse.read.return_value = pd.DataFrame(
+        {
+            "trade_date": pd.date_range("2024-01-01", "2024-01-10"),
+            "stock_code": ["600000.SH"] * 10,
+            "close": [10 + i for i in range(10)],
+        }
+    )
     mock_redis.read.return_value = None  # 缓存未命中
 
     mock_storage.get_storage_by_type.side_effect = lambda t: {
@@ -197,10 +200,7 @@ def test_get_daily_quote_shortcut():
 
     query = MarketDataQuery(mock_storage)
     result = query.get_daily_quote(
-        stock_codes=["600000.SH"],
-        start_date="2024-01-01",
-        end_date="2024-01-10",
-        fields=["trade_date", "close"]
+        stock_codes=["600000.SH"], start_date="2024-01-01", end_date="2024-01-10", fields=["trade_date", "close"]
     )
 
     assert result.success is True
@@ -212,6 +212,7 @@ def test_get_daily_quote_shortcut():
 def test_get_latest_daily_quote():
     """测试获取最近N天日线"""
     from datetime import datetime, timedelta
+
     mock_storage = Mock()
     mock_clickhouse = Mock()
     mock_postgresql = Mock()
@@ -220,11 +221,13 @@ def test_get_latest_daily_quote():
     end_date = datetime.now()
     dates = [end_date - timedelta(days=i) for i in range(10)]
     dates.reverse()
-    mock_clickhouse.read.return_value = pd.DataFrame({
-        "trade_date": dates,
-        "stock_code": ["600000.SH"] * 10,
-        "close": [10 + i for i in range(10)],
-    })
+    mock_clickhouse.read.return_value = pd.DataFrame(
+        {
+            "trade_date": dates,
+            "stock_code": ["600000.SH"] * 10,
+            "close": [10 + i for i in range(10)],
+        }
+    )
     mock_redis.read.return_value = None  # 缓存未命中
 
     mock_storage.get_storage_by_type.side_effect = lambda t: {
@@ -245,6 +248,7 @@ def test_get_latest_daily_quote():
 def test_calculate_ma():
     """测试计算均线"""
     from datetime import datetime, timedelta
+
     mock_storage = Mock()
     mock_clickhouse = Mock()
     mock_postgresql = Mock()
@@ -253,10 +257,12 @@ def test_calculate_ma():
     end_date = datetime.now()
     dates = [end_date - timedelta(days=i) for i in reversed(range(100))]
     close_prices = [10 + i * 0.1 for i in range(100)]
-    mock_clickhouse.read.return_value = pd.DataFrame({
-        "trade_date": dates,
-        "close": close_prices,
-    })
+    mock_clickhouse.read.return_value = pd.DataFrame(
+        {
+            "trade_date": dates,
+            "close": close_prices,
+        }
+    )
     mock_redis.read.return_value = None  # 缓存未命中
 
     mock_storage.get_storage_by_type.side_effect = lambda t: {

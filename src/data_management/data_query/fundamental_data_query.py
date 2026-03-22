@@ -5,13 +5,12 @@
 
 import logging
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 
 from common.exceptions import QueryException
-from common.utils import DateTimeUtils, StockCodeUtils
 
 from .base_query import BaseQuery, QueryCondition, QueryResult
 
@@ -55,16 +54,24 @@ class FundamentalDataQuery(BaseQuery):
 
             # 缓存查询
             cache_key = self._build_cache_key(condition)
-            if self.redis_storage:
+            if self.redis_storage is not None:
                 cache_result = self.redis_storage.read("fundamental_query_cache", {"key": cache_key})
-                if cache_result:
+                if cache_result is not None:
                     logger.debug(f"基本面缓存命中：{cache_key}")
-                    return QueryResult(
-                        data=pd.DataFrame(cache_result),
-                        query_time=time.time() - start_time,
-                        success=True,
-                        message="缓存命中",
-                    )
+                    if isinstance(cache_result, pd.DataFrame):
+                        return QueryResult(
+                            data=cache_result,
+                            query_time=time.time() - start_time,
+                            success=True,
+                            message="缓存命中",
+                        )
+                    else:
+                        return QueryResult(
+                            data=pd.DataFrame(cache_result),
+                            query_time=time.time() - start_time,
+                            success=True,
+                            message="缓存命中",
+                        )
 
             # 选择存储引擎
             storage = (
@@ -72,7 +79,7 @@ class FundamentalDataQuery(BaseQuery):
                 if data_type in ["stock_basic", "holder", "dividend"]
                 else self.clickhouse_storage
             )
-            if not storage:
+            if storage is None:
                 raise QueryException(f"无可用存储引擎查询{data_type}数据")
 
             table_name = self.table_config[data_type]
@@ -93,7 +100,7 @@ class FundamentalDataQuery(BaseQuery):
             df = self._select_fields(df, condition.fields)
 
             # 缓存结果
-            if self.redis_storage and not df.empty and len(df) < 5000:
+            if self.redis_storage is not None and not df.empty and len(df) < 5000:
                 self.redis_storage.write("fundamental_query_cache", df, key=cache_key, ttl=3600)  # 缓存1小时
 
             query_time = time.time() - start_time
