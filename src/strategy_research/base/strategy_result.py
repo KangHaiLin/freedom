@@ -64,7 +64,11 @@ class DailyStats:
     trades: int
 
     def to_dict(self) -> Dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        # Convert date/datetime to string for JSON serialization
+        if hasattr(self.date, "isoformat"):
+            data["date"] = self.date.isoformat()
+        return data
 
 
 @dataclass
@@ -103,6 +107,7 @@ class BacktestResult:
             "annualized_return": self.annualized_return,
             "sharpe_ratio": self.sharpe_ratio,
             "max_drawdown": self.max_drawdown,
+            "max_drawdown_date": self.max_drawdown_date,
             "win_rate": self.win_rate,
             "profit_loss_ratio": self.profit_loss_ratio,
             "total_trades": self.total_trades,
@@ -110,5 +115,8 @@ class BacktestResult:
             "losing_trades": self.losing_trades,
             "avg_holding_days": self.avg_holding_days,
             "turnover_rate": self.turnover_rate,
+            "daily_stats": [ds.to_dict() for ds in self.daily_stats],
+            "trades": [t.to_dict() for t in self.trades],
+            "positions": self.positions,
             "extra_info": self.extra_info,
         }

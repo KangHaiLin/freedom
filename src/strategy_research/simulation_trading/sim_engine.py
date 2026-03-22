@@ -205,11 +205,17 @@ class SimulationEngine:
         executed = []
         for ts_code, direction in signals.items():
             if direction == TradeDirection.BUY:
-                # 买入全仓能买的数量
+                # 买入全仓能买的数量（考虑佣金）
                 price = current_prices.get(ts_code, 0)
                 if price <= 0:
                     continue
-                max_quantity = int(self._account.cash // (price * 100)) * 100
+                # 计算最大可买数量，预留佣金空间
+                # commission = (price * quantity) * commission_rate
+                # We need: price * quantity + commission <= cash
+                # => price * quantity * (1 + commission_rate) <= cash
+                # => quantity <= cash / (price * (1 + commission_rate))
+                rate = self._account._config.commission_rate
+                max_quantity = int(self._account.cash // (price * 100 * (1 + rate))) * 100
                 if max_quantity > 0:
                     order_id = self.place_order(ts_code, direction, price, max_quantity)
                     if order_id > 0:
@@ -276,7 +282,9 @@ class SimulationEngine:
     def close_all(self, current_prices: Dict[str, float]) -> List[TradeRecord]:
         """平仓所有持仓"""
         closed_trades = []
-        for ts_code, pos in self._account.get_all_positions().items():
+        # Convert to list to avoid "dictionary changed size during iteration"
+        positions = list(self._account.get_all_positions().items())
+        for ts_code, pos in positions:
             if pos.quantity > 0 and ts_code in current_prices:
                 price = current_prices[ts_code]
                 order_id = self.place_order(ts_code, TradeDirection.SELL, price, pos.quantity)
