@@ -2,6 +2,7 @@
 任务调度 - 任务抽象基类
 定义任务基础接口，错误处理，完成回调
 """
+
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -11,6 +12,7 @@ from uuid import uuid4
 
 class TaskStatus(Enum):
     """任务状态"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -45,13 +47,13 @@ class TaskResult:
     def to_dict(self) -> dict:
         """转换为字典"""
         return {
-            'task_id': self.task_id,
-            'success': self.success,
-            'result': repr(self.result) if self.result is not None else None,
-            'error': str(self.error) if self.error is not None else None,
-            'start_time': self.start_time.isoformat(),
-            'end_time': self.end_time.isoformat(),
-            'duration_seconds': self.duration_seconds,
+            "task_id": self.task_id,
+            "success": self.success,
+            "result": repr(self.result) if self.result is not None else None,
+            "error": str(self.error) if self.error is not None else None,
+            "start_time": self.start_time.isoformat(),
+            "end_time": self.end_time.isoformat(),
+            "duration_seconds": self.duration_seconds,
         }
 
 
@@ -131,12 +133,12 @@ class BaseTask(ABC):
 
             return task_result
 
-    def on_complete(self, callback: Callable[[TaskResult], None]) -> 'BaseTask':
+    def on_complete(self, callback: Callable[[TaskResult], None]) -> "BaseTask":
         """设置完成回调"""
         self._on_complete = callback
         return self
 
-    def on_error(self, callback: Callable[[Exception], None]) -> 'BaseTask':
+    def on_error(self, callback: Callable[[Exception], None]) -> "BaseTask":
         """设置错误回调"""
         self._on_error = callback
         return self

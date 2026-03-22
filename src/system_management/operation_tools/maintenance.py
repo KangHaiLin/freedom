@@ -2,6 +2,7 @@
 运维工具 - 维护操作
 清理过期日志、清理临时文件、备份配置、空间估算
 """
+
 import os
 import shutil
 from datetime import datetime, timedelta
@@ -38,9 +39,9 @@ class Maintenance:
         log_path = Path(log_dir)
         if not log_path.exists():
             return {
-                'deleted_count': 0,
-                'deleted_bytes': 0,
-                'error': "日志目录不存在",
+                "deleted_count": 0,
+                "deleted_bytes": 0,
+                "error": "日志目录不存在",
             }
 
         cutoff = datetime.now() - timedelta(days=retention_days)
@@ -51,7 +52,7 @@ class Maintenance:
         errors: List[str] = []
 
         # 查找所有日志文件
-        extensions = ['.log', '.log.gz', '.txt', '.json']
+        extensions = [".log", ".log.gz", ".txt", ".json"]
         for ext in extensions:
             for file_path in log_path.glob(f"**/*{ext}"):
                 if not file_path.is_file():
@@ -69,11 +70,11 @@ class Maintenance:
                     errors.append(f"删除 {file_path}: {str(e)}")
 
         return {
-            'deleted_count': deleted_count,
-            'deleted_bytes': deleted_count,
-            'deleted_mb': deleted_bytes / (1024 ** 2),
-            'dry_run': dry_run,
-            'errors': errors,
+            "deleted_count": deleted_count,
+            "deleted_bytes": deleted_count,
+            "deleted_mb": deleted_bytes / (1024**2),
+            "dry_run": dry_run,
+            "errors": errors,
         }
 
     def clean_temp_files(
@@ -93,9 +94,9 @@ class Maintenance:
         temp_path = Path(temp_dir)
         if not temp_path.exists():
             return {
-                'deleted_count': 0,
-                'deleted_bytes': 0,
-                'error': "临时目录不存在",
+                "deleted_count": 0,
+                "deleted_bytes": 0,
+                "error": "临时目录不存在",
             }
 
         cutoff = datetime.now() - timedelta(hours=max_age_hours)
@@ -131,11 +132,11 @@ class Maintenance:
                         pass
 
         return {
-            'deleted_count': deleted_count,
-            'deleted_bytes': deleted_bytes,
-            'deleted_mb': deleted_bytes / (1024 ** 2),
-            'dry_run': dry_run,
-            'errors': errors,
+            "deleted_count": deleted_count,
+            "deleted_bytes": deleted_bytes,
+            "deleted_mb": deleted_bytes / (1024**2),
+            "dry_run": dry_run,
+            "errors": errors,
         }
 
     def estimate_directory_size(self, directory: str | Path) -> Tuple[int, int]:
@@ -178,7 +179,7 @@ class Maintenance:
         backup_path = Path(backup_dir)
         backup_path.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         total_files = 0
         total_bytes = 0
         errors: List[str] = []
@@ -194,7 +195,7 @@ class Maintenance:
                     continue
 
                 # 跳过隐藏文件和备份文件
-                if file_path.name.startswith('.') or file_path.name.endswith('.bak'):
+                if file_path.name.startswith(".") or file_path.name.endswith(".bak"):
                     continue
 
                 rel_path = file_path.relative_to(source_path.parent)
@@ -213,13 +214,13 @@ class Maintenance:
                     errors.append(f"备份 {file_path}: {str(e)}")
 
         result = {
-            'backup_dir': str(backup_path),
-            'timestamp': timestamp,
-            'total_files': total_files,
-            'total_bytes': total_bytes,
-            'total_mb': total_bytes / (1024 ** 2),
-            'errors': errors,
-            'success': len(errors) == 0,
+            "backup_dir": str(backup_path),
+            "timestamp": timestamp,
+            "total_files": total_files,
+            "total_bytes": total_bytes,
+            "total_mb": total_bytes / (1024**2),
+            "errors": errors,
+            "success": len(errors) == 0,
         }
 
         if compress and total_files > 0:
@@ -228,13 +229,13 @@ class Maintenance:
             try:
                 archive_path = shutil.make_archive(
                     str(backup_path / archive_name),
-                    'gztar',
+                    "gztar",
                     str(backup_path),
                 )
-                result['archive_path'] = archive_path
-                result['archive_size_bytes'] = Path(archive_path).stat().st_size
+                result["archive_path"] = archive_path
+                result["archive_size_bytes"] = Path(archive_path).stat().st_size
             except Exception as e:
-                result['compress_error'] = str(e)
+                result["compress_error"] = str(e)
 
         return result
 
@@ -248,9 +249,9 @@ class Maintenance:
         backup_path = Path(backup_dir)
         if not backup_path.exists():
             return {
-                'deleted_count': 0,
-                'deleted_bytes': 0,
-                'error': "备份目录不存在",
+                "deleted_count": 0,
+                "deleted_bytes": 0,
+                "error": "备份目录不存在",
             }
 
         cutoff = datetime.now() - timedelta(days=retention_days)
@@ -275,9 +276,9 @@ class Maintenance:
                 errors.append(f"删除备份 {file_path}: {str(e)}")
 
         return {
-            'deleted_count': deleted_count,
-            'deleted_bytes': deleted_bytes,
-            'deleted_mb': deleted_bytes / (1024 ** 2),
-            'dry_run': dry_run,
-            'errors': errors,
+            "deleted_count": deleted_count,
+            "deleted_bytes": deleted_bytes,
+            "deleted_mb": deleted_bytes / (1024**2),
+            "dry_run": dry_run,
+            "errors": errors,
         }

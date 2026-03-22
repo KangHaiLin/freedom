@@ -2,10 +2,11 @@
 运维工具 - 系统健康检查
 检查各子系统连接、存储、配置等健康状态
 """
+
 import os
 import socket
-from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class HealthCheckResult:
@@ -26,10 +27,10 @@ class HealthCheckResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'check_name': self.check_name,
-            'healthy': self.healthy,
-            'message': self.message,
-            'details': self.details,
+            "check_name": self.check_name,
+            "healthy": self.healthy,
+            "message": self.message,
+            "details": self.details,
         }
 
 
@@ -85,25 +86,25 @@ class HealthChecker:
             stat = os.statvfs(path)
             free_bytes = stat.f_frsize * stat.f_bfree
             total_bytes = stat.f_frsize * stat.f_blocks
-            free_gb = free_bytes / (1024 ** 3)
+            free_gb = free_bytes / (1024**3)
             free_percent = (free_bytes / total_bytes) * 100
 
             details = {
-                'total_gb': total_bytes / (1024 ** 3),
-                'free_gb': free_gb,
-                'free_percent': free_percent,
+                "total_gb": total_bytes / (1024**3),
+                "free_gb": free_gb,
+                "free_percent": free_percent,
             }
 
             if free_gb < min_free_gb or free_percent < min_free_percent:
                 return HealthCheckResult(
-                    check_name='disk_space',
+                    check_name="disk_space",
                     healthy=False,
                     message=f"磁盘空间不足: {free_gb:.1f} GB ({free_percent:.1f}%)，需要至少 {min_free_gb} GB ({min_free_percent}%)",
                     details=details,
                 )
 
             return HealthCheckResult(
-                check_name='disk_space',
+                check_name="disk_space",
                 healthy=True,
                 message=f"磁盘空间正常: {free_gb:.1f} GB ({free_percent:.1f}%)",
                 details=details,
@@ -111,10 +112,10 @@ class HealthChecker:
 
         except Exception as e:
             return HealthCheckResult(
-                check_name='disk_space',
+                check_name="disk_space",
                 healthy=False,
                 message=f"检查磁盘空间失败: {str(e)}",
-                details={'error': str(e)},
+                details={"error": str(e)},
             )
 
     def check_memory(
@@ -124,28 +125,29 @@ class HealthChecker:
     ) -> HealthCheckResult:
         """检查可用内存"""
         import psutil
+
         try:
             mem = psutil.virtual_memory()
-            free_gb = mem.available / (1024 ** 3)
+            free_gb = mem.available / (1024**3)
             free_percent = mem.available / mem.total * 100
 
             details = {
-                'total_gb': mem.total / (1024 ** 3),
-                'available_gb': free_gb,
-                'available_percent': free_percent,
-                'used_percent': mem.percent,
+                "total_gb": mem.total / (1024**3),
+                "available_gb": free_gb,
+                "available_percent": free_percent,
+                "used_percent": mem.percent,
             }
 
             if free_gb < min_free_gb or free_percent < min_free_percent:
                 return HealthCheckResult(
-                    check_name='memory',
+                    check_name="memory",
                     healthy=False,
                     message=f"内存不足: {free_gb:.1f} GB ({free_percent:.1f}%)，需要至少 {min_free_gb} GB ({min_free_percent}%)",
                     details=details,
                 )
 
             return HealthCheckResult(
-                check_name='memory',
+                check_name="memory",
                 healthy=True,
                 message=f"内存正常: {free_gb:.1f} GB ({free_percent:.1f}%)",
                 details=details,
@@ -153,10 +155,10 @@ class HealthChecker:
 
         except Exception as e:
             return HealthCheckResult(
-                check_name='memory',
+                check_name="memory",
                 healthy=False,
                 message=f"检查内存失败: {str(e)}",
-                details={'error': str(e)},
+                details={"error": str(e)},
             )
 
     def check_directory_writable(self, path: str | Path) -> HealthCheckResult:
@@ -169,7 +171,7 @@ class HealthChecker:
 
             # 尝试写一个测试文件
             test_file = path / f".health_check_test_{os.getpid()}"
-            with open(test_file, 'w') as f:
+            with open(test_file, "w") as f:
                 f.write("test")
             test_file.unlink()
 
@@ -184,7 +186,7 @@ class HealthChecker:
                 check_name=check_name,
                 healthy=False,
                 message=f"目录 {path} 不可写: {str(e)}",
-                details={'error': str(e), 'path': str(path)},
+                details={"error": str(e), "path": str(path)},
             )
 
     def check_config_file(self, path: str | Path) -> HealthCheckResult:
@@ -207,14 +209,14 @@ class HealthChecker:
                 )
 
             # 尝试读取
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 f.read(100)
 
             return HealthCheckResult(
                 check_name=check_name,
                 healthy=True,
                 message=f"配置文件 {path} 可读",
-                details={'size_bytes': path.stat().st_size},
+                details={"size_bytes": path.stat().st_size},
             )
 
         except Exception as e:
@@ -222,7 +224,7 @@ class HealthChecker:
                 check_name=check_name,
                 healthy=False,
                 message=f"读取配置文件 {path} 失败: {str(e)}",
-                details={'error': str(e)},
+                details={"error": str(e)},
             )
 
     def check_tcp_port(self, host: str, port: int) -> HealthCheckResult:
@@ -252,7 +254,7 @@ class HealthChecker:
                 check_name=check_name,
                 healthy=False,
                 message=f"检查端口 {host}:{port} 失败: {str(e)}",
-                details={'error': str(e)},
+                details={"error": str(e)},
             )
 
     def check_database_connection(self, name: str, connector) -> HealthCheckResult:
@@ -278,7 +280,7 @@ class HealthChecker:
                 check_name=check_name,
                 healthy=False,
                 message=f"{name} 数据库连接异常: {str(e)}",
-                details={'error': str(e)},
+                details={"error": str(e)},
             )
 
     def run_all(self) -> Dict[str, Any]:
@@ -302,24 +304,26 @@ class HealthChecker:
                 result = check_func()
                 results.append(result)
             except Exception as e:
-                results.append(HealthCheckResult(
-                    check_name=name,
-                    healthy=False,
-                    message=f"检查抛出异常: {str(e)}",
-                    details={'error': str(e)},
-                ))
+                results.append(
+                    HealthCheckResult(
+                        check_name=name,
+                        healthy=False,
+                        message=f"检查抛出异常: {str(e)}",
+                        details={"error": str(e)},
+                    )
+                )
 
         # 汇总
         all_healthy = all(r.healthy for r in results)
         unhealthy = [r for r in results if not r.healthy]
 
         return {
-            'overall_healthy': all_healthy,
-            'total_checks': len(results),
-            'healthy_count': sum(1 for r in results if r.healthy),
-            'unhealthy_count': len(unhealthy),
-            'unhealthy_checks': [r.to_dict() for r in unhealthy],
-            'all_results': [r.to_dict() for r in results],
+            "overall_healthy": all_healthy,
+            "total_checks": len(results),
+            "healthy_count": sum(1 for r in results if r.healthy),
+            "unhealthy_count": len(unhealthy),
+            "unhealthy_checks": [r.to_dict() for r in unhealthy],
+            "all_results": [r.to_dict() for r in results],
         }
 
 
@@ -340,4 +344,4 @@ class HealthCheckManager:
     def is_healthy(self) -> bool:
         """检查整体是否健康"""
         result = self.check_all()
-        return result['overall_healthy']
+        return result["overall_healthy"]

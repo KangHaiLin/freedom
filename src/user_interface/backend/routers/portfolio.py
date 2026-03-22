@@ -2,15 +2,18 @@
 投资组合/账户API路由
 提供仪表盘总览数据
 """
-from fastapi import APIRouter, Query, Depends
-from typing import List, Optional
-from datetime import datetime, timedelta
+
 import logging
+from datetime import datetime, timedelta
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, Query
+
+from src.trading_engine.base.base_order import OrderStatus
+from src.trading_engine.position_management.portfolio_manager import PortfolioManager
+from src.trading_engine.trading_manager import TradingManager
 
 from ..dependencies import verify_api_key
-from src.trading_engine.trading_manager import TradingManager
-from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.base.base_order import OrderStatus
 from ..schemas import BaseResponse
 
 logger = logging.getLogger(__name__)
@@ -69,7 +72,7 @@ async def get_dashboard_data():
             "asset_allocation": allocation,
             "top_holdings": top_holdings,
             "equity_curve": equity_curve,
-        }
+        },
     }
 
 
@@ -79,11 +82,7 @@ async def get_account_summary():
     tm = get_trading_manager()
     pm = tm.get_portfolio_manager()
     summary = build_account_summary(pm)
-    return {
-        "code": 200,
-        "message": "success",
-        "data": summary
-    }
+    return {"code": 200, "message": "success", "data": summary}
 
 
 @router.get("/asset-allocation", summary="获取资产配置数据", response_model=BaseResponse)
@@ -92,38 +91,24 @@ async def get_asset_allocation():
     tm = get_trading_manager()
     pm = tm.get_portfolio_manager()
     allocation = build_asset_allocation(pm)
-    return {
-        "code": 200,
-        "message": "success",
-        "data": allocation
-    }
+    return {"code": 200, "message": "success", "data": allocation}
 
 
 @router.get("/top-holdings", summary="获取重仓持股列表", response_model=BaseResponse)
-async def get_top_holdings_route(
-    limit: int = Query(10, description="返回最大数量，默认10")):
+async def get_top_holdings_route(limit: int = Query(10, description="返回最大数量，默认10")):
     """获取按市值排序的重仓持股列表"""
     tm = get_trading_manager()
     pm = tm.get_portfolio_manager()
     holdings = get_top_holdings(pm, limit=limit)
-    return {
-        "code": 200,
-        "message": "success",
-        "data": holdings
-    }
+    return {"code": 200, "message": "success", "data": holdings}
 
 
 @router.get("/equity-curve", summary="获取权益曲线历史", response_model=BaseResponse)
-async def get_equity_curve_route(
-    days: int = Query(90, description="获取最近多少天，默认90")):
+async def get_equity_curve_route(days: int = Query(90, description="获取最近多少天，默认90")):
     """获取权益曲线历史数据"""
     # TODO: 实际应该从交易记录数据库中获取历史净值数据
     curve = generate_mock_equity_curve(days)
-    return {
-        "code": 200,
-        "message": "success",
-        "data": curve
-    }
+    return {"code": 200, "message": "success", "data": curve}
 
 
 def build_account_summary(pm: PortfolioManager) -> dict:
@@ -139,7 +124,7 @@ def build_account_summary(pm: PortfolioManager) -> dict:
 
     # 今日收益（实际应该计算，这里从统计数据获取
     # 简化实现，实际应从每日结算数据计算
-    daily_pnl = summary.get('daily_pnl', 0)
+    daily_pnl = summary.get("daily_pnl", 0)
     daily_pnl_pct = daily_pnl / total_asset if total_asset > 0 else 0
 
     return {
@@ -186,11 +171,7 @@ def build_asset_allocation(pm: PortfolioManager) -> List[dict]:
             pct = round((value / total_asset * 100), 1)
         else:
             pct = 0
-        result.append({
-                "name": name,
-                "value": pct,
-                "color": colors[i % len(colors)]
-            })
+        result.append({"name": name, "value": pct, "color": colors[i % len(colors)]})
 
     # 过滤掉0值
     result = [item for item in result if item["value"] > 0]
@@ -202,16 +183,12 @@ def get_top_holdings(pm: PortfolioManager, limit: int = 10) -> List[dict]:
     positions = pm.get_non_empty_positions()
 
     # 按市值降序排序
-    sorted_positions = sorted(
-        positions,
-        key=lambda p: p.get_market_value(),
-        reverse=True
-    )
+    sorted_positions = sorted(positions, key=lambda p: p.get_market_value(), reverse=True)
 
     # 取前N个
     result = []
     for pos in sorted_positions[:limit]:
-                result.append(pos.to_dict())
+        result.append(pos.to_dict())
 
     return result
 
@@ -229,6 +206,7 @@ def generate_mock_equity_curve(days: int) -> List[dict]:
 
     # 从initial_value到current_value生成一个增长曲线
     import random
+
     current = initial_value
     today = datetime.now()
 
@@ -241,15 +219,13 @@ def generate_mock_equity_curve(days: int) -> List[dict]:
         # 最后一天用真实值
         if i == min(days, 90) - 1:
             current = current_value
-        result.append({
-            "date": date_str,
-            "value": round(current, 2)
-        })
+        result.append({"date": date_str, "value": round(current, 2)})
 
     return result
 
 
 # ========== 订单管理接口 ==========
+
 
 @router.get("/orders/today", summary="获取今日订单列表", response_model=BaseResponse)
 async def get_today_orders():
@@ -265,11 +241,7 @@ async def get_today_orders():
     orders = om.query_orders(start_time=start_of_day, end_time=end_of_day)
     result = [order.to_dict() for order in orders]
 
-    return {
-        "code": 200,
-        "message": "success",
-        "data": result
-    }
+    return {"code": 200, "message": "success", "data": result}
 
 
 @router.get("/orders/pending", summary="获取待成交订单列表", response_model=BaseResponse)
@@ -282,17 +254,13 @@ async def get_pending_orders():
     orders = om.query_orders(status=pending_status)
     result = [order.to_dict() for order in orders]
 
-    return {
-        "code": 200,
-        "message": "success",
-        "data": result
-    }
+    return {"code": 200, "message": "success", "data": result}
 
 
 @router.get("/orders/history", summary="获取历史订单列表", response_model=BaseResponse)
 async def get_history_orders(
-    page: int = Query(1, description="页码"),
-    page_size: int = Query(20, description="每页数量")):
+    page: int = Query(1, description="页码"), page_size: int = Query(20, description="每页数量")
+):
     """获取历史订单（已成交、已取消、已拒绝），分页返回"""
     tm = get_trading_manager()
     om = tm.get_order_manager()
@@ -315,13 +283,8 @@ async def get_history_orders(
     return {
         "code": 200,
         "message": "success",
-        "data": {
-            "items": result,
-            "total": total,
-            "page": page,
-            "page_size": page_size
-        },
-        "total": total
+        "data": {"items": result, "total": total, "page": page, "page_size": page_size},
+        "total": total,
     }
 
 
@@ -353,14 +316,10 @@ async def get_order_statistics():
         "today_filled": len([o for o in today_orders if o.status == OrderStatus.FILLED]),
         "today_amount": today_amount,
         "today_commission": today_commission,
-        "pending": len(pending_orders)
+        "pending": len(pending_orders),
     }
 
-    return {
-        "code": 200,
-        "message": "success",
-        "data": stats
-    }
+    return {"code": 200, "message": "success", "data": stats}
 
 
 @router.post("/orders/cancel", summary="取消订单", response_model=BaseResponse)
@@ -372,22 +331,13 @@ async def cancel_order(order_id: str):
     success, error = om.cancel_order(order_id)
 
     if not success:
-        return {
-            "code": 400,
-            "message": error or "取消订单失败",
-            "data": None
-        }
+        return {"code": 400, "message": error or "取消订单失败", "data": None}
 
-    return {
-        "code": 200,
-        "message": "取消成功",
-        "data": {"success": True}
-    }
+    return {"code": 200, "message": "取消成功", "data": {"success": True}}
 
 
 @router.get("/orders/search", summary="搜索订单", response_model=BaseResponse)
-async def search_orders(
-    keyword: str = Query(..., description="搜索关键词（股票代码或名称）")):
+async def search_orders(keyword: str = Query(..., description="搜索关键词（股票代码或名称）")):
     """搜索订单，按股票代码或名称模糊匹配"""
     tm = get_trading_manager()
     om = tm.get_order_manager()
@@ -410,8 +360,4 @@ async def search_orders(
 
     result = [order.to_dict() for order in matched]
 
-    return {
-        "code": 200,
-        "message": "success",
-        "data": result
-    }
+    return {"code": 200, "message": "success", "data": result}

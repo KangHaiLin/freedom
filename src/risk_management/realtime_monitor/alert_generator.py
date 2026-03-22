@@ -2,10 +2,11 @@
 告警生成器
 根据风险级别生成不同渠道的告警
 """
-from typing import Dict, Any, List, Optional, Callable
-from datetime import datetime, timedelta
+
 import logging
 from collections import OrderedDict
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, List, Optional
 
 from src.risk_management.rule_engine.rule_result import RuleViolation
 
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 class AlertLevel:
     """告警级别常量"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -45,15 +47,15 @@ class Alert:
     def to_dict(self) -> Dict[str, Any]:
         """序列化为字典"""
         return {
-            'alert_id': self.alert_id,
-            'level': self.level,
-            'message': self.message,
-            'risk_type': self.risk_type,
-            'data': self.data,
-            'violation': self.violation.to_dict() if self.violation else None,
-            'created_at': self.created_at.isoformat(),
-            'sent': self.sent,
-            'sent_time': self.sent_time.isoformat() if self.sent_time else None,
+            "alert_id": self.alert_id,
+            "level": self.level,
+            "message": self.message,
+            "risk_type": self.risk_type,
+            "data": self.data,
+            "violation": self.violation.to_dict() if self.violation else None,
+            "created_at": self.created_at.isoformat(),
+            "sent": self.sent,
+            "sent_time": self.sent_time.isoformat() if self.sent_time else None,
         }
 
 
@@ -144,7 +146,7 @@ class AlertGenerator:
         # 保存到列表
         self._alerts.append(alert)
         if len(self._alerts) > self._max_cache_size:
-            self._alerts = self._alerts[-self._max_cache_size:]
+            self._alerts = self._alerts[-self._max_cache_size :]
 
         # 分发告警
         self._dispatch(alert)
@@ -209,7 +211,7 @@ class AlertGenerator:
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'total_alerts': len(self._alerts),
-            'cached_alerts': len(self._alert_cache),
+            "status": "ok",
+            "total_alerts": len(self._alerts),
+            "cached_alerts": len(self._alert_cache),
         }

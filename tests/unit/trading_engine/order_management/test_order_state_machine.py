@@ -1,10 +1,12 @@
 """
 Unit tests for order_state_machine.py
 """
+
 import pytest
-from src.trading_engine.order_management.order_state_machine import OrderStateMachine
-from src.trading_engine.order_management.order import Order
+
 from src.trading_engine.base.base_order import OrderSide, OrderStatus
+from src.trading_engine.order_management.order import Order
+from src.trading_engine.order_management.order_state_machine import OrderStateMachine
 
 
 def test_valid_transitions_from_pending():
@@ -75,13 +77,13 @@ def test_validate_transition_bad():
     """测试验证非法转换"""
     error = OrderStateMachine.validate_transition(OrderStatus.PENDING, OrderStatus.FILLED)
     assert error is not None
-    assert '无效状态转换' in error
-    assert 'PENDING → FILLED' in error
+    assert "无效状态转换" in error
+    assert "PENDING → FILLED" in error
 
 
 def test_transition_success():
     """测试执行转换成功"""
-    order = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
+    order = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
     assert order.status == OrderStatus.PENDING
     success = OrderStateMachine.transition(order, OrderStatus.SUBMITTED)
     assert success
@@ -90,7 +92,7 @@ def test_transition_success():
 
 def test_transition_fail():
     """测试执行转换失败"""
-    order = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
+    order = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
     # FILLED 是终态，不能转换到 PENDING
     order.submit()
     order.fill(1000, 10.0, order.created_at)

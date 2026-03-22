@@ -2,16 +2,17 @@
 模拟券商适配器
 用于回测和模拟交易，提供撮合成交功能
 """
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from src.trading_engine.base.base_broker_adapter import BaseBrokerAdapter
 from src.trading_engine.base.base_order import BaseOrder, OrderStatus
+from src.trading_engine.broker_adapter.interface import CommissionCalculator, CommissionConfig
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.trade_record.trade_record_manager import TradeRecordManager
 from src.trading_engine.trade_record.trade_record import TradeRecord
-from src.trading_engine.broker_adapter.interface import CommissionConfig, CommissionCalculator
+from src.trading_engine.trade_record.trade_record_manager import TradeRecordManager
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +65,11 @@ class SimulatedBrokerAdapter(BaseBrokerAdapter):
         """获取账户信息"""
         summary = self._portfolio.get_summary()
         return {
-            'total_asset': summary.get('total_asset', 0.0),
-            'cash': self._portfolio.get_cash(),
-            'market_value': summary.get('total_market_value', 0.0),
-            'available_cash': self._portfolio.get_cash(),
-            'frozen_cash': 0.0,  # 模拟券商不冻结资金
+            "total_asset": summary.get("total_asset", 0.0),
+            "cash": self._portfolio.get_cash(),
+            "market_value": summary.get("total_market_value", 0.0),
+            "available_cash": self._portfolio.get_cash(),
+            "frozen_cash": 0.0,  # 模拟券商不冻结资金
         }
 
     def get_available_cash(self) -> float:
@@ -80,12 +81,12 @@ class SimulatedBrokerAdapter(BaseBrokerAdapter):
         result = {}
         for pos in self._portfolio.get_non_empty_positions():
             result[pos.ts_code] = {
-                'ts_code': pos.ts_code,
-                'quantity': pos.quantity,
-                'avg_cost': pos.avg_cost,
-                'last_price': pos.last_price,
-                'market_value': pos.get_market_value(),
-                'unrealized_pnl': pos.get_unrealized_pnl(),
+                "ts_code": pos.ts_code,
+                "quantity": pos.quantity,
+                "avg_cost": pos.avg_cost,
+                "last_price": pos.last_price,
+                "market_value": pos.get_market_value(),
+                "unrealized_pnl": pos.get_unrealized_pnl(),
             }
         return result
 
@@ -95,12 +96,12 @@ class SimulatedBrokerAdapter(BaseBrokerAdapter):
         if pos is None or pos.is_empty():
             return None
         return {
-            'ts_code': pos.ts_code,
-            'quantity': pos.quantity,
-            'avg_cost': pos.avg_cost,
-            'last_price': pos.last_price,
-            'market_value': pos.get_market_value(),
-            'unrealized_pnl': pos.get_unrealized_pnl(),
+            "ts_code": pos.ts_code,
+            "quantity": pos.quantity,
+            "avg_cost": pos.avg_cost,
+            "last_price": pos.last_price,
+            "market_value": pos.get_market_value(),
+            "unrealized_pnl": pos.get_unrealized_pnl(),
         }
 
     def submit_order(self, order: BaseOrder) -> bool:
@@ -114,10 +115,16 @@ class SimulatedBrokerAdapter(BaseBrokerAdapter):
 
         # 检查可用资金/持仓
         if order.is_buy():
-            commission = self._commission_calc.calculate_buy_commission(order.quantity, order.price if order.price else self._last_prices.get(order.ts_code, 0))
-            required = order.quantity * (order.price if order.price else self._last_prices.get(order.ts_code, 0)) + commission
+            commission = self._commission_calc.calculate_buy_commission(
+                order.quantity, order.price if order.price else self._last_prices.get(order.ts_code, 0)
+            )
+            required = (
+                order.quantity * (order.price if order.price else self._last_prices.get(order.ts_code, 0)) + commission
+            )
             if self._portfolio.get_cash() < required:
-                logger.warning(f"资金不足，无法买单: {order.order_id}, 需要 {required}, 可用 {self._portfolio.get_cash()}")
+                logger.warning(
+                    f"资金不足，无法买单: {order.order_id}, 需要 {required}, 可用 {self._portfolio.get_cash()}"
+                )
                 order.reject()
                 return False
         else:
@@ -151,7 +158,9 @@ class SimulatedBrokerAdapter(BaseBrokerAdapter):
         pnl = self._portfolio.process_order_fill(order, quantity, current_price, commission)
 
         # 记录成交
-        pos_before = self._portfolio.get_position(order.ts_code).quantity if self._portfolio.get_position(order.ts_code) else 0
+        pos_before = (
+            self._portfolio.get_position(order.ts_code).quantity if self._portfolio.get_position(order.ts_code) else 0
+        )
         pos_after = pos_before + (quantity if order.is_buy() else -quantity)
 
         self._trade_records.add_record(
@@ -212,7 +221,7 @@ class SimulatedBrokerAdapter(BaseBrokerAdapter):
         self,
         status: Optional[List[OrderStatus]] = None,
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+        end_time: Optional[datetime] = None,
     ) -> List[BaseOrder]:
         """查询订单列表"""
         return []
@@ -246,8 +255,8 @@ class SimulatedBrokerAdapter(BaseBrokerAdapter):
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok' if self.connected else 'disconnected',
-            'connected': self.connected,
-            'account_id': self.account_id,
-            'type': 'simulated',
+            "status": "ok" if self.connected else "disconnected",
+            "connected": self.connected,
+            "account_id": self.account_id,
+            "type": "simulated",
         }

@@ -339,4 +339,3 @@ export interface UserInfo {
   role: string;
   api_key_valid: boolean;
 }
-

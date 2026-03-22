@@ -2,8 +2,9 @@
 券商适配器管理器
 管理多个券商适配器，提供统一访问入口
 """
-from typing import Dict, Any, Optional
+
 import logging
+from typing import Any, Dict, Optional
 
 from src.trading_engine.base.base_broker_adapter import BaseBrokerAdapter
 

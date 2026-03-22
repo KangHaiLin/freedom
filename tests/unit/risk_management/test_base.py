@@ -1,8 +1,11 @@
 """
 Unit tests for base classes
 """
-import pytest
+
 from datetime import datetime
+
+import pytest
+
 from src.risk_management.base.base_rule import BaseRule, RuleLevel, RuleType
 from src.risk_management.base.base_violation import BaseViolation, ViolationLevel
 
@@ -11,14 +14,14 @@ class TestRule(BaseRule):
     """Test concrete rule"""
 
     def check(self, context):
-        value = context.get('value', 0)
+        value = context.get("value", 0)
         return value <= 100
 
     def get_violation_message(self, context):
         return f"Value {context.get('value')} exceeds 100"
 
     def get_violation_details(self, context):
-        return {'value': context.get('value'), 'limit': 100}
+        return {"value": context.get("value"), "limit": 100}
 
 
 def test_base_rule_init():
@@ -65,8 +68,8 @@ def test_base_rule_check():
         rule_group="pre_trade",
     )
 
-    assert rule.check({'value': 50}) is True
-    assert rule.check({'value': 150}) is False
+    assert rule.check({"value": 50}) is True
+    assert rule.check({"value": 150}) is False
 
 
 def test_base_rule_to_dict():
@@ -81,10 +84,10 @@ def test_base_rule_to_dict():
 
     data = rule.to_dict()
 
-    assert data['rule_id'] == "test-001"
-    assert data['rule_name'] == "Test Rule"
-    assert data['level'] == "error"
-    assert data['description'] == "Test"
+    assert data["rule_id"] == "test-001"
+    assert data["rule_name"] == "Test Rule"
+    assert data["level"] == "error"
+    assert data["description"] == "Test"
 
 
 def test_base_violation_init():
@@ -94,13 +97,13 @@ def test_base_violation_init():
         rule_name="Test Rule",
         level=ViolationLevel.ERROR,
         message="Test violation",
-        details={'key': 'value'},
+        details={"key": "value"},
     )
 
     assert violation.rule_id == "test-001"
     assert violation.level == ViolationLevel.ERROR
     assert violation.message == "Test violation"
-    assert violation.details == {'key': 'value'}
+    assert violation.details == {"key": "value"}
 
 
 def test_base_violation_is_blocking():
@@ -118,12 +121,12 @@ def test_base_violation_to_dict():
         rule_name="Test Rule",
         level=ViolationLevel.WARNING,
         message="Test message",
-        details={'current': 150, 'limit': 100},
+        details={"current": 150, "limit": 100},
     )
 
     data = violation.to_dict()
 
-    assert data['rule_id'] == "test-001"
-    assert data['level'] == "warning"
-    assert data['message'] == "Test message"
-    assert 'current' in data['details']
+    assert data["rule_id"] == "test-001"
+    assert data["level"] == "warning"
+    assert data["message"] == "Test message"
+    assert "current" in data["details"]

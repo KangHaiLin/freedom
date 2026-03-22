@@ -1,13 +1,16 @@
 """
 API响应模型
 """
+
+from datetime import date, datetime
+from typing import Any, List, Optional, Union
+
 from pydantic import BaseModel, Field
-from typing import List, Optional, Any, Union
-from datetime import datetime, date
 
 
 class BaseResponse(BaseModel):
     """基础响应模型"""
+
     code: int = Field(200, description="响应码")
     message: str = Field("success", description="响应消息")
     data: Optional[Any] = Field(None, description="响应数据")
@@ -18,12 +21,14 @@ class BaseResponse(BaseModel):
 
 class MarketDataResponse(BaseResponse):
     """行情数据响应模型"""
+
     data: Optional[List[Any]] = Field(None, description="数据列表")
 
 
 # 行情数据模型
 class RealtimeQuoteResponse(BaseModel):
     """实时行情响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     time: datetime = Field(..., description="行情时间")
     price: float = Field(..., description="当前价格")
@@ -41,6 +46,7 @@ class RealtimeQuoteResponse(BaseModel):
 
 class DailyQuoteResponse(BaseModel):
     """日线行情响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     trade_date: date = Field(..., description="交易日期")
     open: float = Field(..., description="开盘价")
@@ -54,6 +60,7 @@ class DailyQuoteResponse(BaseModel):
 
 class MinuteQuoteResponse(BaseModel):
     """分钟线行情响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     trade_time: datetime = Field(..., description="交易时间")
     open: float = Field(..., description="开盘价")
@@ -66,6 +73,7 @@ class MinuteQuoteResponse(BaseModel):
 
 class TickQuoteResponse(BaseModel):
     """Tick行情响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     trade_time: datetime = Field(..., description="交易时间")
     price: float = Field(..., description="成交价格")
@@ -80,6 +88,7 @@ class TickQuoteResponse(BaseModel):
 # 基本面数据模型
 class StockBasicResponse(BaseModel):
     """股票基础信息响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     name: Optional[str] = Field(None, description="股票名称")
     exchange: Optional[str] = Field(None, description="交易所")
@@ -91,6 +100,7 @@ class StockBasicResponse(BaseModel):
 
 class FinancialIndicatorResponse(BaseModel):
     """财务指标响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     report_date: date = Field(..., description="报告期")
     eps: Optional[float] = Field(None, description="每股收益")
@@ -106,6 +116,7 @@ class FinancialIndicatorResponse(BaseModel):
 
 class IncomeStatementResponse(BaseModel):
     """利润表响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     report_date: date = Field(..., description="报告期")
     report_type: Optional[str] = Field(None, description="报告类型")
@@ -117,6 +128,7 @@ class IncomeStatementResponse(BaseModel):
 
 class BalanceSheetResponse(BaseModel):
     """资产负债表响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     report_date: date = Field(..., description="报告期")
     report_type: Optional[str] = Field(None, description="报告类型")
@@ -129,6 +141,7 @@ class BalanceSheetResponse(BaseModel):
 
 class CashFlowResponse(BaseModel):
     """现金流量表响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     report_date: date = Field(..., description="报告期")
     report_type: Optional[str] = Field(None, description="报告类型")
@@ -140,6 +153,7 @@ class CashFlowResponse(BaseModel):
 
 class HolderInfoResponse(BaseModel):
     """股东信息响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     announce_date: Optional[date] = Field(None, description="公告日期")
     holder_name: Optional[str] = Field(None, description="股东名称")
@@ -150,6 +164,7 @@ class HolderInfoResponse(BaseModel):
 
 class DividendResponse(BaseModel):
     """分红送股响应模型"""
+
     stock_code: str = Field(..., description="股票代码")
     announce_date: Optional[date] = Field(None, description="公告日期")
     ex_dividend_date: Optional[date] = Field(None, description="除权除息日")
@@ -162,6 +177,7 @@ class DividendResponse(BaseModel):
 # 监控数据模型
 class MonitorStatusResponse(BaseModel):
     """监控状态响应模型"""
+
     monitor_name: str = Field(..., description="监控名称")
     enabled: bool = Field(..., description="是否启用")
     interval: int = Field(..., description="监控间隔（秒）")
@@ -172,6 +188,7 @@ class MonitorStatusResponse(BaseModel):
 
 class AlertRecordResponse(BaseModel):
     """告警记录响应模型"""
+
     monitor_name: str = Field(..., description="监控名称")
     success: bool = Field(..., description="是否正常")
     message: str = Field(..., description="告警消息")
@@ -183,6 +200,7 @@ class AlertRecordResponse(BaseModel):
 
 class DashboardResponse(BaseModel):
     """监控面板响应模型"""
+
     monitor_count: int = Field(..., description="监控任务总数")
     running: bool = Field(..., description="调度器是否运行")
     monitor_status: List[MonitorStatusResponse] = Field(..., description="监控状态列表")
@@ -195,6 +213,7 @@ class DashboardResponse(BaseModel):
 # 系统数据模型
 class SystemStatusResponse(BaseModel):
     """系统状态响应模型"""
+
     system_info: dict = Field(..., description="系统信息")
     cpu_info: dict = Field(..., description="CPU信息")
     memory_info: dict = Field(..., description="内存信息")
@@ -207,6 +226,7 @@ class SystemStatusResponse(BaseModel):
 # 回测任务模型
 class BacktestResultResponse(BaseModel):
     """回测结果响应模型"""
+
     total_return: float = Field(..., description="总收益率")
     annual_return: float = Field(..., description="年化收益率")
     sharpe_ratio: float = Field(..., description="夏普比率")
@@ -217,6 +237,7 @@ class BacktestResultResponse(BaseModel):
 
 class BacktestTaskResponse(BaseModel):
     """回测任务响应模型"""
+
     id: str = Field(..., description="任务ID")
     name: str = Field(..., description="任务名称")
     strategy: str = Field(..., description="策略名称")
@@ -230,6 +251,7 @@ class BacktestTaskResponse(BaseModel):
 # 策略信息模型
 class StrategyInfoResponse(BaseModel):
     """策略信息响应模型"""
+
     id: str = Field(..., description="策略ID")
     name: str = Field(..., description="策略名称")
     type: str = Field(..., description="策略类型")

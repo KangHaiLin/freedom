@@ -2,21 +2,22 @@
 数据处理管理器
 统一管理所有数据处理器，提供统一处理接口，支持流水线执行
 """
-from typing import Any, Dict, List, Optional, Any
-import logging
 
-from .base_processor import BaseProcessor
-from .processor_result import ProcessingResult
-from .transformation_processor import TransformationProcessor
-from .aggregation_processor import AggregationProcessor
-from .indicator_calculator import IndicatorCalculator
-from .normalization_processor import NormalizationProcessor
-from .merging_processor import MergingProcessor
-from .batch_processor import BatchProcessor
-from .stream_processor import StreamProcessor
+import logging
+from typing import Any, Dict, List, Optional
 
 from common.config import settings
 from common.utils import DateTimeUtils
+
+from .aggregation_processor import AggregationProcessor
+from .base_processor import BaseProcessor
+from .batch_processor import BatchProcessor
+from .indicator_calculator import IndicatorCalculator
+from .merging_processor import MergingProcessor
+from .normalization_processor import NormalizationProcessor
+from .processor_result import ProcessingResult
+from .stream_processor import StreamProcessor
+from .transformation_processor import TransformationProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -33,52 +34,38 @@ class ProcessingManager:
         """初始化所有处理器实例"""
         try:
             # 数据转换
-            if self.config.get('enable_transformation', True):
-                self.processors['transformation'] = TransformationProcessor(
-                    self.config.get('transformation', {})
-                )
+            if self.config.get("enable_transformation", True):
+                self.processors["transformation"] = TransformationProcessor(self.config.get("transformation", {}))
                 logger.info("数据转换处理器已加载")
 
             # 数据聚合
-            if self.config.get('enable_aggregation', True):
-                self.processors['aggregation'] = AggregationProcessor(
-                    self.config.get('aggregation', {})
-                )
+            if self.config.get("enable_aggregation", True):
+                self.processors["aggregation"] = AggregationProcessor(self.config.get("aggregation", {}))
                 logger.info("数据聚合处理器已加载")
 
             # 指标计算
-            if self.config.get('enable_indicators', True):
-                self.processors['indicators'] = IndicatorCalculator(
-                    self.config.get('indicators', {})
-                )
+            if self.config.get("enable_indicators", True):
+                self.processors["indicators"] = IndicatorCalculator(self.config.get("indicators", {}))
                 logger.info("指标计算器已加载")
 
             # 归一化标准化
-            if self.config.get('enable_normalization', True):
-                self.processors['normalization'] = NormalizationProcessor(
-                    self.config.get('normalization', {})
-                )
+            if self.config.get("enable_normalization", True):
+                self.processors["normalization"] = NormalizationProcessor(self.config.get("normalization", {}))
                 logger.info("归一化处理器已加载")
 
             # 数据合并
-            if self.config.get('enable_merging', True):
-                self.processors['merging'] = MergingProcessor(
-                    self.config.get('merging', {})
-                )
+            if self.config.get("enable_merging", True):
+                self.processors["merging"] = MergingProcessor(self.config.get("merging", {}))
                 logger.info("数据合并处理器已加载")
 
             # 批处理
-            if self.config.get('enable_batch', True):
-                self.processors['batch'] = BatchProcessor(
-                    self.config.get('batch', {})
-                )
+            if self.config.get("enable_batch", True):
+                self.processors["batch"] = BatchProcessor(self.config.get("batch", {}))
                 logger.info("批处理器已加载")
 
             # 流处理
-            if self.config.get('enable_stream', True):
-                self.processors['stream'] = StreamProcessor(
-                    self.config.get('stream', {})
-                )
+            if self.config.get("enable_stream", True):
+                self.processors["stream"] = StreamProcessor(self.config.get("stream", {}))
                 logger.info("流处理器已加载")
 
             logger.info(f"数据处理管理器初始化完成，共加载{len(self.processors)}个处理器")
@@ -134,8 +121,8 @@ class ProcessingManager:
         """
         current_data = data
         for step in pipeline:
-            processor_name = step.get('processor')
-            params = step.get('params', {})
+            processor_name = step.get("processor")
+            params = step.get("params", {})
 
             processor = self.get_processor(processor_name)
             if not processor or not processor.enabled:
@@ -153,31 +140,31 @@ class ProcessingManager:
     # 便捷方法
     def transform(self, data: Any, **kwargs) -> Any:
         """数据转换便捷方法"""
-        return self.process('transformation', data, **kwargs)
+        return self.process("transformation", data, **kwargs)
 
     def aggregate(self, data: Any, **kwargs) -> Any:
         """数据聚合便捷方法"""
-        return self.process('aggregation', data, **kwargs)
+        return self.process("aggregation", data, **kwargs)
 
     def calculate_indicators(self, data: Any, **kwargs) -> Any:
         """计算指标便捷方法"""
-        return self.process('indicators', data, **kwargs)
+        return self.process("indicators", data, **kwargs)
 
     def normalize(self, data: Any, **kwargs) -> Any:
         """归一化便捷方法"""
-        return self.process('normalization', data, **kwargs)
+        return self.process("normalization", data, **kwargs)
 
     def merge(self, data: Any, **kwargs) -> Any:
         """数据合并便捷方法"""
-        return self.process('merging', data, **kwargs)
+        return self.process("merging", data, **kwargs)
 
     def batch_process(self, data: Any, **kwargs) -> ProcessingResult:
         """批处理便捷方法"""
-        return self.process('batch', data, **kwargs)
+        return self.process("batch", data, **kwargs)
 
     def stream_process(self, data: Any, **kwargs) -> Any:
         """流处理便捷方法"""
-        return self.process('stream', data, **kwargs)
+        return self.process("stream", data, **kwargs)
 
     def health_check(self) -> Dict:
         """健康检查"""
@@ -186,10 +173,10 @@ class ProcessingManager:
             processor_health[name] = processor.health_check()
 
         return {
-            'status': 'healthy',
-            'processor_count': len(self.processors),
-            'processors': processor_health,
-            'check_time': DateTimeUtils.now_str()
+            "status": "healthy",
+            "processor_count": len(self.processors),
+            "processors": processor_health,
+            "check_time": DateTimeUtils.now_str(),
         }
 
     def get_processor_info(self) -> List[Dict]:

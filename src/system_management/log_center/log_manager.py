@@ -2,9 +2,11 @@
 日志中心 - 日志管理器
 统一入口，支持多处理器同时输出，按级别过滤
 """
+
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional
+
 from .base_logger import BaseLogger, LogLevel, LogRecord
 from .console_logger import ConsoleLogger
 
@@ -17,10 +19,10 @@ class LogManager:
     单例模式
     """
 
-    _instance: Optional['LogManager'] = None
+    _instance: Optional["LogManager"] = None
     _lock: threading.Lock = threading.Lock()
 
-    def __new__(cls) -> 'LogManager':
+    def __new__(cls) -> "LogManager":
         """单例创建"""
         if cls._instance is None:
             with cls._lock:
@@ -31,7 +33,7 @@ class LogManager:
 
     def __init__(self):
         """初始化，只执行一次"""
-        if getattr(self, '_initialized', False):
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
         self._loggers: List[BaseLogger] = []
@@ -74,20 +76,24 @@ class LogManager:
 
         # 添加文件日志
         if log_file is not None:
-            self._loggers.append(FileLogger(
-                log_file=log_file,
-                min_level=default_level,
-                retention_days=retention_days,
-            ))
+            self._loggers.append(
+                FileLogger(
+                    log_file=log_file,
+                    min_level=default_level,
+                    retention_days=retention_days,
+                )
+            )
 
         # 添加结构化日志
         if enable_structured and structured_log_file is not None:
-            self._loggers.append(StructuredLogger(
-                output_file=structured_log_file,
-                min_level=default_level,
-            ))
+            self._loggers.append(
+                StructuredLogger(
+                    output_file=structured_log_file,
+                    min_level=default_level,
+                )
+            )
 
-    def add_logger(self, logger: BaseLogger) -> 'LogManager':
+    def add_logger(self, logger: BaseLogger) -> "LogManager":
         """添加日志处理器"""
         self._loggers.append(logger)
         return self
@@ -106,11 +112,11 @@ class LogManager:
 
     def set_trace_id(self, trace_id: Optional[str]) -> None:
         """设置当前线程的 trace_id"""
-        setattr(self._thread_local, 'trace_id', trace_id)
+        setattr(self._thread_local, "trace_id", trace_id)
 
     def get_trace_id(self) -> Optional[str]:
         """获取当前线程的 trace_id"""
-        return getattr(self._thread_local, 'trace_id', None)
+        return getattr(self._thread_local, "trace_id", None)
 
     def _should_log(self, level: LogLevel, module: str) -> bool:
         """检查是否应该记录该日志"""
@@ -178,7 +184,7 @@ class LogManager:
         """记录 CRITICAL 级别日志"""
         self.log(LogLevel.CRITICAL, message, module, context)
 
-    def get_logger(self, module: str) -> 'ModuleLogger':
+    def get_logger(self, module: str) -> "ModuleLogger":
         """获取绑定模块名的模块日志器"""
         return ModuleLogger(self, module)
 

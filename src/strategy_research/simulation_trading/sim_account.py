@@ -2,17 +2,19 @@
 模拟交易账户
 维护账户现金、持仓、权益
 """
-from typing import Dict, List, Optional
-from dataclasses import dataclass
 
-from src.strategy_research.base import TradeRecord, TradeDirection
-from src.strategy_research.base import PositionSnapshot
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
+from src.strategy_research.base import PositionSnapshot, TradeDirection, TradeRecord
+
 from .sim_config import SimulationConfig
 
 
 @dataclass
 class SimPosition:
     """模拟持仓"""
+
     ts_code: str
     quantity: int = 0
     avg_cost: float = 0.0

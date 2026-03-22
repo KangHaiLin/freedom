@@ -2,6 +2,7 @@
 配置中心 - 配置源抽象基类
 定义配置源的基础接口
 """
+
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, Optional
 

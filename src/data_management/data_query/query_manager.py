@@ -2,19 +2,20 @@
 查询管理器
 统一管理所有查询服务，提供统一的查询入口，支持查询路由、缓存、权限控制等
 """
-from typing import List, Dict, Optional, Any, Union
-import pandas as pd
-from datetime import datetime, date
-import time
-import logging
 
-from .base_query import QueryCondition, QueryResult
-from .market_data_query import MarketDataQuery
-from .fundamental_data_query import FundamentalDataQuery
-from ..data_storage.storage_manager import storage_manager
+import logging
+import time
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional, Union
+
 from common.config import settings
 from common.exceptions import QueryException
 from common.utils import DateTimeUtils
+
+from ..data_storage.storage_manager import storage_manager
+from .base_query import QueryCondition, QueryResult
+from .fundamental_data_query import FundamentalDataQuery
+from .market_data_query import MarketDataQuery
 
 logger = logging.getLogger(__name__)
 
@@ -22,22 +23,22 @@ logger = logging.getLogger(__name__)
 class QueryManager:
     """查询管理器，提供统一查询入口"""
 
-    def __init__(self):
-        self.storage_manager = storage_manager
+    def __init__(self, storage_manager_inject=None):
+        self.storage_manager = storage_manager_inject if storage_manager_inject is not None else storage_manager
         self.query_services = {}
         self._init_query_services()
 
         # 配置项
-        self.enable_cache = settings.QUERY_CONFIG.get('enable_cache', True)
-        self.max_query_limit = settings.QUERY_CONFIG.get('max_query_limit', 100000)
-        default_timeout = settings.QUERY_CONFIG.get('query_timeout', 30)
+        self.enable_cache = settings.QUERY_CONFIG.get("enable_cache", True)
+        self.max_query_limit = settings.QUERY_CONFIG.get("max_query_limit", 100000)
+        default_timeout = settings.QUERY_CONFIG.get("query_timeout", 30)
         self.query_timeout = max(5, default_timeout)  # 最少5秒超时
 
     def _init_query_services(self):
         """初始化查询服务"""
         try:
-            self.query_services['market'] = MarketDataQuery(self.storage_manager)
-            self.query_services['fundamental'] = FundamentalDataQuery(self.storage_manager)
+            self.query_services["market"] = MarketDataQuery(self.storage_manager)
+            self.query_services["fundamental"] = FundamentalDataQuery(self.storage_manager)
             logger.info("所有查询服务初始化完成")
         except Exception as e:
             logger.error(f"初始化查询服务失败：{e}")
@@ -61,7 +62,7 @@ class QueryManager:
         order_by: Optional[Union[str, List[str]]] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ) -> QueryResult:
         """
         统一查询入口
@@ -107,27 +108,20 @@ class QueryManager:
 
             # 记录慢查询
             if result.query_time > 5:
-                logger.warning(f"慢查询：服务={service_type}，条件={condition.to_dict()}，耗时={result.query_time:.3f}s")
+                logger.warning(
+                    f"慢查询：服务={service_type}，条件={condition.to_dict()}，耗时={result.query_time:.3f}s"
+                )
 
             return result
 
         except Exception as e:
             logger.error(f"查询失败：{e}")
-            return QueryResult(
-                data=[],
-                success=False,
-                message=str(e),
-                query_time=time.time() - start_time
-            )
+            return QueryResult(data=[], success=False, message=str(e), query_time=time.time() - start_time)
 
     # 快捷行情查询方法
-    def get_realtime_quote(
-        self,
-        stock_codes: List[str],
-        fields: Optional[List[str]] = None
-    ) -> QueryResult:
+    def get_realtime_quote(self, stock_codes: List[str], fields: Optional[List[str]] = None) -> QueryResult:
         """获取实时行情"""
-        return self.get_query_service('market').get_realtime_quote(stock_codes, fields)
+        return self.get_query_service("market").get_realtime_quote(stock_codes, fields)
 
     def get_daily_quote(
         self,
@@ -135,12 +129,10 @@ class QueryManager:
         start_date: Union[str, date, datetime],
         end_date: Optional[Union[str, date, datetime]] = None,
         fields: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> QueryResult:
         """获取日线行情"""
-        return self.get_query_service('market').get_daily_quote(
-            stock_codes, start_date, end_date, fields, **kwargs
-        )
+        return self.get_query_service("market").get_daily_quote(stock_codes, start_date, end_date, fields, **kwargs)
 
     def get_minute_quote(
         self,
@@ -149,36 +141,25 @@ class QueryManager:
         end_date: Optional[Union[str, date, datetime]] = None,
         period: int = 1,
         fields: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> QueryResult:
         """获取分钟线行情"""
-        return self.get_query_service('market').get_minute_quote(
+        return self.get_query_service("market").get_minute_quote(
             stock_codes, start_date, end_date, period, fields, **kwargs
         )
 
     def get_tick_quote(
-        self,
-        stock_codes: List[str],
-        date: Union[str, date, datetime],
-        fields: Optional[List[str]] = None,
-        **kwargs
+        self, stock_codes: List[str], date: Union[str, date, datetime], fields: Optional[List[str]] = None, **kwargs
     ) -> QueryResult:
         """获取Tick行情"""
-        return self.get_query_service('market').get_tick_quote(
-            stock_codes, date, fields, **kwargs
-        )
+        return self.get_query_service("market").get_tick_quote(stock_codes, date, fields, **kwargs)
 
     # 快捷基本面查询方法
     def get_stock_basic(
-        self,
-        stock_codes: Optional[List[str]] = None,
-        fields: Optional[List[str]] = None,
-        **kwargs
+        self, stock_codes: Optional[List[str]] = None, fields: Optional[List[str]] = None, **kwargs
     ) -> QueryResult:
         """获取股票基础信息"""
-        return self.get_query_service('fundamental').get_stock_basic(
-            stock_codes, fields, **kwargs
-        )
+        return self.get_query_service("fundamental").get_stock_basic(stock_codes, fields, **kwargs)
 
     def get_financial_indicator(
         self,
@@ -186,10 +167,10 @@ class QueryManager:
         start_date: Optional[Union[str, date, datetime]] = None,
         end_date: Optional[Union[str, date, datetime]] = None,
         fields: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> QueryResult:
         """获取财务指标"""
-        return self.get_query_service('fundamental').get_financial_indicator(
+        return self.get_query_service("fundamental").get_financial_indicator(
             stock_codes, start_date, end_date, fields, **kwargs
         )
 
@@ -199,10 +180,10 @@ class QueryManager:
         start_date: Optional[Union[str, date, datetime]] = None,
         end_date: Optional[Union[str, date, datetime]] = None,
         fields: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> QueryResult:
         """获取利润表"""
-        return self.get_query_service('fundamental').get_income_statement(
+        return self.get_query_service("fundamental").get_income_statement(
             stock_codes, start_date, end_date, fields, **kwargs
         )
 
@@ -212,10 +193,10 @@ class QueryManager:
         start_date: Optional[Union[str, date, datetime]] = None,
         end_date: Optional[Union[str, date, datetime]] = None,
         fields: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> QueryResult:
         """获取资产负债表"""
-        return self.get_query_service('fundamental').get_balance_sheet(
+        return self.get_query_service("fundamental").get_balance_sheet(
             stock_codes, start_date, end_date, fields, **kwargs
         )
 
@@ -225,17 +206,12 @@ class QueryManager:
         start_date: Optional[Union[str, date, datetime]] = None,
         end_date: Optional[Union[str, date, datetime]] = None,
         fields: Optional[List[str]] = None,
-        **kwargs
+        **kwargs,
     ) -> QueryResult:
         """获取现金流量表"""
-        return self.get_query_service('fundamental').get_cash_flow(
-            stock_codes, start_date, end_date, fields, **kwargs
-        )
+        return self.get_query_service("fundamental").get_cash_flow(stock_codes, start_date, end_date, fields, **kwargs)
 
-    def batch_query(
-        self,
-        queries: List[Dict]
-    ) -> List[QueryResult]:
+    def batch_query(self, queries: List[Dict]) -> List[QueryResult]:
         """
         批量查询
         Args:
@@ -249,11 +225,7 @@ class QueryManager:
                 result = self.query(**query_params)
                 results.append(result)
             except Exception as e:
-                results.append(QueryResult(
-                    data=[],
-                    success=False,
-                    message=str(e)
-                ))
+                results.append(QueryResult(data=[], success=False, message=str(e)))
         return results
 
     def health_check(self) -> Dict:
@@ -262,7 +234,7 @@ class QueryManager:
             "status": "healthy",
             "query_services": {},
             "storage_health": self.storage_manager.health_check(),
-            "check_time": DateTimeUtils.now_str()
+            "check_time": DateTimeUtils.now_str(),
         }
 
         for name, service in self.query_services.items():
@@ -273,29 +245,26 @@ class QueryManager:
                 result = service.query(test_condition)
                 health_status["query_services"][name] = {
                     "status": "healthy" if result.success else "unhealthy",
-                    "message": result.message
+                    "message": result.message,
                 }
             except Exception as e:
-                health_status["query_services"][name] = {
-                    "status": "unhealthy",
-                    "error": str(e)
-                }
+                health_status["query_services"][name] = {"status": "unhealthy", "error": str(e)}
                 health_status["status"] = "unhealthy"
 
         return health_status
 
     def clear_cache(self, pattern: Optional[str] = None) -> int:
         """清除查询缓存"""
-        redis_storage = self.storage_manager.get_storage_by_type('redis')
+        redis_storage = self.storage_manager.get_storage_by_type("redis")
         if not redis_storage:
             return 0
 
         try:
             if pattern:
-                deleted = redis_storage.delete('query_cache', {'pattern': pattern})
+                deleted = redis_storage.delete("query_cache", {"pattern": pattern})
             else:
-                deleted = redis_storage.delete('query_cache', {'pattern': 'query_cache:*'})
-                deleted += redis_storage.delete('fundamental_query_cache', {'pattern': 'fundamental_query_cache:*'})
+                deleted = redis_storage.delete("query_cache", {"pattern": "query_cache:*"})
+                deleted += redis_storage.delete("fundamental_query_cache", {"pattern": "fundamental_query_cache:*"})
             logger.info(f"清除缓存成功，删除键数：{deleted}")
             return deleted
         except Exception as e:

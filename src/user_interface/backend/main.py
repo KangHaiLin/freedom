@@ -1,24 +1,26 @@
 """
 FastAPI主程序
 """
-import sys
+
 import os
+import sys
 
 # 添加src目录到Python路径
 current_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.abspath(os.path.join(current_dir, '../../..'))
-src_dir = os.path.join(project_root, 'src')
+project_root = os.path.abspath(os.path.join(current_dir, "../../.."))
+src_dir = os.path.join(project_root, "src")
 sys.path.insert(0, project_root)
 sys.path.insert(0, src_dir)
 
+import logging
+from datetime import datetime
+from pathlib import Path
+
+import uvicorn
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-import uvicorn
-import logging
-from datetime import datetime
-from pathlib import Path
 
 # 初始化日志配置
 from common.config import settings
@@ -30,21 +32,21 @@ log_path.mkdir(parents=True, exist_ok=True)
 # 配置日志
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(),  # 输出到控制台
-        logging.FileHandler(log_path / 'app.log', encoding='utf-8'),  # 输出到文件
-    ]
+        logging.FileHandler(log_path / "app.log", encoding="utf-8"),  # 输出到文件
+    ],
 )
 
 from common.config import settings
 from common.exceptions import BaseAppException
-from .middleware import RequestLogMiddleware, RateLimitMiddleware
-from .routers import market, fundamental, monitor, system, portfolio
-from .websocket import ws_router
-from data_management.data_ingestion import init_all_data_sources
-from data_management.data_ingestion import register_sync_tasks_to_scheduler
+from data_management.data_ingestion import init_all_data_sources, register_sync_tasks_to_scheduler
 from system_management.task_scheduler.scheduler_manager import get_scheduler_manager
+
+from .middleware import RateLimitMiddleware, RequestLogMiddleware
+from .routers import fundamental, market, monitor, portfolio, system
+from .websocket import ws_router
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +56,9 @@ app = FastAPI(
     description="A股量化交易系统API接口",
     version=settings.VERSION,
     docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None
+    redoc_url="/redoc" if settings.DEBUG else None,
 )
+
 
 # 应用启动事件：初始化所有数据源
 @app.on_event("startup")
@@ -70,7 +73,7 @@ async def startup_event():
     scheduler = get_scheduler_manager()
     if not scheduler.is_running:
         # 从配置读取最大并发异步任务数
-        max_concurrent = settings.SYSTEM_CONFIG.get('max_concurrent_async_tasks', 10)
+        max_concurrent = settings.SYSTEM_CONFIG.get("max_concurrent_async_tasks", 10)
         scheduler.initialize(max_concurrent_async=max_concurrent)
         scheduler.start()
     # 注册同步任务
@@ -84,21 +87,22 @@ async def startup_event():
 
         def check_and_trigger_initial_sync():
             from data_management.data_ingestion import trigger_manual_sync
+
             try:
                 result = trigger_manual_sync("daily")
                 if result.get("success"):
-                    logger.info(f"初始全量同步完成: {result.get('message', '')}，共写入{result.get('total_records', 0)}条记录")
+                    logger.info(
+                        f"初始全量同步完成: {result.get('message', '')}，共写入{result.get('total_records', 0)}条记录"
+                    )
                 else:
                     logger.error(f"初始全量同步失败: {result.get('message', '')}")
             except Exception as e:
                 logger.error(f"初始全量同步执行异常: {e}", exc_info=True)
 
         # 提交为异步任务，不阻塞应用启动
-        scheduler.submit_async(
-            check_and_trigger_initial_sync,
-            task_name="初始日线全量同步"
-        )
+        scheduler.submit_async(check_and_trigger_initial_sync, task_name="初始日线全量同步")
         logger.info("已提交初始全量同步任务到异步队列")
+
 
 # 配置CORS
 app.add_middleware(
@@ -126,6 +130,7 @@ frontend_dist = Path(__file__).parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
     app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
+
 # 全局异常处理
 @app.exception_handler(BaseAppException)
 async def base_app_exception_handler(request: Request, exc: BaseAppException):
@@ -138,9 +143,10 @@ async def base_app_exception_handler(request: Request, exc: BaseAppException):
             "message": exc.message,
             "details": exc.details,
             "request_id": getattr(request.state, "request_id", ""),
-            "timestamp": datetime.now().isoformat()
-        }
+            "timestamp": datetime.now().isoformat(),
+        },
     )
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -153,9 +159,10 @@ async def global_exception_handler(request: Request, exc: Exception):
             "message": "服务器内部错误",
             "details": str(exc) if settings.DEBUG else None,
             "request_id": getattr(request.state, "request_id", ""),
-            "timestamp": datetime.now().isoformat()
-        }
+            "timestamp": datetime.now().isoformat(),
+        },
     )
+
 
 # 根路由
 @app.get("/", tags=["根路径"])
@@ -165,34 +172,22 @@ async def root():
         "message": "A股量化交易系统API服务",
         "version": settings.VERSION,
         "debug": settings.DEBUG,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }
+
 
 # 健康检查
 @app.get("/health", tags=["健康检查"])
 async def health_check():
-    return {
-        "code": 200,
-        "status": "healthy",
-        "timestamp": datetime.now().isoformat()
-    }
+    return {"code": 200, "status": "healthy", "timestamp": datetime.now().isoformat()}
+
 
 if __name__ == "__main__":
     if settings.debug:
         # 调试模式下使用reload需要传入字符串模块路径
         uvicorn.run(
-            "src.user_interface.backend.main:app",
-            host=settings.host,
-            port=settings.port,
-            reload=True,
-            workers=1
+            "src.user_interface.backend.main:app", host=settings.host, port=settings.port, reload=True, workers=1
         )
     else:
         # 生产模式直接传入app
-        uvicorn.run(
-            app,
-            host=settings.host,
-            port=settings.port,
-            reload=False,
-            workers=1
-        )
+        uvicorn.run(app, host=settings.host, port=settings.port, reload=False, workers=1)

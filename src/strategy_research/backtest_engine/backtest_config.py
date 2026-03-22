@@ -1,6 +1,7 @@
 """
 回测配置
 """
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -8,6 +9,7 @@ from typing import Optional
 @dataclass
 class BacktestConfig:
     """回测配置"""
+
     initial_capital: float = 1000000.0  # 初始资金
     start_date: any = None  # 开始日期
     end_date: any = None  # 结束日期

@@ -2,18 +2,21 @@
 回测引擎核心
 驱动回测执行，调用策略，撮合交易，计算结果
 """
-from typing import Dict, List, Any, Optional
-import pandas as pd
+
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 from src.strategy_research.base import (
-    BaseStrategy,
     BacktestResult,
-    TradeRecord,
+    BaseStrategy,
     DailyStats,
     PositionSnapshot,
     TradeDirection,
+    TradeRecord,
 )
+
 from .backtest_config import BacktestConfig
 from .backtest_portfolio import BacktestPortfolio
 from .performance_calculator import calculate_metrics
@@ -36,13 +39,13 @@ class BacktestEngine:
             config: 回测配置
         """
         self._data = data.copy()
-        self._data.sort_values(['trade_date', 'ts_code'], inplace=True)
+        self._data.sort_values(["trade_date", "ts_code"], inplace=True)
         self._config = config or BacktestConfig()
         self._portfolio = BacktestPortfolio(self._config)
 
         # 按日期分组
-        self._dates = sorted(self._data['trade_date'].unique())
-        self._date_data = {d: self._data[self._data['trade_date'] == d] for d in self._dates}
+        self._dates = sorted(self._data["trade_date"].unique())
+        self._date_data = {d: self._data[self._data["trade_date"] == d] for d in self._dates}
 
     def run(self, strategy: BaseStrategy) -> BacktestResult:
         """
@@ -75,7 +78,7 @@ class BacktestEngine:
             # 获取当前收盘价
             current_prices: Dict[str, float] = {}
             for _, row in bar_data.iterrows():
-                current_prices[row['ts_code']] = row['close']
+                current_prices[row["ts_code"]] = row["close"]
 
             # 获取当前信号
             signals = strategy.on_bar(bar_data, current_date, self._portfolio)
@@ -152,7 +155,7 @@ class BacktestEngine:
             last_date = filtered_dates[-1]
             last_prices: Dict[str, float] = {}
             for _, row in self._date_data[last_date].iterrows():
-                last_prices[row['ts_code']] = row['close']
+                last_prices[row["ts_code"]] = row["close"]
             close_trades = self._portfolio.close_all(last_prices)
             for trade in close_trades:
                 trade.trade_id = trade_id_counter
@@ -192,17 +195,17 @@ class BacktestEngine:
             final_capital=final_cap,
             total_pnl=total_pnl,
             total_pnl_pct=total_pnl_pct * 100,
-            annualized_return=metrics.get('annualized_return', 0),
-            sharpe_ratio=metrics.get('sharpe_ratio', 0),
-            max_drawdown=metrics.get('max_drawdown', 0),
-            max_drawdown_date=metrics.get('max_drawdown_date_valley', None),
-            win_rate=metrics.get('win_rate', 0),
-            profit_loss_ratio=metrics.get('profit_loss_ratio', 0),
-            total_trades=metrics.get('total_trades', 0),
-            winning_trades=metrics.get('winning_trades', 0),
-            losing_trades=metrics.get('losing_trades', 0),
-            avg_holding_days=metrics.get('avg_holding_days', 0),
-            turnover_rate=metrics.get('turnover_rate_annual', 0),
+            annualized_return=metrics.get("annualized_return", 0),
+            sharpe_ratio=metrics.get("sharpe_ratio", 0),
+            max_drawdown=metrics.get("max_drawdown", 0),
+            max_drawdown_date=metrics.get("max_drawdown_date_valley", None),
+            win_rate=metrics.get("win_rate", 0),
+            profit_loss_ratio=metrics.get("profit_loss_ratio", 0),
+            total_trades=metrics.get("total_trades", 0),
+            winning_trades=metrics.get("winning_trades", 0),
+            losing_trades=metrics.get("losing_trades", 0),
+            avg_holding_days=metrics.get("avg_holding_days", 0),
+            turnover_rate=metrics.get("turnover_rate_annual", 0),
             daily_stats=all_daily_stats,
             trades=all_trades,
             positions=all_position_snapshots,

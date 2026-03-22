@@ -2,14 +2,16 @@
 加密工具类
 提供密码加密、签名验证、Token生成等安全功能
 """
-import hmac
-import hashlib
+
 import base64
+import hashlib
+import hmac
 import json
 import secrets
-import bcrypt
-from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
+
+import bcrypt
 import jwt
 from pydantic_settings import BaseSettings
 
@@ -18,8 +20,9 @@ class CryptoUtils:
     """加密工具类"""
 
     @classmethod
-    def generate_hmac_signature(cls, params: Dict[str, Any], secret_key: str,
-                              timestamp: int = None, nonce: str = None) -> tuple[str, int, str]:
+    def generate_hmac_signature(
+        cls, params: Dict[str, Any], secret_key: str, timestamp: int = None, nonce: str = None
+    ) -> tuple[str, int, str]:
         """生成HMAC-SHA256签名
         Args:
             params: 请求参数
@@ -31,7 +34,7 @@ class CryptoUtils:
         """
         # 参数按字典序排序
         sorted_params = sorted(params.items(), key=lambda x: x[0])
-        param_str = '&'.join([f"{k}={v}" for k, v in sorted_params])
+        param_str = "&".join([f"{k}={v}" for k, v in sorted_params])
 
         # 添加时间戳和随机数
         timestamp = timestamp or int(datetime.now().timestamp())
@@ -40,18 +43,14 @@ class CryptoUtils:
         sign_str = f"{param_str}&timestamp={timestamp}&nonce={nonce}"
 
         # 生成签名
-        signature = hmac.new(
-            secret_key.encode(),
-            sign_str.encode(),
-            hashlib.sha256
-        ).hexdigest()
+        signature = hmac.new(secret_key.encode(), sign_str.encode(), hashlib.sha256).hexdigest()
 
         return signature, timestamp, nonce
 
     @classmethod
-    def verify_hmac_signature(cls, signature: str, params: Dict[str, Any],
-                            secret_key: str, timestamp: int, nonce: str,
-                            timeout: int = 300) -> bool:
+    def verify_hmac_signature(
+        cls, signature: str, params: Dict[str, Any], secret_key: str, timestamp: int, nonce: str, timeout: int = 300
+    ) -> bool:
         """验证HMAC-SHA256签名
         Args:
             signature: 待验证的签名
@@ -82,8 +81,8 @@ class CryptoUtils:
         """
         if salt is None:
             salt = bcrypt.gensalt()
-        hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-        return hashed.decode('utf-8'), salt.decode('utf-8')
+        hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+        return hashed.decode("utf-8"), salt.decode("utf-8")
 
     @classmethod
     def verify_password(cls, password: str, hashed_password: str, salt: str) -> bool:
@@ -95,8 +94,8 @@ class CryptoUtils:
         Returns:
             是否匹配
         """
-        calculated_hash = bcrypt.hashpw(password.encode('utf-8'), salt.encode('utf-8'))
-        return hmac.compare_digest(calculated_hash, hashed_password.encode('utf-8'))
+        calculated_hash = bcrypt.hashpw(password.encode("utf-8"), salt.encode("utf-8"))
+        return hmac.compare_digest(calculated_hash, hashed_password.encode("utf-8"))
 
     @classmethod
     def generate_token(cls, length: int = 32) -> str:
@@ -114,11 +113,13 @@ class CryptoUtils:
     def verify_api_key(cls, api_key: str) -> bool:
         """验证API Key是否有效"""
         from common.config import settings
+
         return api_key in settings.API_KEYS
 
     @classmethod
-    def generate_jwt_token(cls, user_id: int, username: str, role: str,
-                          secret_key: str, expire_minutes: int = 120) -> str:
+    def generate_jwt_token(
+        cls, user_id: int, username: str, role: str, secret_key: str, expire_minutes: int = 120
+    ) -> str:
         """生成JWT Token"""
         payload = {
             "user_id": user_id,
@@ -126,7 +127,7 @@ class CryptoUtils:
             "role": role,
             "exp": datetime.utcnow() + timedelta(minutes=expire_minutes),
             "iat": datetime.utcnow(),
-            "type": "access"
+            "type": "access",
         }
         return jwt.encode(payload, secret_key, algorithm="HS256")
 
@@ -137,7 +138,7 @@ class CryptoUtils:
             "user_id": user_id,
             "exp": datetime.utcnow() + timedelta(days=expire_days),
             "iat": datetime.utcnow(),
-            "type": "refresh"
+            "type": "refresh",
         }
         return jwt.encode(payload, secret_key, algorithm="HS256")
 
@@ -156,22 +157,22 @@ class CryptoUtils:
     @classmethod
     def md5(cls, data: str) -> str:
         """MD5加密"""
-        return hashlib.md5(data.encode('utf-8')).hexdigest()
+        return hashlib.md5(data.encode("utf-8")).hexdigest()
 
     @classmethod
     def sha256(cls, data: str) -> str:
         """SHA256加密"""
-        return hashlib.sha256(data.encode('utf-8')).hexdigest()
+        return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
     @classmethod
     def base64_encode(cls, data: str) -> str:
         """Base64编码"""
-        return base64.b64encode(data.encode('utf-8')).decode('utf-8')
+        return base64.b64encode(data.encode("utf-8")).decode("utf-8")
 
     @classmethod
     def base64_decode(cls, data: str) -> str:
         """Base64解码"""
-        return base64.b64decode(data.encode('utf-8')).decode('utf-8')
+        return base64.b64decode(data.encode("utf-8")).decode("utf-8")
 
     @classmethod
     def generate_salt(cls, length: int = 16) -> str:
@@ -182,6 +183,7 @@ class CryptoUtils:
     def aes_encrypt(cls, data: str, key: str) -> str:
         """AES加密（简化版，生产环境建议使用pycryptodome完整实现）"""
         from cryptography.fernet import Fernet
+
         # 确保key是32位url安全的base64编码
         key_bytes = cls.sha256(key).encode()[:32]
         fernet_key = base64.urlsafe_b64encode(key_bytes)
@@ -193,6 +195,7 @@ class CryptoUtils:
         """AES解密"""
         try:
             from cryptography.fernet import Fernet
+
             key_bytes = cls.sha256(key).encode()[:32]
             fernet_key = base64.urlsafe_b64encode(key_bytes)
             f = Fernet(fernet_key)
@@ -212,22 +215,22 @@ class CryptoUtils:
         if not data:
             return ""
 
-        if data_type == 'phone':
+        if data_type == "phone":
             # 手机号：138****1234
             return data[:3] + "****" + data[-4:] if len(data) >= 11 else data
-        elif data_type == 'email':
+        elif data_type == "email":
             # 邮箱：a****@example.com
-            parts = data.split('@')
+            parts = data.split("@")
             if len(parts) == 2:
                 return parts[0][:1] + "****@" + parts[1]
             return data
-        elif data_type == 'idcard':
+        elif data_type == "idcard":
             # 身份证：1101****1234
             return data[:4] + "****" + data[-4:] if len(data) >= 18 else data
-        elif data_type == 'bankcard':
+        elif data_type == "bankcard":
             # 银行卡：6222 **** **** 1234
             return data[:4] + " **** **** " + data[-4:] if len(data) >= 16 else data
-        elif data_type == 'name':
+        elif data_type == "name":
             # 姓名：张**
             return data[:1] + "**" if len(data) >= 2 else data
         else:
@@ -235,4 +238,4 @@ class CryptoUtils:
             if len(data) <= 4:
                 return data
             half = len(data) // 2
-            return data[:half-2] + "****" + data[half+2:]
+            return data[: half - 2] + "****" + data[half + 2 :]

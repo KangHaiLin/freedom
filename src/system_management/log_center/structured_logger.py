@@ -2,9 +2,11 @@
 日志中心 - JSON结构化日志处理器
 支持包含上下文信息和trace_id链路追踪
 """
+
 import json
-from typing import Optional, IO
 from pathlib import Path
+from typing import IO, Optional
+
 from .base_logger import BaseLogger, LogLevel, LogRecord
 
 
@@ -37,10 +39,11 @@ class StructuredLogger(BaseLogger):
         if output_file is not None:
             output_path = Path(output_file).resolve()
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            self._file = open(output_path, 'a', encoding='utf-8')
+            self._file = open(output_path, "a", encoding="utf-8")
             self._close_on_exit = True
         else:
             import sys
+
             self._file = sys.stdout
 
     def log(self, record: LogRecord) -> None:
@@ -54,12 +57,12 @@ class StructuredLogger(BaseLogger):
         json_line = json.dumps(
             log_dict,
             ensure_ascii=self.ensure_ascii,
-            separators=(',', ':'),
+            separators=(",", ":"),
         )
 
         # 写入一行
         if self._file is not None:
-            self._file.write(json_line + '\n')
+            self._file.write(json_line + "\n")
             self._file.flush()
 
     def __del__(self):

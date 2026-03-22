@@ -1,15 +1,17 @@
 """
 数据采集模块单元测试
 """
-import pytest
-import pandas as pd
+
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-from data_management.data_ingestion.market_collector import MarketDataCollector
-from data_management.data_ingestion.tushare_collector import TushareCollector
+import pandas as pd
+import pytest
+
 from data_management.data_ingestion.data_cleaner import DataCleaner
 from data_management.data_ingestion.data_source_manager import DataSourceManager
+from data_management.data_ingestion.market_collector import MarketDataCollector
+from data_management.data_ingestion.tushare_collector import TushareCollector
 
 
 class TestMarketCollector:
@@ -85,8 +87,24 @@ class TestDataCleaner:
     def test_clean_daily_quote(self):
         """测试清洗日线行情数据"""
         data = [
-            {"stock_code": "000001.SZ", "trade_date": "2023-01-01", "open": 10.0, "high": 10.5, "low": 9.5, "close": 10.2, "volume": 100000},
-            {"stock_code": "000001.SZ", "trade_date": "2023-01-02", "open": 10.2, "high": 9.8, "low": 10.5, "close": 10.3, "volume": 200000},  # 价格不合理
+            {
+                "stock_code": "000001.SZ",
+                "trade_date": "2023-01-01",
+                "open": 10.0,
+                "high": 10.5,
+                "low": 9.5,
+                "close": 10.2,
+                "volume": 100000,
+            },
+            {
+                "stock_code": "000001.SZ",
+                "trade_date": "2023-01-02",
+                "open": 10.2,
+                "high": 9.8,
+                "low": 10.5,
+                "close": 10.3,
+                "volume": 200000,
+            },  # 价格不合理
         ]
         df = pd.DataFrame(data)
 
@@ -97,6 +115,7 @@ class TestDataCleaner:
     def test_validate_data_quality(self):
         """测试数据质量校验"""
         from datetime import datetime
+
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         data = [
             {"stock_code": "000001.SZ", "time": current_time, "price": 10.0, "volume": 1000},
@@ -142,6 +161,7 @@ class TestDataSourceManager:
     def test_select_best_source(self):
         """测试选择最优数据源"""
         import random
+
         # 设置随机种子保证测试确定性
         random.seed(42)
         self.manager.add_source(self.source1)

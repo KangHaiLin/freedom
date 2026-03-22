@@ -2,9 +2,10 @@
 订单拆分器
 将大单根据流动性和风险偏好拆分成多个小单
 """
-from typing import List, Tuple, Optional
+
 import math
 import random
+from typing import List, Optional, Tuple
 
 from src.trading_engine.base.base_order import OrderSide
 
@@ -82,7 +83,9 @@ class OrderSplitter:
         return chunks
 
     @staticmethod
-    def split_random(total_quantity: int, num_splits: int, min_chunk: int = 100, max_chunk: int = 10000, seed: int = None) -> List[int]:
+    def split_random(
+        total_quantity: int, num_splits: int, min_chunk: int = 100, max_chunk: int = 10000, seed: int = None
+    ) -> List[int]:
         """
         随机拆分，减少可预测性
         Args:
@@ -178,7 +181,7 @@ class OrderSplitter:
             for i in range(len(chunks)):
                 add = per_chunk + (1 if i < remainder else 0)
                 new_size = min(chunks[i] + add, max_chunk)
-                remaining -= (new_size - chunks[i])
+                remaining -= new_size - chunks[i]
                 chunks[i] = new_size
             if remaining > 0:
                 chunks[-1] += remaining

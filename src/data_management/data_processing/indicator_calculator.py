@@ -3,13 +3,16 @@
 计算A股常用技术指标：SMA、EMA、RSI、KDJ、MACD、BOLL、VWAP、OBV、ADX
 以及基本面衍生指标：PE衍生、PB衍生、ROE衍生、同比环比增长率
 """
-from typing import Any, Dict, List, Optional, Union
-import pandas as pd
-import numpy as np
+
 import logging
+from typing import Any, Dict, List, Optional, Union
+
+import numpy as np
+import pandas as pd
+
+from common.utils import NumberUtils
 
 from .base_processor import BaseProcessor
-from common.utils import NumberUtils
 
 logger = logging.getLogger(__name__)
 
@@ -20,15 +23,18 @@ class IndicatorCalculator(BaseProcessor):
     def __init__(self, config: Dict = None):
         super().__init__(config=config)
         # 默认参数配置
-        self.default_params = self.config.get('default_params', {
-            'sma': {'windows': [5, 10, 20, 60]},
-            'ema': {'windows': [12, 26]},
-            'rsi': {'window': 14},
-            'kdj': {'n': 9, 'm1': 3, 'm2': 3},
-            'macd': {'fast': 12, 'slow': 26, 'signal': 9},
-            'boll': {'window': 20, 'std_dev': 2},
-            'adx': {'window': 14},
-        })
+        self.default_params = self.config.get(
+            "default_params",
+            {
+                "sma": {"windows": [5, 10, 20, 60]},
+                "ema": {"windows": [12, 26]},
+                "rsi": {"window": 14},
+                "kdj": {"n": 9, "m1": 3, "m2": 3},
+                "macd": {"fast": 12, "slow": 26, "signal": 9},
+                "boll": {"window": 20, "std_dev": 2},
+                "adx": {"window": 14},
+            },
+        )
 
     def process(self, data: Any, indicators: Optional[List[str]] = None, **kwargs) -> pd.DataFrame:
         """
@@ -49,28 +55,28 @@ class IndicatorCalculator(BaseProcessor):
             return data
 
         df = data.copy()
-        indicators = indicators or ['sma', 'ema', 'rsi', 'kdj', 'macd', 'boll', 'vwap', 'obv', 'adx']
+        indicators = indicators or ["sma", "ema", "rsi", "kdj", "macd", "boll", "vwap", "obv", "adx"]
 
         for indicator in indicators:
             try:
-                if indicator == 'sma':
-                    df = self.calculate_sma(df, **kwargs.get('sma', {}))
-                elif indicator == 'ema':
-                    df = self.calculate_ema(df, **kwargs.get('ema', {}))
-                elif indicator == 'rsi':
-                    df = self.calculate_rsi(df, **kwargs.get('rsi', {}))
-                elif indicator == 'kdj':
-                    df = self.calculate_kdj(df, **kwargs.get('kdj', {}))
-                elif indicator == 'macd':
-                    df = self.calculate_macd(df, **kwargs.get('macd', {}))
-                elif indicator == 'boll':
-                    df = self.calculate_boll(df, **kwargs.get('boll', {}))
-                elif indicator == 'vwap':
+                if indicator == "sma":
+                    df = self.calculate_sma(df, **kwargs.get("sma", {}))
+                elif indicator == "ema":
+                    df = self.calculate_ema(df, **kwargs.get("ema", {}))
+                elif indicator == "rsi":
+                    df = self.calculate_rsi(df, **kwargs.get("rsi", {}))
+                elif indicator == "kdj":
+                    df = self.calculate_kdj(df, **kwargs.get("kdj", {}))
+                elif indicator == "macd":
+                    df = self.calculate_macd(df, **kwargs.get("macd", {}))
+                elif indicator == "boll":
+                    df = self.calculate_boll(df, **kwargs.get("boll", {}))
+                elif indicator == "vwap":
                     df = self.calculate_vwap(df)
-                elif indicator == 'obv':
+                elif indicator == "obv":
                     df = self.calculate_obv(df)
-                elif indicator == 'adx':
-                    df = self.calculate_adx(df, **kwargs.get('adx', {}))
+                elif indicator == "adx":
+                    df = self.calculate_adx(df, **kwargs.get("adx", {}))
                 else:
                     logger.warning(f"{self.name}: 未知的指标类型: {indicator}")
             except Exception as e:
@@ -78,7 +84,7 @@ class IndicatorCalculator(BaseProcessor):
 
         return df
 
-    def calculate_sma(self, df: pd.DataFrame, windows: List[int] = None, close_col: str = 'close') -> pd.DataFrame:
+    def calculate_sma(self, df: pd.DataFrame, windows: List[int] = None, close_col: str = "close") -> pd.DataFrame:
         """
         计算简单移动平均 (Simple Moving Average)
         Args:
@@ -88,7 +94,7 @@ class IndicatorCalculator(BaseProcessor):
         Returns:
             添加了sma列的DataFrame
         """
-        windows = windows or self.default_params['sma']['windows']
+        windows = windows or self.default_params["sma"]["windows"]
         df = df.copy()
 
         if close_col not in df.columns:
@@ -96,12 +102,12 @@ class IndicatorCalculator(BaseProcessor):
             return df
 
         for window in windows:
-            df[f'sma_{window}'] = df[close_col].rolling(window=window).mean()
-            df[f'sma_{window}'] = df[f'sma_{window}'].apply(NumberUtils.round_price).astype(float)
+            df[f"sma_{window}"] = df[close_col].rolling(window=window).mean()
+            df[f"sma_{window}"] = df[f"sma_{window}"].apply(NumberUtils.round_price).astype(float)
 
         return df
 
-    def calculate_ema(self, df: pd.DataFrame, windows: List[int] = None, close_col: str = 'close') -> pd.DataFrame:
+    def calculate_ema(self, df: pd.DataFrame, windows: List[int] = None, close_col: str = "close") -> pd.DataFrame:
         """
         计算指数移动平均 (Exponential Moving Average)
         Args:
@@ -111,7 +117,7 @@ class IndicatorCalculator(BaseProcessor):
         Returns:
             添加了ema列的DataFrame
         """
-        windows = windows or self.default_params['ema']['windows']
+        windows = windows or self.default_params["ema"]["windows"]
         df = df.copy()
 
         if close_col not in df.columns:
@@ -119,12 +125,12 @@ class IndicatorCalculator(BaseProcessor):
             return df
 
         for window in windows:
-            df[f'ema_{window}'] = df[close_col].ewm(span=window, adjust=False).mean()
-            df[f'ema_{window}'] = df[f'ema_{window}'].apply(NumberUtils.round_price).astype(float)
+            df[f"ema_{window}"] = df[close_col].ewm(span=window, adjust=False).mean()
+            df[f"ema_{window}"] = df[f"ema_{window}"].apply(NumberUtils.round_price).astype(float)
 
         return df
 
-    def calculate_rsi(self, df: pd.DataFrame, window: int = None, close_col: str = 'close') -> pd.DataFrame:
+    def calculate_rsi(self, df: pd.DataFrame, window: int = None, close_col: str = "close") -> pd.DataFrame:
         """
         计算相对强弱指数 (Relative Strength Index)
         公式: RSI = 100 - 100 / (1 + RS), RS = 平均涨幅 / 平均跌幅
@@ -135,7 +141,7 @@ class IndicatorCalculator(BaseProcessor):
         Returns:
             添加了rsi列的DataFrame
         """
-        window = window or self.default_params['rsi']['window']
+        window = window or self.default_params["rsi"]["window"]
         df = df.copy()
 
         if close_col not in df.columns:
@@ -155,7 +161,7 @@ class IndicatorCalculator(BaseProcessor):
 
         # 计算RS和RSI
         rs = avg_gain / avg_loss
-        df[f'rsi_{window}'] = (100 - (100 / (1 + rs))).round(2)
+        df[f"rsi_{window}"] = (100 - (100 / (1 + rs))).round(2)
 
         return df
 
@@ -165,9 +171,9 @@ class IndicatorCalculator(BaseProcessor):
         n: int = None,
         m1: int = None,
         m2: int = None,
-        high_col: str = 'high',
-        low_col: str = 'low',
-        close_col: str = 'close'
+        high_col: str = "high",
+        low_col: str = "low",
+        close_col: str = "close",
     ) -> pd.DataFrame:
         """
         计算KDJ指标
@@ -183,9 +189,9 @@ class IndicatorCalculator(BaseProcessor):
         Returns:
             添加了k, d, j列的DataFrame
         """
-        n = n or self.default_params['kdj']['n']
-        m1 = m1 or self.default_params['kdj']['m1']
-        m2 = m2 or self.default_params['kdj']['m2']
+        n = n or self.default_params["kdj"]["n"]
+        m1 = m1 or self.default_params["kdj"]["m1"]
+        m2 = m2 or self.default_params["kdj"]["m2"]
         df = df.copy()
 
         for col in [high_col, low_col, close_col]:
@@ -209,24 +215,19 @@ class IndicatorCalculator(BaseProcessor):
         d.iloc[0] = 50
 
         for i in range(1, len(df)):
-            k.iloc[i] = (1/m1) * rsv.iloc[i] + ((m1-1)/m1) * k.iloc[i-1]
-            d.iloc[i] = (1/m2) * k.iloc[i] + ((m2-1)/m2) * d.iloc[i-1]
+            k.iloc[i] = (1 / m1) * rsv.iloc[i] + ((m1 - 1) / m1) * k.iloc[i - 1]
+            d.iloc[i] = (1 / m2) * k.iloc[i] + ((m2 - 1) / m2) * d.iloc[i - 1]
 
         j = 3 * k - 2 * d
 
-        df[f'k_{n}'] = k.round(2)
-        df[f'd_{n}'] = d.round(2)
-        df[f'j_{n}'] = j.round(2)
+        df[f"k_{n}"] = k.round(2)
+        df[f"d_{n}"] = d.round(2)
+        df[f"j_{n}"] = j.round(2)
 
         return df
 
     def calculate_macd(
-        self,
-        df: pd.DataFrame,
-        fast: int = None,
-        slow: int = None,
-        signal: int = None,
-        close_col: str = 'close'
+        self, df: pd.DataFrame, fast: int = None, slow: int = None, signal: int = None, close_col: str = "close"
     ) -> pd.DataFrame:
         """
         计算MACD指标
@@ -241,9 +242,9 @@ class IndicatorCalculator(BaseProcessor):
         Returns:
             添加了dif, dea, macd柱状图列的DataFrame
         """
-        fast = fast or self.default_params['macd']['fast']
-        slow = slow or self.default_params['macd']['slow']
-        signal = signal or self.default_params['macd']['signal']
+        fast = fast or self.default_params["macd"]["fast"]
+        slow = slow or self.default_params["macd"]["slow"]
+        signal = signal or self.default_params["macd"]["signal"]
         df = df.copy()
 
         if close_col not in df.columns:
@@ -259,18 +260,14 @@ class IndicatorCalculator(BaseProcessor):
         dea = dif.ewm(span=signal, adjust=False).mean()
         macd_bar = 2 * (dif - dea)
 
-        df['macd_dif'] = dif.round(4)
-        df['macd_dea'] = dea.round(4)
-        df['macd_bar'] = macd_bar.round(4)
+        df["macd_dif"] = dif.round(4)
+        df["macd_dea"] = dea.round(4)
+        df["macd_bar"] = macd_bar.round(4)
 
         return df
 
     def calculate_boll(
-        self,
-        df: pd.DataFrame,
-        window: int = None,
-        std_dev: int = None,
-        close_col: str = 'close'
+        self, df: pd.DataFrame, window: int = None, std_dev: int = None, close_col: str = "close"
     ) -> pd.DataFrame:
         """
         计算布林带 (Bollinger Bands)
@@ -284,8 +281,8 @@ class IndicatorCalculator(BaseProcessor):
         Returns:
             添加了布林带三轨的DataFrame
         """
-        window = window or self.default_params['boll']['window']
-        std_dev = std_dev or self.default_params['boll']['std_dev']
+        window = window or self.default_params["boll"]["window"]
+        std_dev = std_dev or self.default_params["boll"]["std_dev"]
         df = df.copy()
 
         if close_col not in df.columns:
@@ -296,19 +293,19 @@ class IndicatorCalculator(BaseProcessor):
         middle = df[close_col].rolling(window=window).mean()
         std = df[close_col].rolling(window=window).std()
 
-        df[f'boll_mid_{window}'] = middle.apply(NumberUtils.round_price).astype(float)
-        df[f'boll_up_{window}'] = (middle + std_dev * std).apply(NumberUtils.round_price).astype(float)
-        df[f'boll_down_{window}'] = (middle - std_dev * std).apply(NumberUtils.round_price).astype(float)
+        df[f"boll_mid_{window}"] = middle.apply(NumberUtils.round_price).astype(float)
+        df[f"boll_up_{window}"] = (middle + std_dev * std).apply(NumberUtils.round_price).astype(float)
+        df[f"boll_down_{window}"] = (middle - std_dev * std).apply(NumberUtils.round_price).astype(float)
 
         return df
 
     def calculate_vwap(
         self,
         df: pd.DataFrame,
-        close_col: str = 'close',
-        volume_col: str = 'volume',
+        close_col: str = "close",
+        volume_col: str = "volume",
         group_by_date: bool = True,
-        date_col: str = 'trade_date'
+        date_col: str = "trade_date",
     ) -> pd.DataFrame:
         """
         计算成交量加权平均价格 (Volume Weighted Average Price)
@@ -330,24 +327,19 @@ class IndicatorCalculator(BaseProcessor):
 
         if group_by_date and date_col in df.columns:
             # 按日期分组计算累计VWAP
-            df['cum_price_vol'] = (df[close_col] * df[volume_col]).groupby(df[date_col]).cumsum()
-            df['cum_volume'] = df[volume_col].groupby(df[date_col]).cumsum()
-            df['vwap'] = (df['cum_price_vol'] / df['cum_volume']).apply(NumberUtils.round_price).astype(float)
-            df = df.drop(['cum_price_vol', 'cum_volume'], axis=1)
+            df["cum_price_vol"] = (df[close_col] * df[volume_col]).groupby(df[date_col]).cumsum()
+            df["cum_volume"] = df[volume_col].groupby(df[date_col]).cumsum()
+            df["vwap"] = (df["cum_price_vol"] / df["cum_volume"]).apply(NumberUtils.round_price).astype(float)
+            df = df.drop(["cum_price_vol", "cum_volume"], axis=1)
         else:
             # 全局累计VWAP
             cum_price_vol = (df[close_col] * df[volume_col]).cumsum()
             cum_volume = df[volume_col].cumsum()
-            df['vwap'] = (cum_price_vol / cum_volume).apply(NumberUtils.round_price)
+            df["vwap"] = (cum_price_vol / cum_volume).apply(NumberUtils.round_price)
 
         return df
 
-    def calculate_obv(
-        self,
-        df: pd.DataFrame,
-        close_col: str = 'close',
-        volume_col: str = 'volume'
-    ) -> pd.DataFrame:
+    def calculate_obv(self, df: pd.DataFrame, close_col: str = "close", volume_col: str = "volume") -> pd.DataFrame:
         """
         计算能量潮 (On-Balance Volume)
         公式: 收盘价上涨 -> OBV += 成交量; 收盘价下跌 -> OBV -= 成交量
@@ -369,7 +361,7 @@ class IndicatorCalculator(BaseProcessor):
         obv = df[volume_col].copy()
         obv[delta < 0] = -obv[delta < 0]
 
-        df['obv'] = obv.cumsum()
+        df["obv"] = obv.cumsum()
 
         return df
 
@@ -377,9 +369,9 @@ class IndicatorCalculator(BaseProcessor):
         self,
         df: pd.DataFrame,
         window: int = None,
-        high_col: str = 'high',
-        low_col: str = 'low',
-        close_col: str = 'close'
+        high_col: str = "high",
+        low_col: str = "low",
+        close_col: str = "close",
     ) -> pd.DataFrame:
         """
         计算平均趋向指数 (Average Directional Index)
@@ -389,7 +381,7 @@ class IndicatorCalculator(BaseProcessor):
         Returns:
             添加了adx列的DataFrame
         """
-        window = window or self.default_params['adx']['window']
+        window = window or self.default_params["adx"]["window"]
         df = df.copy()
 
         for col in [high_col, low_col, close_col]:
@@ -419,20 +411,20 @@ class IndicatorCalculator(BaseProcessor):
         dx = 100 * ((plus_di - minus_di).abs() / (plus_di + minus_di))
         adx = dx.rolling(window=window).mean()
 
-        df[f'adx_{window}'] = adx.round(2)
-        df[f'plus_di_{window}'] = plus_di.round(2)
-        df[f'minus_di_{window}'] = minus_di.round(2)
+        df[f"adx_{window}"] = adx.round(2)
+        df[f"plus_di_{window}"] = plus_di.round(2)
+        df[f"minus_di_{window}"] = minus_di.round(2)
 
         return df
 
     def calculate_fundamental_derivatives(
         self,
         df: pd.DataFrame,
-        pe_col: str = 'pe',
-        pb_col: str = 'pb',
-        roe_col: str = 'roe',
-        earnings_col: str = 'net_profit',
-        revenue_col: str = 'revenue'
+        pe_col: str = "pe",
+        pb_col: str = "pb",
+        roe_col: str = "roe",
+        earnings_col: str = "net_profit",
+        revenue_col: str = "revenue",
     ) -> pd.DataFrame:
         """
         计算基本面衍生指标
@@ -449,24 +441,30 @@ class IndicatorCalculator(BaseProcessor):
         df = df.copy()
 
         if pe_col in df.columns:
-            df['pe_percentile'] = df[pe_col].rank(pct=True).round(4)
+            df["pe_percentile"] = df[pe_col].rank(pct=True).round(4)
 
         if pb_col in df.columns:
-            df['pb_percentile'] = df[pb_col].rank(pct=True).round(4)
+            df["pb_percentile"] = df[pb_col].rank(pct=True).round(4)
 
         if roe_col in df.columns:
-            df['roe_rank'] = pd.qcut(df[roe_col], q=5, labels=['1', '2', '3', '4', '5'])
+            df["roe_rank"] = pd.qcut(df[roe_col], q=5, labels=["1", "2", "3", "4", "5"])
 
         if earnings_col in df.columns:
             # 同比增长率 = 本期 / 去年同期 - 1
-            df['earnings_yoy'] = ((df[earnings_col] / df[earnings_col].shift(4) - 1) if 'quarter' in df.columns
-                                 else (df[earnings_col] / df[earnings_col].shift(1) - 1)).round(4)
+            df["earnings_yoy"] = (
+                (df[earnings_col] / df[earnings_col].shift(4) - 1)
+                if "quarter" in df.columns
+                else (df[earnings_col] / df[earnings_col].shift(1) - 1)
+            ).round(4)
             # 环比增长率 = 本期 / 上期 - 1
-            df['earnings_qoq'] = ((df[earnings_col] / df[earnings_col].shift(1)) - 1).round(4)
+            df["earnings_qoq"] = ((df[earnings_col] / df[earnings_col].shift(1)) - 1).round(4)
 
         if revenue_col in df.columns:
-            df['revenue_yoy'] = ((df[revenue_col] / df[revenue_col].shift(4) - 1) if 'quarter' in df.columns
-                                else (df[revenue_col] / df[revenue_col].shift(1) - 1)).round(4)
-            df['revenue_qoq'] = ((df[revenue_col] / df[revenue_col].shift(1)) - 1).round(4)
+            df["revenue_yoy"] = (
+                (df[revenue_col] / df[revenue_col].shift(4) - 1)
+                if "quarter" in df.columns
+                else (df[revenue_col] / df[revenue_col].shift(1) - 1)
+            ).round(4)
+            df["revenue_qoq"] = ((df[revenue_col] / df[revenue_col].shift(1)) - 1).round(4)
 
         return df

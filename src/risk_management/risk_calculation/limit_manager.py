@@ -2,15 +2,17 @@
 风险限额管理器
 支持多维度风险限额管理：用户级别、单票级别、每日累计等
 """
-from typing import Dict, Any, Optional, List
-from datetime import date, datetime
+
 from collections import defaultdict
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
 
 
 class LimitType:
     """限额类型常量"""
-    USER_DAILY_AMOUNT = "user_daily_amount"    # 用户单日累计交易金额
-    USER_TOTAL_AMOUNT = "user_total_amount"    # 用户总交易金额
+
+    USER_DAILY_AMOUNT = "user_daily_amount"  # 用户单日累计交易金额
+    USER_TOTAL_AMOUNT = "user_total_amount"  # 用户总交易金额
     SINGLE_POSITION_RATIO = "single_position_ratio"  # 单票持仓比例
     MAX_POSITIONS_COUNT = "max_positions_count"  # 最大持仓数量
     DAILY_ORDER_COUNT = "daily_order_count"  # 单日订单数量
@@ -51,15 +53,15 @@ class RiskLimit:
     def to_dict(self) -> Dict[str, Any]:
         """序列化"""
         return {
-            'limit_id': self.limit_id,
-            'limit_type': self.limit_type,
-            'limit_value': self.limit_value,
-            'user_id': self.user_id,
-            'ts_code': self.ts_code,
-            'enabled': self.enabled,
-            'description': self.description,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat(),
+            "limit_id": self.limit_id,
+            "limit_type": self.limit_type,
+            "limit_value": self.limit_value,
+            "user_id": self.user_id,
+            "ts_code": self.ts_code,
+            "enabled": self.enabled,
+            "description": self.description,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
         }
 
 
@@ -150,9 +152,9 @@ class LimitManager:
         if not matching_limits:
             # 没有匹配限额，默认通过
             return {
-                'passed': True,
-                'message': '无匹配限额',
-                'current_value': current_value,
+                "passed": True,
+                "message": "无匹配限额",
+                "current_value": current_value,
             }
 
         # 找出最严格的（最小的）限额
@@ -160,18 +162,18 @@ class LimitManager:
 
         if current_value > most_strict.limit_value:
             return {
-                'passed': False,
-                'message': f'超出{limit_type}限额: 当前{current_value:.2f}, 限额{most_strict.limit_value:.2f}',
-                'current_value': current_value,
-                'limit_value': most_strict.limit_value,
-                'limit_id': most_strict.limit_id,
+                "passed": False,
+                "message": f"超出{limit_type}限额: 当前{current_value:.2f}, 限额{most_strict.limit_value:.2f}",
+                "current_value": current_value,
+                "limit_value": most_strict.limit_value,
+                "limit_id": most_strict.limit_id,
             }
 
         return {
-            'passed': True,
-            'message': '检查通过',
-            'current_value': current_value,
-            'limit_value': most_strict.limit_value,
+            "passed": True,
+            "message": "检查通过",
+            "current_value": current_value,
+            "limit_value": most_strict.limit_value,
         }
 
     def check_daily_amount(
@@ -200,7 +202,7 @@ class LimitManager:
             user_id=user_id,
         )
 
-        if result['passed']:
+        if result["passed"]:
             # 更新已用额度
             self._daily_usage[key] = current_total
 
@@ -246,40 +248,48 @@ class LimitManager:
     ) -> None:
         """设置默认限额"""
         # 默认单票持仓比例
-        self.add_limit(RiskLimit(
-            limit_id=0,
-            limit_type=LimitType.SINGLE_POSITION_RATIO,
-            limit_value=max_single_position_ratio,
-            description='默认单票持仓比例限额',
-        ))
+        self.add_limit(
+            RiskLimit(
+                limit_id=0,
+                limit_type=LimitType.SINGLE_POSITION_RATIO,
+                limit_value=max_single_position_ratio,
+                description="默认单票持仓比例限额",
+            )
+        )
         # 默认最大持仓数量
-        self.add_limit(RiskLimit(
-            limit_id=0,
-            limit_type=LimitType.MAX_POSITIONS_COUNT,
-            limit_value=max_positions_count,
-            description='默认最大持仓数量限额',
-        ))
+        self.add_limit(
+            RiskLimit(
+                limit_id=0,
+                limit_type=LimitType.MAX_POSITIONS_COUNT,
+                limit_value=max_positions_count,
+                description="默认最大持仓数量限额",
+            )
+        )
         # 默认用户单日金额
-        self.add_limit(RiskLimit(
-            limit_id=0,
-            limit_type=LimitType.USER_DAILY_AMOUNT,
-            limit_value=user_daily_amount,
-            description='默认用户单日交易金额限额',
-        ))
+        self.add_limit(
+            RiskLimit(
+                limit_id=0,
+                limit_type=LimitType.USER_DAILY_AMOUNT,
+                limit_value=user_daily_amount,
+                description="默认用户单日交易金额限额",
+            )
+        )
         # 默认每日订单数量
-        self.add_limit(RiskLimit(
-            limit_id=0,
-            limit_type=LimitType.DAILY_ORDER_COUNT,
-            limit_value=daily_order_count,
-            description='默认每日订单数量限额',
-        ))
+        self.add_limit(
+            RiskLimit(
+                limit_id=0,
+                limit_type=LimitType.DAILY_ORDER_COUNT,
+                limit_value=daily_order_count,
+                description="默认每日订单数量限额",
+            )
+        )
 
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'total_limits': len(self._limits),
-            'enabled_limits': sum(1 for l in self._limits.values() if l.enabled),
-            'daily_usage_entries': len(self._daily_usage),
-            'by_type': {t: len(ids) for t, ids in self._limits_by_type.items()},
+            "status": "ok",
+            "total_limits": len(self._limits),
+            "enabled_limits": sum(1 for l in self._limits.values() if l.enabled),
+            "daily_usage_entries": len(self._daily_usage),
+            "by_type": {t: len(ids) for t, ids in self._limits_by_type.items()},
         }

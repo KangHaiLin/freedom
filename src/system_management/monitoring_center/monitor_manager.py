@@ -2,13 +2,15 @@
 监控中心 - 监控管理器
 统一入口，启动/停止定期采集，获取指标快照，健康判断
 """
+
 import threading
 import time
 from typing import Any, Dict, List, Optional, Tuple
-from .base_monitor import BaseMonitor
-from .system_monitor import SystemMonitor
+
 from .application_monitor import ApplicationMonitor
+from .base_monitor import BaseMonitor
 from .metrics_collector import MetricsCollector
+from .system_monitor import SystemMonitor
 
 
 class MonitorManager:
@@ -21,10 +23,10 @@ class MonitorManager:
     单例模式
     """
 
-    _instance: Optional['MonitorManager'] = None
+    _instance: Optional["MonitorManager"] = None
     _lock: threading.Lock = threading.Lock()
 
-    def __new__(cls) -> 'MonitorManager':
+    def __new__(cls) -> "MonitorManager":
         """单例创建"""
         if cls._instance is None:
             with cls._lock:
@@ -35,7 +37,7 @@ class MonitorManager:
 
     def __init__(self):
         """初始化，只执行一次"""
-        if getattr(self, '_initialized', False):
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
         self._monitors: Dict[str, BaseMonitor] = {}
@@ -47,9 +49,9 @@ class MonitorManager:
 
         # 健康阈值
         self._thresholds: Dict[str, Dict[str, float]] = {
-            'cpu_usage_percent': {'warning': 70, 'critical': 90},
-            'memory_usage_percent': {'warning': 80, 'critical': 95},
-            'disk_usage_percent': {'warning': 85, 'critical': 95},
+            "cpu_usage_percent": {"warning": 70, "critical": 90},
+            "memory_usage_percent": {"warning": 80, "critical": 95},
+            "disk_usage_percent": {"warning": 85, "critical": 95},
         }
 
         # 默认添加系统监控
@@ -73,7 +75,7 @@ class MonitorManager:
         if auto_start:
             self.start()
 
-    def add_monitor(self, monitor: BaseMonitor) -> 'MonitorManager':
+    def add_monitor(self, monitor: BaseMonitor) -> "MonitorManager":
         """添加监控器"""
         self._monitors[monitor.name] = monitor
         return self
@@ -84,11 +86,11 @@ class MonitorManager:
 
     def get_application_monitor(self) -> Optional[ApplicationMonitor]:
         """获取应用监控器"""
-        return self.get_monitor('application')  # type: ignore
+        return self.get_monitor("application")  # type: ignore
 
     def set_threshold(self, metric: str, warning: float, critical: float) -> None:
         """设置指标健康阈值"""
-        self._thresholds[metric] = {'warning': warning, 'critical': critical}
+        self._thresholds[metric] = {"warning": warning, "critical": critical}
 
     def collect_once(self) -> Dict[str, Any]:
         """手动采集一次所有监控器"""
@@ -116,10 +118,7 @@ class MonitorManager:
             return
 
         self._stop_event.clear()
-        self._collect_thread = threading.Thread(
-            target=self._collect_loop,
-            daemon=True
-        )
+        self._collect_thread = threading.Thread(target=self._collect_loop, daemon=True)
         self._collect_thread.start()
         self._running = True
 
@@ -165,9 +164,9 @@ class MonitorManager:
             snapshot = self.get_metrics_snapshot()
 
         result = {
-            'status': 'ok',
-            'metrics': {},
-            'issues': [],
+            "status": "ok",
+            "metrics": {},
+            "issues": [],
         }
 
         for metric, thresholds in self._thresholds.items():
@@ -175,39 +174,43 @@ class MonitorManager:
                 continue
 
             value = snapshot[metric]
-            status = 'ok'
+            status = "ok"
 
-            if value >= thresholds['critical']:
-                status = 'critical'
-                result['issues'].append({
-                    'metric': metric,
-                    'value': value,
-                    'threshold': thresholds['critical'],
-                    'level': 'critical',
-                })
-            elif value >= thresholds['warning']:
-                status = 'warning'
-                result['issues'].append({
-                    'metric': metric,
-                    'value': value,
-                    'threshold': thresholds['warning'],
-                    'level': 'warning',
-                })
+            if value >= thresholds["critical"]:
+                status = "critical"
+                result["issues"].append(
+                    {
+                        "metric": metric,
+                        "value": value,
+                        "threshold": thresholds["critical"],
+                        "level": "critical",
+                    }
+                )
+            elif value >= thresholds["warning"]:
+                status = "warning"
+                result["issues"].append(
+                    {
+                        "metric": metric,
+                        "value": value,
+                        "threshold": thresholds["warning"],
+                        "level": "warning",
+                    }
+                )
 
-            result['metrics'][metric] = {
-                'value': value,
-                'status': status,
-                'warning_threshold': thresholds['warning'],
-                'critical_threshold': thresholds['critical'],
+            result["metrics"][metric] = {
+                "value": value,
+                "status": status,
+                "warning_threshold": thresholds["warning"],
+                "critical_threshold": thresholds["critical"],
             }
 
         # 确定整体状态
-        if any(i['level'] == 'critical' for i in result['issues']):
-            result['status'] = 'critical'
-        elif any(i['level'] == 'warning' for i in result['issues']):
-            result['status'] = 'warning'
+        if any(i["level"] == "critical" for i in result["issues"]):
+            result["status"] = "critical"
+        elif any(i["level"] == "warning" for i in result["issues"]):
+            result["status"] = "warning"
         else:
-            result['status'] = 'ok'
+            result["status"] = "ok"
 
         return result
 

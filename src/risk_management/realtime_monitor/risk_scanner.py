@@ -2,14 +2,16 @@
 风险扫描器
 负责定期扫描全系统各类风险
 """
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+
 import asyncio
 import logging
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
-from src.risk_management.rule_engine.rule_manager import RuleManager
 from src.risk_management.rule_engine.rule_executor import RuleExecutor
+from src.risk_management.rule_engine.rule_manager import RuleManager
 from src.risk_management.rule_engine.rule_result import RuleResult
+
 from .alert_generator import AlertGenerator, AlertLevel
 
 logger = logging.getLogger(__name__)
@@ -116,9 +118,7 @@ class RealtimeRiskScanner:
         try:
             recent_trades = self._get_recent_trades_callback()
             for trade in recent_trades:
-                result = self._rule_executor.execute(
-                    "intraday_trade", trade
-                )
+                result = self._rule_executor.execute("intraday_trade", trade)
                 self._process_result("trade", trade, result)
         except Exception as e:
             logger.error(f"Error scanning trade risks: {e}")
@@ -131,18 +131,16 @@ class RealtimeRiskScanner:
         try:
             all_positions = self._get_all_positions_callback()
             for position in all_positions:
-                result = self._rule_executor.execute(
-                    "position_risk", position
-                )
+                result = self._rule_executor.execute("position_risk", position)
                 self._process_result("position", position, result)
 
                 # 额外检查持仓风险值，如果高于阈值直接告警
-                risk_value = position.get('risk_value', 0.0)
+                risk_value = position.get("risk_value", 0.0)
                 if risk_value > 0.8:
                     self._alert_generator.generate(
                         level=AlertLevel.WARNING,
                         message=f"持仓风险值过高: {risk_value:.2f}",
-                        data={'ts_code': position.get('ts_code'), 'risk_value': risk_value},
+                        data={"ts_code": position.get("ts_code"), "risk_value": risk_value},
                         risk_type="position_high_risk",
                     )
         except Exception as e:
@@ -191,8 +189,8 @@ class RealtimeRiskScanner:
                 level=level,
                 message=violation.message,
                 data={
-                    'risk_type': risk_type,
-                    'context_data': data,
+                    "risk_type": risk_type,
+                    "context_data": data,
                     **violation.details,
                 },
                 violation=violation,
@@ -203,6 +201,7 @@ class RealtimeRiskScanner:
         """同步单次扫描，用于手动触发"""
         # 执行一次完整扫描
         import asyncio
+
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
@@ -212,22 +211,22 @@ class RealtimeRiskScanner:
         result = loop.run_until_complete(self._scan_all_risks())
         stats = self.get_statistics()
         return {
-            'success': True,
-            'stats': stats,
+            "success": True,
+            "stats": stats,
         }
 
     def get_statistics(self) -> Dict[str, Any]:
         """获取扫描统计"""
         return {
-            'running': self._running,
-            'scan_interval': self._scan_interval,
-            'total_alerts': len(self._alert_generator.get_recent_alerts()),
+            "running": self._running,
+            "scan_interval": self._scan_interval,
+            "total_alerts": len(self._alert_generator.get_recent_alerts()),
         }
 
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         stats = self.get_statistics()
         return {
-            'status': 'ok' if self._running else 'stopped',
-            'stats': stats,
+            "status": "ok" if self._running else "stopped",
+            "stats": stats,
         }

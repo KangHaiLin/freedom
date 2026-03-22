@@ -2,9 +2,11 @@
 过拟合检测器
 检测策略是否过拟合
 """
+
+from typing import Any, Dict, List, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Any, Tuple
 
 from src.strategy_research.base import BacktestResult
 
@@ -56,17 +58,17 @@ def detect_overfit(
     # 提取日收益率
     daily_returns = []
     for i in range(1, len(backtest_result.daily_stats)):
-        prev = backtest_result.daily_stats[i-1].total_assets
+        prev = backtest_result.daily_stats[i - 1].total_assets
         curr = backtest_result.daily_stats[i].total_assets
         ret = (curr - prev) / prev if prev > 0 else 0
         daily_returns.append(ret)
 
     if not daily_returns:
         return {
-            'is_overfit': False,
-            'message': 'Insufficient data',
-            'sharpe_ratio': 0,
-            'calmar_ratio': 0,
+            "is_overfit": False,
+            "message": "Insufficient data",
+            "sharpe_ratio": 0,
+            "calmar_ratio": 0,
         }
 
     returns_series = pd.Series(daily_returns)
@@ -82,22 +84,29 @@ def detect_overfit(
         warnings.append(f"High Sharpe ratio {sharpe:.2f} exceeds threshold {threshold_sharpe}, possible overfitting")
 
     # 收益高但回撤更大，可能过拟合
-    if backtest_result.max_drawdown > 0 and backtest_result.annualized_return / backtest_result.max_drawdown < threshold_drawdown_ratio:
+    if (
+        backtest_result.max_drawdown > 0
+        and backtest_result.annualized_return / backtest_result.max_drawdown < threshold_drawdown_ratio
+    ):
         is_overfit = True
-        warnings.append(f"Low return/drawdown ratio {(backtest_result.annualized_return / backtest_result.max_drawdown):.2f}, possible overfitting")
+        warnings.append(
+            f"Low return/drawdown ratio {(backtest_result.annualized_return / backtest_result.max_drawdown):.2f}, possible overfitting"
+        )
 
     # 交易太少怀疑过度拟合
     if backtest_result.total_trades < 10:
-        warnings.append(f"Very few trades ({backtest_result.total_trades}), possible overfitting or too restrictive strategy")
+        warnings.append(
+            f"Very few trades ({backtest_result.total_trades}), possible overfitting or too restrictive strategy"
+        )
 
     return {
-        'is_overfit': is_overfit,
-        'warnings': warnings,
-        'sharpe_ratio': sharpe,
-        'calmar_ratio': calmar,
-        'total_trades': backtest_result.total_trades,
-        'annualized_return': backtest_result.annualized_return,
-        'max_drawdown': backtest_result.max_drawdown,
+        "is_overfit": is_overfit,
+        "warnings": warnings,
+        "sharpe_ratio": sharpe,
+        "calmar_ratio": calmar,
+        "total_trades": backtest_result.total_trades,
+        "annualized_return": backtest_result.annualized_return,
+        "max_drawdown": backtest_result.max_drawdown,
     }
 
 
@@ -121,12 +130,12 @@ def walk_forward_analysis(
         if i + 1 >= len(backtest_results):
             break
         in_sample = backtest_results[i]
-        out_sample = backtest_results[i+1]
+        out_sample = backtest_results[i + 1]
         in_sample_returns.append(in_sample.annualized_return)
         out_sample_returns.append(out_sample.annualized_return)
 
     if not in_sample_returns or not out_sample_returns:
-        return {'error': 'No paired results'}
+        return {"error": "No paired results"}
 
     avg_in = np.mean(in_sample_returns)
     avg_out = np.mean(out_sample_returns)
@@ -136,9 +145,9 @@ def walk_forward_analysis(
     is_significant_decay = decay > 0.1  # 衰减超过10%年化
 
     return {
-        'average_in_sample_return': avg_in * 100,
-        'average_out_sample_return': avg_out * 100,
-        'return_decay': decay * 100,
-        'significant_decay': is_significant_decay,
-        'overfit_suspected': is_significant_decay,
+        "average_in_sample_return": avg_in * 100,
+        "average_out_sample_return": avg_out * 100,
+        "return_decay": decay * 100,
+        "significant_decay": is_significant_decay,
+        "overfit_suspected": is_significant_decay,
     }

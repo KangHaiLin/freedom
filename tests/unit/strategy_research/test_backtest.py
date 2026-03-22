@@ -1,20 +1,23 @@
 """
 Unit tests for backtest engine
 """
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
+from src.strategy_research.backtest_engine import BacktestConfig, BacktestEngine
+from src.strategy_research.backtest_engine.performance_calculator import calculate_max_drawdown, calculate_sharpe_ratio
 from src.strategy_research.base import BaseStrategy, TradeDirection
-from src.strategy_research.backtest_engine import BacktestEngine, BacktestConfig
-from src.strategy_research.backtest_engine.performance_calculator import calculate_sharpe_ratio, calculate_max_drawdown
 
 
 class SimpleBuyHoldStrategy(BaseStrategy):
     """Simple buy and hold strategy for testing"""
+
     def on_bar(self, bar_data, current_date, portfolio):
         signals = {}
         for _, row in bar_data.iterrows():
             if len(portfolio.get_all_positions()) == 0:
-                signals[row['ts_code']] = TradeDirection.BUY
+                signals[row["ts_code"]] = TradeDirection.BUY
         return signals
 
 
@@ -22,11 +25,51 @@ def test_simple_backtest():
     """Test simple backtest with buy-and-hold"""
     # Create test data
     data = [
-        {'trade_date': 20240101, 'ts_code': '000001.SZ', 'open': 10, 'high': 11, 'low': 9.5, 'close': 10, 'vol': 1000000},
-        {'trade_date': 20240102, 'ts_code': '000001.SZ', 'open': 10, 'high': 11, 'low': 9.5, 'close': 10.2, 'vol': 1000000},
-        {'trade_date': 20240103, 'ts_code': '000001.SZ', 'open': 10.2, 'high': 11.5, 'low': 10, 'close': 10.5, 'vol': 1000000},
-        {'trade_date': 20240104, 'ts_code': '000001.SZ', 'open': 10.5, 'high': 12, 'low': 10.3, 'close': 11, 'vol': 1000000},
-        {'trade_date': 20240105, 'ts_code': '000001.SZ', 'open': 11, 'high': 12.5, 'low': 10.8, 'close': 11.5, 'vol': 1000000},
+        {
+            "trade_date": 20240101,
+            "ts_code": "000001.SZ",
+            "open": 10,
+            "high": 11,
+            "low": 9.5,
+            "close": 10,
+            "vol": 1000000,
+        },
+        {
+            "trade_date": 20240102,
+            "ts_code": "000001.SZ",
+            "open": 10,
+            "high": 11,
+            "low": 9.5,
+            "close": 10.2,
+            "vol": 1000000,
+        },
+        {
+            "trade_date": 20240103,
+            "ts_code": "000001.SZ",
+            "open": 10.2,
+            "high": 11.5,
+            "low": 10,
+            "close": 10.5,
+            "vol": 1000000,
+        },
+        {
+            "trade_date": 20240104,
+            "ts_code": "000001.SZ",
+            "open": 10.5,
+            "high": 12,
+            "low": 10.3,
+            "close": 11,
+            "vol": 1000000,
+        },
+        {
+            "trade_date": 20240105,
+            "ts_code": "000001.SZ",
+            "open": 11,
+            "high": 12.5,
+            "low": 10.8,
+            "close": 11.5,
+            "vol": 1000000,
+        },
     ]
     df = pd.DataFrame(data)
 
@@ -60,9 +103,9 @@ def test_performance_calculator():
 def test_position_limits():
     """Test position limit configuration"""
     data = [
-        {'trade_date': 20240101, 'ts_code': '000001.SZ', 'close': 10},
-        {'trade_date': 20240101, 'ts_code': '000002.SZ', 'close': 20},
-        {'trade_date': 20240101, 'ts_code': '000003.SZ', 'close': 30},
+        {"trade_date": 20240101, "ts_code": "000001.SZ", "close": 10},
+        {"trade_date": 20240101, "ts_code": "000002.SZ", "close": 20},
+        {"trade_date": 20240101, "ts_code": "000003.SZ", "close": 30},
     ]
     df = pd.DataFrame(data)
 
@@ -70,7 +113,7 @@ def test_position_limits():
         def on_bar(self, bar_data, current_date, portfolio):
             signals = {}
             for _, row in bar_data.iterrows():
-                signals[row['ts_code']] = TradeDirection.BUY
+                signals[row["ts_code"]] = TradeDirection.BUY
             return signals
 
     # Single position max ratio 50%

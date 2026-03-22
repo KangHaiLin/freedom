@@ -2,15 +2,17 @@
 配置中心 - 配置管理器
 统一入口，单例模式，支持热更新，配置变更监听
 """
+
 import threading
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
 from pathlib import Path
+from typing import Any, Callable, Dict, Optional, Type, TypeVar
+
 from .base_config import ConfigSource
 from .config_provider import ConfigProvider
-from .file_config import FileConfigSource
 from .env_config import EnvConfigSource
+from .file_config import FileConfigSource
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ConfigManager:
@@ -20,10 +22,10 @@ class ConfigManager:
     单例模式，全局唯一实例
     """
 
-    _instance: Optional['ConfigManager'] = None
+    _instance: Optional["ConfigManager"] = None
     _lock: threading.Lock = threading.Lock()
 
-    def __new__(cls) -> 'ConfigManager':
+    def __new__(cls) -> "ConfigManager":
         """单例创建"""
         if cls._instance is None:
             with cls._lock:
@@ -34,7 +36,7 @@ class ConfigManager:
 
     def __init__(self):
         """初始化，只执行一次"""
-        if getattr(self, '_initialized', False):
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
         self._provider = ConfigProvider()
@@ -80,10 +82,7 @@ class ConfigManager:
     def _start_hot_reload(self) -> None:
         """启动热重载线程"""
         self._hot_reload_stop.clear()
-        self._hot_reload_thread = threading.Thread(
-            target=self._hot_reload_loop,
-            daemon=True
-        )
+        self._hot_reload_thread = threading.Thread(target=self._hot_reload_loop, daemon=True)
         self._hot_reload_thread.start()
 
     def _hot_reload_loop(self) -> None:
@@ -108,7 +107,7 @@ class ConfigManager:
             except Exception:
                 pass
 
-    def add_source(self, source: ConfigSource, priority: int = 0) -> 'ConfigManager':
+    def add_source(self, source: ConfigSource, priority: int = 0) -> "ConfigManager":
         """添加配置源"""
         source.on_change(self._on_source_change)
         self._provider.add_source(source, priority)

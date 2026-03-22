@@ -2,10 +2,12 @@
 任务调度 - 任务注册
 任务元数据存储，任务状态查询
 """
+
 from typing import Dict, List, Optional, Union
+
+from .async_task import AsyncTask
 from .base_task import BaseTask, TaskStatus
 from .scheduled_task import ScheduledTask
-from .async_task import AsyncTask
 
 
 class TaskRegistry:
@@ -87,18 +89,18 @@ class TaskRegistry:
         for status in TaskStatus:
             count = sum(1 for t in self._scheduled_tasks.values() if t.status == status)
             scheduled_stats[status.value] = count
-        stats['scheduled'] = scheduled_stats
+        stats["scheduled"] = scheduled_stats
 
         # 异步任务统计
         async_stats: Dict[str, int] = {}
         for status in TaskStatus:
             count = sum(1 for t in self._async_tasks.values() if t.status == status)
             async_stats[status.value] = count
-        stats['async'] = async_stats
+        stats["async"] = async_stats
 
-        stats['total_scheduled'] = len(self._scheduled_tasks)
-        stats['total_async'] = len(self._async_tasks)
-        stats['total'] = len(self._scheduled_tasks) + len(self._async_tasks)
+        stats["total_scheduled"] = len(self._scheduled_tasks)
+        stats["total_async"] = len(self._async_tasks)
+        stats["total"] = len(self._scheduled_tasks) + len(self._async_tasks)
 
         return stats
 

@@ -1,13 +1,15 @@
 """
 API中间件
 """
+
+import logging
+import time
+import uuid
+from typing import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
-import time
-import uuid
-import logging
-from typing import Callable
 
 from common.config import settings
 from common.utils import DateTimeUtils
@@ -56,7 +58,7 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
                 f"[{request_id}] 请求异常：{request.method} {request.url.path} "
                 f"错误：{str(e)} "
                 f"耗时：{process_time:.2f}ms",
-                exc_info=True
+                exc_info=True,
             )
             raise
 
@@ -70,7 +72,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.redis = None
         if settings.REDIS_CONFIG:
             from src.data_management.data_storage.storage_manager import storage_manager
-            self.redis = storage_manager.get_storage_by_type('redis')
+
+            self.redis = storage_manager.get_storage_by_type("redis")
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         # 如果没有配置Redis或者限流关闭，直接放行
@@ -96,7 +99,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 return Response(
                     content='{"code": 429, "message": "请求频率过高，请稍后再试"}',
                     status_code=429,
-                    media_type="application/json"
+                    media_type="application/json",
                 )
 
         except Exception as e:

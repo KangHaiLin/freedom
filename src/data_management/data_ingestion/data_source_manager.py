@@ -2,16 +2,19 @@
 数据源管理器
 动态选择最优数据源，支持多数据源自动切换、负载均衡、降级重试
 """
-from typing import List, Dict, Optional
-import time
-import random
+
 import logging
+import random
+import time
 from datetime import datetime
+from typing import Dict, List, Optional
+
 import pandas as pd
 
-from .market_collector import MarketDataCollector
 from common.exceptions import DataSourceException
 from common.utils import DateTimeUtils
+
+from .market_collector import MarketDataCollector
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +72,9 @@ class DataSourceManager:
             # 响应时间越短得分越高，最大10分
             response_time_score = max(0, 1000 - source.avg_response_time) / 100 * 0.3
             total_score = priority_score + availability_score + response_time_score
-            logger.debug(f"数据源{source.source}得分：{total_score:.2f}，优先级={source.priority}，可用性={source.availability:.2f}，响应时间={source.avg_response_time:.2f}ms")
+            logger.debug(
+                f"数据源{source.source}得分：{total_score:.2f}，优先级={source.priority}，可用性={source.availability:.2f}，响应时间={source.avg_response_time:.2f}ms"
+            )
             return total_score
 
         # 按分数排序，选择前3个加权随机
@@ -163,9 +168,11 @@ class DataSourceManager:
             "available_sources": available_count,
             "health_score": available_count / total_count if total_count > 0 else 0,
             "sources": self.get_source_status(),
-            "check_time": DateTimeUtils.now_str()
+            "check_time": DateTimeUtils.now_str(),
         }
-        logger.info(f"数据源健康检查：可用{available_count}/{total_count}个，健康得分：{health_status['health_score']:.2f}")
+        logger.info(
+            f"数据源健康检查：可用{available_count}/{total_count}个，健康得分：{health_status['health_score']:.2f}"
+        )
         return health_status
 
 

@@ -2,11 +2,13 @@
 绩效指标计算器
 计算夏普比率、最大回撤、胜率等
 """
+
+from typing import List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
-from typing import List, Tuple, Optional
 
-from src.strategy_research.base import DailyStats, BacktestResult, TradeRecord
+from src.strategy_research.base import BacktestResult, DailyStats, TradeRecord
 
 
 def calculate_sharpe_ratio(daily_returns: pd.Series, risk_free_rate: float = 0.03) -> float:
@@ -122,16 +124,16 @@ def calculate_metrics(
         turnover_annual = sum(ds.turnover for ds in daily_stats)
 
     return {
-        'annualized_return': annualized_return * 100,  # 转为百分比
-        'sharpe_ratio': sharpe,
-        'max_drawdown': max_dd * 100,  # 转为百分比
-        'max_drawdown_date_peak': peak_date,
-        'max_drawdown_date_valley': valley_date,
-        'total_trades': total_trades,
-        'winning_trades': len(winning_trades),
-        'losing_trades': len(losing_trades),
-        'win_rate': win_rate * 100,
-        'profit_loss_ratio': profit_loss_ratio,
-        'avg_holding_days': avg_holding_days,
-        'turnover_rate_annual': turnover_annual * 100,
+        "annualized_return": annualized_return * 100,  # 转为百分比
+        "sharpe_ratio": sharpe,
+        "max_drawdown": max_dd * 100,  # 转为百分比
+        "max_drawdown_date_peak": peak_date,
+        "max_drawdown_date_valley": valley_date,
+        "total_trades": total_trades,
+        "winning_trades": len(winning_trades),
+        "losing_trades": len(losing_trades),
+        "win_rate": win_rate * 100,
+        "profit_loss_ratio": profit_loss_ratio,
+        "avg_holding_days": avg_holding_days,
+        "turnover_rate_annual": turnover_annual * 100,
     }

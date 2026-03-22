@@ -2,21 +2,19 @@
 模拟交易引擎
 对接实时行情，执行策略信号，维持账户
 """
-from typing import Dict, List, Any, Optional
-from datetime import datetime
 
-from src.strategy_research.base import (
-    BaseStrategy,
-    TradeRecord,
-    TradeDirection,
-    DailyStats,
-)
-from .sim_config import SimulationConfig
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from src.strategy_research.base import BaseStrategy, DailyStats, TradeDirection, TradeRecord
+
 from .sim_account import SimulationAccount
+from .sim_config import SimulationConfig
 
 
 class SimulationOrder:
     """模拟订单"""
+
     def __init__(
         self,
         order_id: int,
@@ -215,7 +213,7 @@ class SimulationEngine:
                 if max_quantity > 0:
                     order_id = self.place_order(ts_code, direction, price, max_quantity)
                     if order_id > 0:
-                        executed.append({'order_id': order_id, 'ts_code': ts_code, 'direction': direction})
+                        executed.append({"order_id": order_id, "ts_code": ts_code, "direction": direction})
 
             elif direction == TradeDirection.SELL:
                 # 卖出全部持仓
@@ -224,7 +222,7 @@ class SimulationEngine:
                     price = current_prices.get(ts_code, 0)
                     order_id = self.place_order(ts_code, direction, price, pos.quantity)
                     if order_id > 0:
-                        executed.append({'order_id': order_id, 'ts_code': ts_code, 'direction': direction})
+                        executed.append({"order_id": order_id, "ts_code": ts_code, "direction": direction})
 
         # 当日撮合
         trades = self.match_bar(current_prices, current_date)
@@ -252,11 +250,11 @@ class SimulationEngine:
         self._daily_stats.append(stats)
 
         return {
-            'success': True,
-            'signals': signals,
-            'executed_orders': executed,
-            'filled_trades': trades,
-            'daily_stats': stats,
+            "success": True,
+            "signals": signals,
+            "executed_orders": executed,
+            "filled_trades": trades,
+            "daily_stats": stats,
         }
 
     def get_current_stats(self, current_prices: Dict[str, float]) -> DailyStats:
@@ -291,10 +289,10 @@ class SimulationEngine:
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'initial_capital': self._config.initial_capital,
-            'current_cash': self._account.cash,
-            'total_positions': self._account.count_positions(),
-            'total_orders': len(self._orders),
-            'total_trades': len(self._trades),
+            "status": "ok",
+            "initial_capital": self._config.initial_capital,
+            "current_cash": self._account.cash,
+            "total_positions": self._account.count_positions(),
+            "total_orders": len(self._orders),
+            "total_trades": len(self._trades),
         }

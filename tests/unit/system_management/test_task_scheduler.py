@@ -1,27 +1,30 @@
 """
 测试任务调度
 """
+
 import time
 from datetime import datetime
+
 from src.system_management.task_scheduler import (
-    TaskStatus,
-    TaskResult,
-    BaseTask,
-    ScheduledTask,
     AsyncTask,
     AsyncTaskQueue,
-    TaskRegistry,
+    BaseTask,
+    ScheduledTask,
     SchedulerManager,
+    TaskRegistry,
+    TaskResult,
+    TaskStatus,
 )
 
 
 def test_base_task():
     """测试基础任务"""
+
     class TestTask(BaseTask):
         def run(self):
             return 42
 
-    task = TestTask('test')
+    task = TestTask("test")
     assert task.status == TaskStatus.PENDING
 
     result = task.execute()
@@ -33,15 +36,16 @@ def test_base_task():
 
 def test_base_task_error():
     """测试基础任务错误处理"""
+
     class ErrorTask(BaseTask):
         def run(self):
             raise ValueError("test error")
 
-    task = ErrorTask('error_task')
+    task = ErrorTask("error_task")
     result = task.execute()
     assert not result.success
     assert result.error is not None
-    assert 'test error' in str(result.error)
+    assert "test error" in str(result.error)
     assert task.status == TaskStatus.FAILED
 
 
@@ -59,7 +63,7 @@ def test_base_task_callback():
         def run(self):
             return 100
 
-    task = TestTask('test').on_complete(callback)
+    task = TestTask("test").on_complete(callback)
     task.execute()
     assert called
     assert result_arg.success
@@ -75,8 +79,8 @@ def test_scheduled_task_cron():
         called = True
 
     # 每分钟执行一次
-    task = ScheduledTask.from_cron('* * * * *', callback, 'test_cron')
-    assert task.cron_expr == '* * * * *'
+    task = ScheduledTask.from_cron("* * * * *", callback, "test_cron")
+    assert task.cron_expr == "* * * * *"
 
     # 下一次执行应该在不久之后
     next_run = task._calculate_next_run(datetime.now())
@@ -95,7 +99,7 @@ def test_scheduled_task_interval():
         nonlocal called
         called += 1
 
-    task = ScheduledTask.every(0.1, callback, 'test_interval', start_immediately=True)
+    task = ScheduledTask.every(0.1, callback, "test_interval", start_immediately=True)
     assert task.interval_seconds == 0.1
     assert task.next_run is not None
     assert task.should_run(datetime.now())
@@ -109,11 +113,12 @@ def test_scheduled_task_once_after():
         nonlocal called
         called = True
 
-    task = ScheduledTask.once_after(0.01, callback, 'test_once')
+    task = ScheduledTask.once_after(0.01, callback, "test_once")
     assert task.is_one_shot
     assert task.run_count == 0
 
     from datetime import timedelta
+
     # next_run 已经是 datetime.now() + delay_seconds，所以直接测试它
     assert task.should_run(task.next_run)
 
@@ -134,7 +139,9 @@ def test_scheduled_task_should_run():
 
 def test_async_task_priority():
     """测试异步任务优先级"""
-    def f(): pass
+
+    def f():
+        pass
 
     high = AsyncTask(f, priority=100)
     low = AsyncTask(f, priority=1)
@@ -170,6 +177,7 @@ def test_async_task_queue_multiple():
         def inner():
             results.append(i)
             return i
+
         return inner
 
     queue = AsyncTaskQueue(max_workers=5)
@@ -202,8 +210,8 @@ def test_task_registry():
     assert registry.get(id2) == task2
 
     stats = registry.get_stats()
-    assert stats['total_scheduled'] == 1
-    assert stats['total_async'] == 1
+    assert stats["total_scheduled"] == 1
+    assert stats["total_async"] == 1
 
     # 注销
     assert registry.unregister_scheduled(id1)
@@ -242,7 +250,7 @@ def test_scheduler_manager():
         counter += 1
 
     # 添加定时任务
-    task_id = manager.add_interval(0.01, increment, 'test')
+    task_id = manager.add_interval(0.01, increment, "test")
     assert task_id is not None
 
     # 提交异步任务
@@ -267,7 +275,7 @@ def test_scheduler_manager():
     assert async_result == 100
 
     stats = manager.get_stats()
-    assert stats['running'] is False
+    assert stats["running"] is False
 
 
 def test_scheduler_get_task_status():
@@ -280,11 +288,12 @@ def test_scheduler_get_task_status():
     status = manager.get_task_status(task_id)
 
     assert status is not None
-    assert 'task_id' in status
-    assert 'task_name' in status
-    assert 'next_run' in status
+    assert "task_id" in status
+    assert "task_name" in status
+    assert "next_run" in status
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import pytest
-    pytest.main([__file__, '-v'])
+
+    pytest.main([__file__, "-v"])

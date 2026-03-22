@@ -1,13 +1,15 @@
 """
 Unit tests for fundamentals_manager.py
 """
-import pytest
-import pandas as pd
+
 from unittest.mock import Mock, patch
 
-from src.data_management.data_ingestion.fundamentals_manager import FundamentalsManager
-from src.data_management.data_ingestion.fundamentals_collector import FundamentalsCollector
+import pandas as pd
+import pytest
+
 from common.exceptions import DataSourceException
+from src.data_management.data_ingestion.fundamentals_collector import FundamentalsCollector
+from src.data_management.data_ingestion.fundamentals_manager import FundamentalsManager
 
 
 class MockCollector:
@@ -22,24 +24,29 @@ class MockCollector:
         self.error_count = 0
 
         self.is_available = Mock(return_value=available)
-        self.get_source_info = Mock(return_value={
-            'source': source_name,
-            'priority': self.priority,
-            'availability': self.availability,
-            'is_available': available,
-        })
+        self.get_source_info = Mock(
+            return_value={
+                "source": source_name,
+                "priority": self.priority,
+                "availability": self.availability,
+                "is_available": available,
+            }
+        )
 
         if not should_fail:
-            self.get_stock_basic = Mock(return_value=pd.DataFrame({
-                'stock_code': ['000001.SZ', '600000.SH'],
-                'name': ['平安银行', '浦发银行']
-            }))
-            self.get_daily_basic = Mock(return_value=pd.DataFrame({
-                'stock_code': ['000001.SZ'],
-                'trade_date': pd.to_datetime(['2025-01-01']),
-                'pe': [10.5],
-                'pb': [1.2]
-            }))
+            self.get_stock_basic = Mock(
+                return_value=pd.DataFrame({"stock_code": ["000001.SZ", "600000.SH"], "name": ["平安银行", "浦发银行"]})
+            )
+            self.get_daily_basic = Mock(
+                return_value=pd.DataFrame(
+                    {
+                        "stock_code": ["000001.SZ"],
+                        "trade_date": pd.to_datetime(["2025-01-01"]),
+                        "pe": [10.5],
+                        "pb": [1.2],
+                    }
+                )
+            )
         else:
             self.get_stock_basic = Mock(return_value=pd.DataFrame())
             self.get_daily_basic = Mock(return_value=pd.DataFrame())
@@ -88,6 +95,7 @@ def test_get_available_source_count():
 def test_select_best_source():
     """测试选择最优数据源"""
     import random
+
     # 固定随机种子确保测试可重复
     random.seed(42)
 
@@ -110,7 +118,7 @@ def test_execute_query_success():
     manager = FundamentalsManager()
     manager.add_source(MockCollector("tushare", available=True))
 
-    result = manager.execute_query('get_stock_basic', 'L')
+    result = manager.execute_query("get_stock_basic", "L")
 
     assert not result.empty
     assert len(result) == 2
@@ -123,7 +131,7 @@ def test_execute_query_all_fail():
     manager.add_source(MockCollector("wind", available=True, should_fail=True))
 
     with pytest.raises(DataSourceException):
-        manager.execute_query('get_stock_basic', 'L')
+        manager.execute_query("get_stock_basic", "L")
 
 
 def test_execute_query_no_available():
@@ -132,28 +140,28 @@ def test_execute_query_no_available():
     manager.add_source(MockCollector("tushare", available=False))
 
     with pytest.raises(DataSourceException):
-        manager.execute_query('get_stock_basic', 'L')
+        manager.execute_query("get_stock_basic", "L")
 
 
 def test_convenience_methods():
     """测试便捷方法封装"""
     manager = FundamentalsManager()
     collector = MockCollector("tushare", available=True)
-    collector.get_financial_indicator = Mock(return_value=pd.DataFrame({
-        'stock_code': ['000001.SZ'],
-        'end_date': pd.to_datetime(['2024-12-31']),
-        'roe': [15.5]
-    }))
+    collector.get_financial_indicator = Mock(
+        return_value=pd.DataFrame(
+            {"stock_code": ["000001.SZ"], "end_date": pd.to_datetime(["2024-12-31"]), "roe": [15.5]}
+        )
+    )
     manager.add_source(collector)
 
     # 测试各个便捷方法
-    result = manager.get_stock_basic('L')
+    result = manager.get_stock_basic("L")
     assert not result.empty
 
-    result = manager.get_daily_basic(['000001.SZ'], '2025-01-01', '2025-12-31')
+    result = manager.get_daily_basic(["000001.SZ"], "2025-01-01", "2025-12-31")
     assert not result.empty
 
-    result = manager.get_financial_indicator(['000001.SZ'], '2025-01-01', '2025-12-31')
+    result = manager.get_financial_indicator(["000001.SZ"], "2025-01-01", "2025-12-31")
     assert not result.empty
 
     # 验证mock被调用
@@ -168,8 +176,8 @@ def test_health_check():
 
     health = manager.health_check()
 
-    assert health['total_sources'] == 2
-    assert health['available_sources'] == 1
-    assert health['health_score'] == 0.5
-    assert len(health['sources']) == 2
-    assert 'check_time' in health
+    assert health["total_sources"] == 2
+    assert health["available_sources"] == 1
+    assert health["health_score"] == 0.5
+    assert len(health["sources"]) == 2
+    assert "check_time" in health

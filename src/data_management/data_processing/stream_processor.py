@@ -2,11 +2,13 @@
 实时流处理器
 负责增量处理、滑动窗口维护、实时指标计算、过期数据自动清理
 """
-from typing import Any, Dict, List, Optional, Tuple, Union
-import pandas as pd
-import numpy as np
+
 import logging
 from collections import OrderedDict
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import pandas as pd
 
 from .base_processor import BaseProcessor
 from .indicator_calculator import IndicatorCalculator
@@ -17,14 +19,16 @@ logger = logging.getLogger(__name__)
 class StreamProcessor(BaseProcessor):
     """实时流处理器，维护滑动窗口，增量计算指标"""
 
-    def __init__(self, config: Dict = None, window_size: int = None, max_records: int = None, keep_raw_data: bool = None):
+    def __init__(
+        self, config: Dict = None, window_size: int = None, max_records: int = None, keep_raw_data: bool = None
+    ):
         super().__init__(config=config)
         # 滑动窗口大小
-        self.window_size = window_size if window_size is not None else self.config.get('window_size', 100)
+        self.window_size = window_size if window_size is not None else self.config.get("window_size", 100)
         # 数据保留最大条数，超过自动清理
-        self.max_records = max_records if max_records is not None else self.config.get('max_records', 10000)
+        self.max_records = max_records if max_records is not None else self.config.get("max_records", 10000)
         # 是否保留原始数据
-        self.keep_raw_data = keep_raw_data if keep_raw_data is not None else self.config.get('keep_raw_data', True)
+        self.keep_raw_data = keep_raw_data if keep_raw_data is not None else self.config.get("keep_raw_data", True)
 
         # 存储每个股票的滑动窗口数据，使用OrderedDict维护顺序
         self.stock_data: Dict[str, OrderedDict] = OrderedDict()
@@ -43,6 +47,7 @@ class StreamProcessor(BaseProcessor):
             处理结果，包含最新指标值
         """
         import time
+
         start_time = time.time()
 
         if isinstance(data, dict):
@@ -51,7 +56,7 @@ class StreamProcessor(BaseProcessor):
         results = {}
         for item in data:
             try:
-                ts_code = item.get('ts_code')
+                ts_code = item.get("ts_code")
                 if not ts_code:
                     logger.warning(f"{self.name}: 数据缺少ts_code，跳过")
                     continue
@@ -75,10 +80,10 @@ class StreamProcessor(BaseProcessor):
         self._record_processing(start_time)
 
         return {
-            'success': True,
-            'results': results,
-            'processed_count': len(data),
-            'processing_time': time.time() - start_time
+            "success": True,
+            "results": results,
+            "processed_count": len(data),
+            "processing_time": time.time() - start_time,
         }
 
     def _add_to_window(self, ts_code: str, data: Dict):
@@ -87,7 +92,7 @@ class StreamProcessor(BaseProcessor):
             self.stock_data[ts_code] = OrderedDict()
 
         # 获取时间键
-        time_key = data.get('trade_time') or data.get('trade_date') or len(self.stock_data[ts_code])
+        time_key = data.get("trade_time") or data.get("trade_date") or len(self.stock_data[ts_code])
 
         # 添加数据，如果已存在则覆盖
         self.stock_data[ts_code][time_key] = data
@@ -104,17 +109,10 @@ class StreamProcessor(BaseProcessor):
         if window_df is None or len(window_df) < 5:
             # 数据不足，只返回原始价格
             latest = self.get_latest(ts_code)
-            return {
-                'latest_price': latest.get('close', None) if latest else None,
-                'sma_5': None,
-                'rsi_14': None
-            }
+            return {"latest_price": latest.get("close", None) if latest else None, "sma_5": None, "rsi_14": None}
 
         # 使用指标计算器计算
-        indicators_df = self.indicator_calculator.process(
-            window_df,
-            indicators=['sma', 'rsi', 'macd']
-        )
+        indicators_df = self.indicator_calculator.process(window_df, indicators=["sma", "rsi", "macd"])
 
         # 获取最新一行的指标值
         latest_row = indicators_df.iloc[-1]
@@ -122,12 +120,12 @@ class StreamProcessor(BaseProcessor):
 
         # 收集所有指标列
         for col in indicators_df.columns:
-            if col.startswith(('sma_', 'ema_', 'rsi_', 'k_', 'd_', 'j_', 'macd_', 'boll_', 'adx_')):
+            if col.startswith(("sma_", "ema_", "rsi_", "k_", "d_", "j_", "macd_", "boll_", "adx_")):
                 result[col] = latest_row[col] if not pd.isna(latest_row[col]) else None
 
         # 添加最新价格
-        if 'close' in latest_row:
-            result['latest_price'] = latest_row['close']
+        if "close" in latest_row:
+            result["latest_price"] = latest_row["close"]
 
         return result
 
@@ -195,7 +193,7 @@ class StreamProcessor(BaseProcessor):
         """清理过期数据，当总记录数超过max_records时"""
         if len(self.stock_data) > self.max_records:
             # 移除最旧的股票数据（OrderedDict保持插入顺序）
-            oldest_keys = list(self.stock_data.keys())[:int(self.max_records * 0.1)]
+            oldest_keys = list(self.stock_data.keys())[: int(self.max_records * 0.1)]
             for key in oldest_keys:
                 self.clear_stock(key)
             logger.info(f"{self.name}: 清理了{len(oldest_keys)}个过期股票数据")
@@ -204,11 +202,11 @@ class StreamProcessor(BaseProcessor):
         """获取当前流处理器统计信息"""
         total_records = sum(len(window) for window in self.stock_data.values())
         return {
-            'stock_count': len(self.stock_data),
-            'total_records': total_records,
-            'max_records_config': self.max_records,
-            'window_size_config': self.window_size,
-            'indicators_count': len(self.stock_indicators)
+            "stock_count": len(self.stock_data),
+            "total_records": total_records,
+            "max_records_config": self.max_records,
+            "window_size_config": self.window_size,
+            "indicators_count": len(self.stock_indicators),
         }
 
     def get_all_stocks(self) -> List[str]:

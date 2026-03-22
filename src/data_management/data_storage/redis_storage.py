@@ -2,17 +2,19 @@
 Redis存储适配器
 实现Redis缓存的存储操作，适用于高频访问数据、缓存、分布式锁等场景
 """
-from typing import List, Dict, Optional, Any, Union
+
+import json
+import logging
+import pickle
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 import redis
-import json
-import pickle
-from datetime import datetime, timedelta
-import logging
 
-from .base_storage import BaseStorage
 from common.exceptions import StorageException
 from common.utils import DateTimeUtils
+
+from .base_storage import BaseStorage
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +24,14 @@ class RedisStorage(BaseStorage):
 
     def __init__(self, config: Dict):
         super().__init__(config)
-        self.host = config.get('host', 'localhost')
-        self.port = config.get('port', 6379)
-        self.db = config.get('db', 0)
-        self.password = config.get('password')
-        self.decode_responses = config.get('decode_responses', True)
-        self.default_ttl = config.get('default_ttl', 3600)  # 默认过期时间1小时
-        self.socket_timeout = config.get('socket_timeout', 5)
-        self.socket_connect_timeout = config.get('socket_connect_timeout', 5)
+        self.host = config.get("host", "localhost")
+        self.port = config.get("port", 6379)
+        self.db = config.get("db", 0)
+        self.password = config.get("password")
+        self.decode_responses = config.get("decode_responses", True)
+        self.default_ttl = config.get("default_ttl", 3600)  # 默认过期时间1小时
+        self.socket_timeout = config.get("socket_timeout", 5)
+        self.socket_connect_timeout = config.get("socket_connect_timeout", 5)
 
     def connect(self) -> bool:
         """建立Redis连接"""
@@ -41,7 +43,7 @@ class RedisStorage(BaseStorage):
                 password=self.password,
                 decode_responses=self.decode_responses,
                 socket_timeout=self.socket_timeout,
-                socket_connect_timeout=self.socket_connect_timeout
+                socket_connect_timeout=self.socket_connect_timeout,
             )
 
             # 测试连接
@@ -79,13 +81,13 @@ class RedisStorage(BaseStorage):
         self.ensure_connection()
 
         try:
-            ttl = kwargs.get('ttl', self.default_ttl)
-            key = kwargs.get('key', f"{table_name}:{DateTimeUtils.now_str()}")
+            ttl = kwargs.get("ttl", self.default_ttl)
+            key = kwargs.get("key", f"{table_name}:{DateTimeUtils.now_str()}")
 
             # 序列化数据
             if isinstance(data, pd.DataFrame):
                 # DataFrame序列化为JSON
-                serialized = data.to_json(orient='records')
+                serialized = data.to_json(orient="records")
             elif isinstance(data, (list, dict)):
                 # 列表/字典序列化为JSON
                 serialized = json.dumps(data, ensure_ascii=False, default=str)
@@ -101,7 +103,7 @@ class RedisStorage(BaseStorage):
                         password=self.password,
                         decode_responses=False,
                         socket_timeout=self.socket_timeout,
-                        socket_connect_timeout=self.socket_connect_timeout
+                        socket_connect_timeout=self.socket_connect_timeout,
                     )
 
             # 写入数据
@@ -129,9 +131,9 @@ class RedisStorage(BaseStorage):
         self.ensure_connection()
 
         try:
-            if query and 'key' in query:
+            if query and "key" in query:
                 # 读取单个键
-                key = query['key']
+                key = query["key"]
                 value = self.connection.get(key)
 
                 if value is None:
@@ -140,22 +142,26 @@ class RedisStorage(BaseStorage):
                 # 尝试反序列化
                 try:
                     # 尝试JSON反序列化
-                    return json.loads(value)
-                except:
+                    parsed = json.loads(value)
+                    # 如果解析后是列表且每个元素是字典，则假定这是DataFrame保存为orient='records'，转换回DataFrame
+                    if isinstance(parsed, list) and len(parsed) > 0 and all(isinstance(item, dict) for item in parsed):
+                        return pd.DataFrame(parsed)
+                    return parsed
+                except Exception:
                     try:
                         # 尝试DataFrame反序列化
                         return pd.read_json(value)
-                    except:
+                    except Exception:
                         try:
                             # 尝试pickle反序列化
                             return pickle.loads(value)
-                        except:
+                        except Exception:
                             # 返回原始值
                             return value
 
-            elif query and 'pattern' in query:
+            elif query and "pattern" in query:
                 # 匹配多个键
-                pattern = query['pattern']
+                pattern = query["pattern"]
                 keys = self.connection.keys(pattern)
                 result = {}
 
@@ -163,7 +169,7 @@ class RedisStorage(BaseStorage):
                     value = self.connection.get(key)
                     try:
                         result[key] = json.loads(value)
-                    except:
+                    except Exception:
                         result[key] = value
 
                 return result
@@ -182,13 +188,13 @@ class RedisStorage(BaseStorage):
         self.ensure_connection()
 
         try:
-            if 'key' in query:
-                key = query['key']
+            if "key" in query:
+                key = query["key"]
                 deleted = self.connection.delete(key)
                 logger.debug(f"Redis删除成功，键：{key}")
                 return deleted
-            elif 'pattern' in query:
-                pattern = query['pattern']
+            elif "pattern" in query:
+                pattern = query["pattern"]
                 keys = self.connection.keys(pattern)
                 if keys:
                     deleted = self.connection.delete(*keys)
@@ -255,15 +261,15 @@ class RedisStorage(BaseStorage):
             self.connection.ping()
             response_time = (DateTimeUtils.now().timestamp() - start_time) * 1000
 
-            info = self.connection.info('server')
+            info = self.connection.info("server")
             return {
                 "status": "healthy",
                 "host": self.host,
                 "port": self.port,
                 "db": self.db,
-                "version": info.get('redis_version'),
+                "version": info.get("redis_version"),
                 "response_time": response_time,
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }
 
         except Exception as e:
@@ -273,7 +279,7 @@ class RedisStorage(BaseStorage):
                 "port": self.port,
                 "db": self.db,
                 "error": str(e),
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }
 
     # 额外的Redis专用方法

@@ -2,12 +2,14 @@
 日志中心 - 文件日志处理器
 支持按大小和时间轮转，保留天数配置，压缩过期日志
 """
+
 import gzip
 import os
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
+
 from .base_logger import BaseLogger, LogLevel, LogRecord
 
 
@@ -69,7 +71,7 @@ class FileLogger(BaseLogger):
             except Exception:
                 pass
 
-        self._file = open(self.log_file, 'a', encoding='utf-8')
+        self._file = open(self.log_file, "a", encoding="utf-8")
         self._current_size = os.path.getsize(self.log_file) if self.log_file.exists() else 0
         self._current_day = datetime.now().day
 
@@ -90,7 +92,7 @@ class FileLogger(BaseLogger):
         self._file.close()
 
         # 生成轮转文件名
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         rotated_path = self.log_file.parent / f"{self.log_file.stem}_{timestamp}{self.log_file.suffix}"
 
         # 重命名当前日志文件
@@ -99,8 +101,8 @@ class FileLogger(BaseLogger):
 
             # 压缩旧日志
             if self.compress_old_logs:
-                with open(rotated_path, 'rb') as f_in:
-                    with gzip.open(f"{rotated_path}.gz", 'wb') as f_out:
+                with open(rotated_path, "rb") as f_in:
+                    with gzip.open(f"{rotated_path}.gz", "wb") as f_out:
                         shutil.copyfileobj(f_in, f_out)
                 rotated_path.unlink()
 
@@ -139,7 +141,7 @@ class FileLogger(BaseLogger):
 
         # 格式化日志行
         dt = datetime.fromtimestamp(record.timestamp)
-        time_str = dt.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        time_str = dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
         level_str = record.level.name
         module_str = record.module
         message = record.message
@@ -152,7 +154,7 @@ class FileLogger(BaseLogger):
 
         # 写入文件
         self._file.write(line)
-        self._current_size += len(line.encode('utf-8'))
+        self._current_size += len(line.encode("utf-8"))
 
         # 自动刷新
         self._file.flush()

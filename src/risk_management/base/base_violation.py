@@ -2,17 +2,19 @@
 违规结果抽象基类
 定义风险违规结果的统一接口
 """
+
 from abc import ABC
-from enum import Enum
-from typing import Dict, Any, Optional
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class ViolationLevel(Enum):
     """违规级别"""
-    INFO = "info"          # 信息提示
-    WARNING = "warning"    # 警告
-    ERROR = "error"        # 错误，交易被拒绝
+
+    INFO = "info"  # 信息提示
+    WARNING = "warning"  # 警告
+    ERROR = "error"  # 错误，交易被拒绝
     CRITICAL = "critical"  # 严重违规，需要立即处理
 
 
@@ -57,10 +59,10 @@ class BaseViolation(ABC):
     def to_dict(self) -> Dict[str, Any]:
         """序列化为字典"""
         return {
-            'rule_id': self.rule_id,
-            'rule_name': self.rule_name,
-            'level': self.level.value,
-            'message': self.message,
-            'details': self.details,
-            'occurred_at': self.occurred_at.isoformat(),
+            "rule_id": self.rule_id,
+            "rule_name": self.rule_name,
+            "level": self.level.value,
+            "message": self.message,
+            "details": self.details,
+            "occurred_at": self.occurred_at.isoformat(),
         }

@@ -2,6 +2,7 @@
 日志中心 - 日志处理器抽象基类
 定义日志处理器的基础接口和日志级别
 """
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import IntEnum
@@ -10,6 +11,7 @@ from typing import Any, Dict, Optional
 
 class LogLevel(IntEnum):
     """日志级别定义"""
+
     DEBUG = 10
     INFO = 20
     WARNING = 30
@@ -17,16 +19,16 @@ class LogLevel(IntEnum):
     CRITICAL = 50
 
     @classmethod
-    def from_string(cls, level_str: str) -> 'LogLevel':
+    def from_string(cls, level_str: str) -> "LogLevel":
         """从字符串转换日志级别"""
         level_map = {
-            'debug': cls.DEBUG,
-            'info': cls.INFO,
-            'warning': cls.WARNING,
-            'warn': cls.WARNING,
-            'error': cls.ERROR,
-            'critical': cls.CRITICAL,
-            'fatal': cls.CRITICAL,
+            "debug": cls.DEBUG,
+            "info": cls.INFO,
+            "warning": cls.WARNING,
+            "warn": cls.WARNING,
+            "error": cls.ERROR,
+            "critical": cls.CRITICAL,
+            "fatal": cls.CRITICAL,
         }
         return level_map.get(level_str.lower(), cls.INFO)
 
@@ -34,6 +36,7 @@ class LogLevel(IntEnum):
 @dataclass
 class LogRecord:
     """日志记录"""
+
     level: LogLevel
     message: str
     module: str
@@ -44,16 +47,16 @@ class LogRecord:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         result = {
-            'level': self.level.name,
-            'level_value': self.level.value,
-            'message': self.message,
-            'module': self.module,
-            'timestamp': self.timestamp,
+            "level": self.level.name,
+            "level_value": self.level.value,
+            "message": self.message,
+            "module": self.module,
+            "timestamp": self.timestamp,
         }
         if self.context:
-            result['context'] = self.context
+            result["context"] = self.context
         if self.trace_id:
-            result['trace_id'] = self.trace_id
+            result["trace_id"] = self.trace_id
         return result
 
 

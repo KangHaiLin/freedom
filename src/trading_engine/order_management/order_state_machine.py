@@ -2,8 +2,10 @@
 订单状态机
 管理订单状态转换，验证状态转换合法性
 """
-from typing import Dict, Set, Optional
-from src.trading_engine.base.base_order import OrderStatus, BaseOrder
+
+from typing import Dict, Optional, Set
+
+from src.trading_engine.base.base_order import BaseOrder, OrderStatus
 
 
 class OrderStateMachine:

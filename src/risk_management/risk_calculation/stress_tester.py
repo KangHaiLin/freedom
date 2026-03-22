@@ -2,9 +2,11 @@
 压力测试器
 在极端市场情景下测试投资组合的风险承受能力
 """
-from typing import Dict, Any, List, Optional
-import pandas as pd
+
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+import pandas as pd
 
 
 class StressScenario:
@@ -48,39 +50,47 @@ class StressTester:
     def _init_standard_scenarios(self) -> None:
         """初始化标准压力测试情景"""
         # 系统性下跌情景
-        self.add_scenario(StressScenario(
-            scenario_id='systemic_down_10',
-            name='系统性下跌10%',
-            description='整个市场系统性下跌10%',
-            shocks={},  # 空表示所有股票同幅度下跌
-        ))
-        self.add_scenario(StressScenario(
-            scenario_id='systemic_down_20',
-            name='系统性下跌20%',
-            description='整个市场系统性下跌20%',
-            shocks={},
-        ))
+        self.add_scenario(
+            StressScenario(
+                scenario_id="systemic_down_10",
+                name="系统性下跌10%",
+                description="整个市场系统性下跌10%",
+                shocks={},  # 空表示所有股票同幅度下跌
+            )
+        )
+        self.add_scenario(
+            StressScenario(
+                scenario_id="systemic_down_20",
+                name="系统性下跌20%",
+                description="整个市场系统性下跌20%",
+                shocks={},
+            )
+        )
         # 金融危机情景
-        self.add_scenario(StressScenario(
-            scenario_id='financial_crisis_2008',
-            name='2008金融危机情景',
-            description='类似2008金融危机，金融股下跌40%，大盘下跌30%',
-            shocks={
-                'FINANCE': -0.40,
-                'DEFAULT': -0.30,
-            },
-        ))
+        self.add_scenario(
+            StressScenario(
+                scenario_id="financial_crisis_2008",
+                name="2008金融危机情景",
+                description="类似2008金融危机，金融股下跌40%，大盘下跌30%",
+                shocks={
+                    "FINANCE": -0.40,
+                    "DEFAULT": -0.30,
+                },
+            )
+        )
         # 流动性危机情景
-        self.add_scenario(StressScenario(
-            scenario_id='liquidity_crisis',
-            name='流动性危机情景',
-            description='小盘股跌幅超大盘，流动性枯竭带来额外下跌',
-            shocks={
-                'LARGE_CAP': -0.15,
-                'MID_CAP': -0.25,
-                'SMALL_CAP': -0.40,
-            },
-        ))
+        self.add_scenario(
+            StressScenario(
+                scenario_id="liquidity_crisis",
+                name="流动性危机情景",
+                description="小盘股跌幅超大盘，流动性枯竭带来额外下跌",
+                shocks={
+                    "LARGE_CAP": -0.15,
+                    "MID_CAP": -0.25,
+                    "SMALL_CAP": -0.40,
+                },
+            )
+        )
 
     def add_scenario(self, scenario: StressScenario) -> None:
         """添加压力测试情景"""
@@ -101,9 +111,9 @@ class StressTester:
         """列出所有情景"""
         return [
             {
-                'id': s.scenario_id,
-                'name': s.name,
-                'description': s.description,
+                "id": s.scenario_id,
+                "name": s.name,
+                "description": s.description,
             }
             for s in self._scenarios.values()
         ]
@@ -128,8 +138,8 @@ class StressTester:
         scenario = self._scenarios.get(scenario_id)
         if scenario is None:
             return {
-                'success': False,
-                'error': f'Scenario not found: {scenario_id}',
+                "success": False,
+                "error": f"Scenario not found: {scenario_id}",
             }
 
         # 合并冲击
@@ -143,8 +153,8 @@ class StressTester:
         position_results: List[Dict[str, Any]] = []
 
         for ts_code, position in current_positions.items():
-            quantity = position.get('quantity', 0)
-            last_price = position.get('last_price', 0.0)
+            quantity = position.get("quantity", 0)
+            last_price = position.get("last_price", 0.0)
             initial_value = quantity * last_price
             total_initial_value += initial_value
 
@@ -154,28 +164,30 @@ class StressTester:
             final_value = quantity * final_price
             total_final_value += final_value
 
-            position_results.append({
-                'ts_code': ts_code,
-                'initial_value': initial_value,
-                'final_value': final_value,
-                'pnl': final_value - initial_value,
-                'pnl_pct': shock * 100,
-            })
+            position_results.append(
+                {
+                    "ts_code": ts_code,
+                    "initial_value": initial_value,
+                    "final_value": final_value,
+                    "pnl": final_value - initial_value,
+                    "pnl_pct": shock * 100,
+                }
+            )
 
         # 汇总结果
         total_pnl = total_final_value - total_initial_value
         pnl_pct = (total_pnl / total_initial_value) * 100 if total_initial_value > 0 else 0
 
         return {
-            'success': True,
-            'scenario_id': scenario_id,
-            'scenario_name': scenario.name,
-            'scenario_description': scenario.description,
-            'total_initial_value': total_initial_value,
-            'total_final_value': total_final_value,
-            'total_pnl': total_pnl,
-            'total_pnl_pct': pnl_pct,
-            'position_results': position_results,
+            "success": True,
+            "scenario_id": scenario_id,
+            "scenario_name": scenario.name,
+            "scenario_description": scenario.description,
+            "total_initial_value": total_initial_value,
+            "total_final_value": total_final_value,
+            "total_pnl": total_pnl,
+            "total_pnl_pct": pnl_pct,
+            "position_results": position_results,
         }
 
     def run_all_scenarios(
@@ -198,21 +210,21 @@ class StressTester:
         for scenario_id in self._scenarios:
             result = self.run_stress_test(scenario_id, current_positions)
             results[scenario_id] = result
-            if result['success']:
-                if result['total_pnl_pct'] < worst_loss_pct:
-                    worst_loss_pct = result['total_pnl_pct']
+            if result["success"]:
+                if result["total_pnl_pct"] < worst_loss_pct:
+                    worst_loss_pct = result["total_pnl_pct"]
                     worst_scenario = scenario_id
 
         summary = {
-            'total_scenarios': len(results),
-            'successful_scenarios': sum(1 for r in results.values() if r['success']),
-            'worst_loss_pct': worst_loss_pct,
-            'worst_scenario': worst_scenario,
+            "total_scenarios": len(results),
+            "successful_scenarios": sum(1 for r in results.values() if r["success"]),
+            "worst_loss_pct": worst_loss_pct,
+            "worst_scenario": worst_scenario,
         }
 
         return {
-            'results': results,
-            'summary': summary,
+            "results": results,
+            "summary": summary,
         }
 
     def _get_shock(
@@ -226,25 +238,25 @@ class StressTester:
         if ts_code in shocks:
             return shocks[ts_code]
         # 按板块
-        sector = position.get('sector')
+        sector = position.get("sector")
         if sector in shocks:
             return shocks[sector]
         # 按市值分类
-        market_cap = position.get('market_cap')
-        if 'LARGE_CAP' in shocks and market_cap and market_cap > 500e8:
-            return shocks['LARGE_CAP']
-        if 'MID_CAP' in shocks and market_cap and market_cap > 100e8:
-            return shocks['MID_CAP']
-        if 'SMALL_CAP' in shocks:
-            return shocks['SMALL_CAP']
+        market_cap = position.get("market_cap")
+        if "LARGE_CAP" in shocks and market_cap and market_cap > 500e8:
+            return shocks["LARGE_CAP"]
+        if "MID_CAP" in shocks and market_cap and market_cap > 100e8:
+            return shocks["MID_CAP"]
+        if "SMALL_CAP" in shocks:
+            return shocks["SMALL_CAP"]
         # 默认冲击
-        if 'DEFAULT' in shocks:
-            return shocks['DEFAULT']
+        if "DEFAULT" in shocks:
+            return shocks["DEFAULT"]
         # 空字典表示全部下跌，从scenario_id判断幅度
         if len(shocks) == 0:
-            if '10' in scenario_id:
+            if "10" in scenario_id:
                 return -0.10
-            elif '20' in scenario_id:
+            elif "20" in scenario_id:
                 return -0.20
         # 默认0，不变化
         return 0.0

@@ -2,36 +2,18 @@
 策略研究统一管理器
 作为策略研究子系统的统一入口，整合所有模块提供一站式服务
 """
-from typing import Dict, Any, List, Optional, Type
+
+from typing import Any, Dict, List, Optional, Type
+
 import pandas as pd
 
-from src.strategy_research.base import (
-    BaseStrategy,
-    BacktestResult,
-    StrategyStatus,
-)
-from src.strategy_research.strategy_management import (
-    StrategyManager as MetadataManager,
-    StrategyMetadata,
-    StrategyVersion,
-)
-from src.strategy_research.backtest_engine import (
-    BacktestEngine,
-    BacktestConfig,
-)
-from src.strategy_research.simulation_trading import (
-    SimulationEngine,
-    SimulationConfig,
-)
-from src.strategy_research.strategy_validator import (
-    detect_overfit,
-    rolling_window_test,
-    scan_parameter,
-)
-from src.strategy_research.report_generator import (
-    save_report,
-    generate_text_report,
-)
+from src.strategy_research.backtest_engine import BacktestConfig, BacktestEngine
+from src.strategy_research.base import BacktestResult, BaseStrategy, StrategyStatus
+from src.strategy_research.report_generator import generate_text_report, save_report
+from src.strategy_research.simulation_trading import SimulationConfig, SimulationEngine
+from src.strategy_research.strategy_management import StrategyManager as MetadataManager
+from src.strategy_research.strategy_management import StrategyMetadata, StrategyVersion
+from src.strategy_research.strategy_validator import detect_overfit, rolling_window_test, scan_parameter
 
 
 class StrategyResearchManager:
@@ -72,9 +54,9 @@ class StrategyResearchManager:
             tags=tags,
         )
         return {
-            'success': success,
-            'message': msg,
-            'metadata': meta,
+            "success": success,
+            "message": msg,
+            "metadata": meta,
         }
 
     def backtest(
@@ -146,15 +128,14 @@ class StrategyResearchManager:
     ) -> Dict:
         """滚动样本外测试"""
         from src.strategy_research.strategy_validator import rolling_window_test
-        return rolling_window_test(
-            data, strategy_class, params, train_window_days, test_window_days, config
-        )
+
+        return rolling_window_test(data, strategy_class, params, train_window_days, test_window_days, config)
 
     def save_report(
         self,
         result: BacktestResult,
         output_path: str,
-        format: str = 'html',
+        format: str = "html",
     ) -> Dict:
         """保存回测报告"""
         return save_report(result, output_path, format)
@@ -196,7 +177,7 @@ class StrategyResearchManager:
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'strategies': self._metadata_manager.count(),
-            'metadata_manager': self._metadata_manager.health_check(),
+            "status": "ok",
+            "strategies": self._metadata_manager.count(),
+            "metadata_manager": self._metadata_manager.health_check(),
         }

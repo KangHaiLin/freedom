@@ -2,13 +2,14 @@
 存储抽象基类
 所有存储引擎都需要实现此接口，提供统一的存储操作
 """
+
+import logging
 from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
-from datetime import datetime
 
 from common.exceptions import StorageException
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,11 @@ class BaseStorage(ABC):
         """确保连接可用，如果未连接则尝试重连"""
         if not self.is_connected or not self.connection:
             try:
-                self.connect()
+                success = self.connect()
+                if not success:
+                    raise StorageException("存储连接失败：connect() 返回 False")
             except Exception as e:
                 logger.error(f"存储连接失败：{e}")
-                raise StorageException(f"存储连接失败：{e}") from e
+                if not isinstance(e, StorageException):
+                    raise StorageException(f"存储连接失败：{e}") from e
+                raise

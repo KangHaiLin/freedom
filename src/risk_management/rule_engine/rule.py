@@ -2,8 +2,10 @@
 规则数据类
 存储规则元数据和可执行逻辑
 """
-from typing import Dict, Any, Optional, Callable
+
 from datetime import datetime
+from typing import Any, Callable, Dict, Optional
+
 from src.risk_management.base.base_rule import BaseRule, RuleLevel, RuleType
 
 
@@ -71,21 +73,21 @@ class Rule(BaseRule):
         return {}
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Rule':
+    def from_dict(cls, data: Dict[str, Any]) -> "Rule":
         """从字典创建规则 - 反序列化"""
         # 注意：函数无法序列化，此方法用于从数据库加载规则，需要重新绑定函数
         # 动态加载规则需要从规则内容重新编译函数
-        level = RuleLevel(data.get('level', 'warning'))
+        level = RuleLevel(data.get("level", "warning"))
         return cls(
-            rule_id=data['rule_id'],
-            rule_name=data['rule_name'],
-            rule_group=data['rule_group'],
+            rule_id=data["rule_id"],
+            rule_name=data["rule_name"],
+            rule_group=data["rule_group"],
             check_func=lambda ctx: False,  # 需要重新绑定
-            message_func=lambda ctx: data.get('description', ''),
+            message_func=lambda ctx: data.get("description", ""),
             level=level,
-            enabled=data.get('enabled', True),
-            priority=data.get('priority', 1),
-            description=data.get('description'),
+            enabled=data.get("enabled", True),
+            priority=data.get("priority", 1),
+            description=data.get("description"),
         )
 
 
@@ -132,12 +134,12 @@ class RuleVersion:
     def to_dict(self) -> Dict[str, Any]:
         """序列化"""
         return {
-            'version_id': self.version_id,
-            'rule_id': self.rule_id,
-            'rule_content': self.rule_content,
-            'rule_group': self.rule_group,
-            'created_by': self.created_by,
-            'created_at': self.created_at.isoformat(),
-            'gray_percentage': self.gray_percentage,
-            'gray_users': self.gray_users,
+            "version_id": self.version_id,
+            "rule_id": self.rule_id,
+            "rule_content": self.rule_content,
+            "rule_group": self.rule_group,
+            "created_by": self.created_by,
+            "created_at": self.created_at.isoformat(),
+            "gray_percentage": self.gray_percentage,
+            "gray_users": self.gray_users,
         }

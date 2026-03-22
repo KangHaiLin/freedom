@@ -11,25 +11,20 @@
 - audit_trail/ - 审计跟踪模块
 - risk_manager.py - 统一风险管理管理器入口
 """
-from .base import (
-    BaseRule,
-    BaseViolation,
-    RuleLevel,
-    RuleType,
-    ViolationLevel,
-)
+
+from .base import BaseRule, BaseViolation, RuleLevel, RuleType, ViolationLevel
 from .risk_manager import RiskManager
 
 __version__ = "0.1.0"
 
 __all__ = [
     # 基础抽象类
-    'BaseRule',
-    'BaseViolation',
+    "BaseRule",
+    "BaseViolation",
     # 枚举
-    'RuleLevel',
-    'RuleType',
-    'ViolationLevel',
+    "RuleLevel",
+    "RuleType",
+    "ViolationLevel",
     # 统一入口
-    'RiskManager',
+    "RiskManager",
 ]

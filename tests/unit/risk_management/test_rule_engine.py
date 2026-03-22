@@ -1,29 +1,32 @@
 """
 Unit tests for rule engine
 """
+
 import pytest
+
 from src.risk_management.base.base_rule import RuleLevel
-from src.risk_management.rule_engine.rule import Rule, RuleVersion
-from src.risk_management.rule_engine.rule_result import RuleResult, RuleViolation
-from src.risk_management.rule_engine.rule_manager import RuleManager
-from src.risk_management.rule_engine.rule_executor import RuleExecutor
 from src.risk_management.rule_engine.builtins import (
-    create_single_position_concentration_rule,
     create_insufficient_cash_rule,
+    create_single_position_concentration_rule,
     get_default_pre_trade_rules,
 )
+from src.risk_management.rule_engine.rule import Rule, RuleVersion
+from src.risk_management.rule_engine.rule_executor import RuleExecutor
+from src.risk_management.rule_engine.rule_manager import RuleManager
+from src.risk_management.rule_engine.rule_result import RuleResult, RuleViolation
 
 
 def test_rule_init():
     """Test rule creation"""
+
     def check(ctx):
-        return ctx.get('value', 0) <= 100
+        return ctx.get("value", 0) <= 100
 
     def message(ctx):
         return f"Value {ctx.get('value')} > 100"
 
     def details(ctx):
-        return {'value': ctx.get('value'), 'limit': 100}
+        return {"value": ctx.get("value"), "limit": 100}
 
     rule = Rule(
         rule_id="test-001",
@@ -37,15 +40,16 @@ def test_rule_init():
     )
 
     assert rule.rule_id == "test-001"
-    assert rule.check({'value': 50}) is True
-    assert rule.check({'value': 150}) is False
-    assert "Value 150" in rule.get_violation_message({'value': 150})
-    assert rule.get_violation_details({'value': 150})['value'] == 150
+    assert rule.check({"value": 50}) is True
+    assert rule.check({"value": 150}) is False
+    assert "Value 150" in rule.get_violation_message({"value": 150})
+    assert rule.get_violation_details({"value": 150})["value"] == 150
 
 
 def test_rule_result():
     """Test RuleResult"""
     from src.risk_management.base.base_violation import ViolationLevel
+
     result = RuleResult()
     assert result.passed() is True
 
@@ -81,7 +85,7 @@ def test_rule_manager():
     manager = RuleManager()
 
     def check(ctx):
-        return ctx.get('value', 0) <= 100
+        return ctx.get("value", 0) <= 100
 
     def message(ctx):
         return f"Value {ctx.get('value')} > 100"
@@ -107,13 +111,13 @@ def test_rule_manager():
 
     # Count
     stats = manager.count_rules()
-    assert stats['total'] == 1
-    assert stats['enabled'] == 1
+    assert stats["total"] == 1
+    assert stats["enabled"] == 1
 
     # Disable
     manager.disable_rule("test-001")
     stats = manager.count_rules()
-    assert stats['enabled'] == 0
+    assert stats["enabled"] == 0
 
     # Delete
     assert manager.delete_rule("test-001") is True
@@ -130,22 +134,28 @@ def test_rule_executor():
     manager.add_rule(rule, created_by=1)
 
     # Check within limit
-    result = executor.execute("pre_trade", {
-        'total_asset': 100000,
-        'current_quantity': 0,
-        'price': 10,
-        'quantity': 2000,
-    })
+    result = executor.execute(
+        "pre_trade",
+        {
+            "total_asset": 100000,
+            "current_quantity": 0,
+            "price": 10,
+            "quantity": 2000,
+        },
+    )
     # 2000 * 10 / 100000 = 0.2 < 0.3 -> pass
     assert result.passed() is True
 
     # Check over limit
-    result = executor.execute("pre_trade", {
-        'total_asset': 100000,
-        'current_quantity': 0,
-        'price': 10,
-        'quantity': 4000,
-    })
+    result = executor.execute(
+        "pre_trade",
+        {
+            "total_asset": 100000,
+            "current_quantity": 0,
+            "price": 10,
+            "quantity": 4000,
+        },
+    )
     # 4000 * 10 / 100000 = 0.4 > 0.3 -> fail
     assert result.passed() is False
     assert len(result.get_violations()) == 1
@@ -155,8 +165,8 @@ def test_rule_executor():
 def test_builtin_insufficient_cash():
     """Test insufficient cash rule"""
     rule = create_insufficient_cash_rule()
-    assert rule.check({'available_cash': 10000, 'required_amount': 5000}) is True
-    assert rule.check({'available_cash': 10000, 'required_amount': 15000}) is False
+    assert rule.check({"available_cash": 10000, "required_amount": 5000}) is True
+    assert rule.check({"available_cash": 10000, "required_amount": 15000}) is False
     assert "可用资金不足" in rule.get_violation_message({})
 
 
@@ -195,20 +205,20 @@ def test_single_position_concentration_correctness():
 
     # Empty current position, buying 30%
     ctx = {
-        'total_asset': 100000,
-        'current_quantity': 0,
-        'price': 30,
-        'quantity': 1000,  # 30 * 1000 = 30000 -> 30%
+        "total_asset": 100000,
+        "current_quantity": 0,
+        "price": 30,
+        "quantity": 1000,  # 30 * 1000 = 30000 -> 30%
     }
     assert rule.check(ctx) is True
 
     # Buying 31%
     ctx = {
-        'total_asset': 100000,
-        'current_quantity': 0,
-        'price': 31,
-        'quantity': 1000,  # 31000 -> 31%
+        "total_asset": 100000,
+        "current_quantity": 0,
+        "price": 31,
+        "quantity": 1000,  # 31000 -> 31%
     }
     assert rule.check(ctx) is False
     details = rule.get_violation_details(ctx)
-    assert abs(details['current_ratio'] - 0.31) < 0.0001
+    assert abs(details["current_ratio"] - 0.31) < 0.0001

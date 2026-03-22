@@ -2,21 +2,25 @@
 JoinQuant数据源适配器
 实现聚宽数据接口的对接
 """
-import pandas as pd
-from typing import List, Dict
+
+import logging
 import time
 from datetime import datetime
+from typing import Dict, List
+
+import pandas as pd
+
+from common.exceptions import DataSourceException
+from common.utils import DateTimeUtils, StockCodeUtils
 
 from .market_collector import MarketDataCollector
-from common.utils import StockCodeUtils, DateTimeUtils
-from common.exceptions import DataSourceException
-import logging
 
 logger = logging.getLogger(__name__)
 
 # 模拟JoinQuant API导入，实际项目中需要安装jqdatasdk
 try:
     import jqdatasdk as jq
+
     JOINQUANT_AVAILABLE = True
 except ImportError:
     JOINQUANT_AVAILABLE = False
@@ -31,8 +35,8 @@ class JoinQuantCollector(MarketDataCollector):
         if not JOINQUANT_AVAILABLE:
             raise DataSourceException("jqdatasdk未安装，无法使用JoinQuant数据源")
 
-        self.username = config.get('username')
-        self.password = config.get('password')
+        self.username = config.get("username")
+        self.password = config.get("password")
         if not self.username or not self.password:
             raise DataSourceException("JoinQuant用户名或密码未配置")
 
@@ -40,7 +44,7 @@ class JoinQuantCollector(MarketDataCollector):
         self._init_joinquant()
         self.request_count = 0
         self.last_request_time = 0
-        self.rate_limit = config.get('rate_limit', 100)  # 每分钟请求次数限制
+        self.rate_limit = config.get("rate_limit", 100)  # 每分钟请求次数限制
 
     def _init_joinquant(self):
         """初始化JoinQuant连接"""
@@ -108,29 +112,29 @@ class JoinQuantCollector(MarketDataCollector):
 
             # 数据格式转换
             df = df.reset_index()
-            df.rename(columns={'index': 'jq_code'}, inplace=True)
-            df['stock_code'] = df['jq_code'].apply(lambda x: StockCodeUtils.normalize_code(x))
-            df['time'] = DateTimeUtils.now()
-            df['source'] = self.source
+            df.rename(columns={"index": "jq_code"}, inplace=True)
+            df["stock_code"] = df["jq_code"].apply(lambda x: StockCodeUtils.normalize_code(x))
+            df["time"] = DateTimeUtils.now()
+            df["source"] = self.source
 
             # 补充其他字段（聚宽实时接口只返回当前价，其他字段需要从快照获取）
             snapshot = jq.get_snapshot(jq_codes)
             if not snapshot.empty:
                 snapshot = snapshot.reset_index()
-                df = df.merge(snapshot, left_on='jq_code', right_on='code', how='left')
+                df = df.merge(snapshot, left_on="jq_code", right_on="code", how="left")
 
             # 重命名字段
             rename_map = {
-                'current': 'price',
-                'open_x': 'open',
-                'high_x': 'high',
-                'low_x': 'low',
-                'volume': 'volume',
-                'amount': 'amount',
-                'a1_p': 'ask_price1',
-                'a1_v': 'ask_volume1',
-                'b1_p': 'bid_price1',
-                'b1_v': 'bid_volume1'
+                "current": "price",
+                "open_x": "open",
+                "high_x": "high",
+                "low_x": "low",
+                "volume": "volume",
+                "amount": "amount",
+                "a1_p": "ask_price1",
+                "a1_v": "ask_volume1",
+                "b1_p": "bid_price1",
+                "b1_v": "bid_volume1",
             }
 
             for old_name, new_name in rename_map.items():
@@ -139,9 +143,19 @@ class JoinQuantCollector(MarketDataCollector):
 
             # 保留需要的字段
             required_columns = [
-                'stock_code', 'time', 'price', 'open', 'high', 'low',
-                'volume', 'amount', 'bid_price1', 'bid_volume1',
-                'ask_price1', 'ask_volume1', 'source'
+                "stock_code",
+                "time",
+                "price",
+                "open",
+                "high",
+                "low",
+                "volume",
+                "amount",
+                "bid_price1",
+                "bid_volume1",
+                "ask_price1",
+                "ask_volume1",
+                "source",
             ]
 
             for col in required_columns:
@@ -184,10 +198,10 @@ class JoinQuantCollector(MarketDataCollector):
                 jq_codes,
                 start_date=start_date,
                 end_date=end_date,
-                frequency='daily',
-                fields=['open', 'high', 'low', 'close', 'volume', 'money', 'factor'],
+                frequency="daily",
+                fields=["open", "high", "low", "close", "volume", "money", "factor"],
                 skip_paused=False,
-                fq='pre'
+                fq="pre",
             )
 
             if df.empty:
@@ -196,19 +210,23 @@ class JoinQuantCollector(MarketDataCollector):
 
             # 数据格式转换
             df = df.reset_index()
-            df['stock_code'] = df['code'].apply(lambda x: code_map.get(x, x))
-            df['trade_date'] = pd.to_datetime(df['time']).dt.date
+            df["stock_code"] = df["code"].apply(lambda x: code_map.get(x, x))
+            df["trade_date"] = pd.to_datetime(df["time"]).dt.date
 
             # 重命名字段
-            df = df.rename(columns={
-                'money': 'amount',
-                'factor': 'adjust_factor'
-            })
+            df = df.rename(columns={"money": "amount", "factor": "adjust_factor"})
 
             # 保留需要的字段
             required_columns = [
-                'stock_code', 'trade_date', 'open', 'high', 'low', 'close',
-                'volume', 'amount', 'adjust_factor'
+                "stock_code",
+                "trade_date",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "amount",
+                "adjust_factor",
             ]
 
             for col in required_columns:
@@ -218,7 +236,7 @@ class JoinQuantCollector(MarketDataCollector):
             result_df = df[required_columns].copy()
 
             # 数据校验
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_date', 'close', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_date", "close", "volume"]):
                 return result_df
             return pd.DataFrame()
 
@@ -251,9 +269,9 @@ class JoinQuantCollector(MarketDataCollector):
                 jq_codes,
                 start_date=start_date + " 09:30:00",
                 end_date=end_date + " 15:00:00",
-                frequency=f'{period}m',
-                fields=['open', 'high', 'low', 'close', 'volume', 'money'],
-                skip_paused=False
+                frequency=f"{period}m",
+                fields=["open", "high", "low", "close", "volume", "money"],
+                skip_paused=False,
             )
 
             if df.empty:
@@ -262,19 +280,14 @@ class JoinQuantCollector(MarketDataCollector):
 
             # 数据格式转换
             df = df.reset_index()
-            df['stock_code'] = df['code'].apply(lambda x: code_map.get(x, x))
-            df['trade_time'] = pd.to_datetime(df['time'])
+            df["stock_code"] = df["code"].apply(lambda x: code_map.get(x, x))
+            df["trade_time"] = pd.to_datetime(df["time"])
 
             # 重命名字段
-            df = df.rename(columns={
-                'money': 'amount'
-            })
+            df = df.rename(columns={"money": "amount"})
 
             # 保留需要的字段
-            required_columns = [
-                'stock_code', 'trade_time', 'open', 'high', 'low', 'close',
-                'volume', 'amount'
-            ]
+            required_columns = ["stock_code", "trade_time", "open", "high", "low", "close", "volume", "amount"]
 
             for col in required_columns:
                 if col not in df.columns:
@@ -283,7 +296,7 @@ class JoinQuantCollector(MarketDataCollector):
             result_df = df[required_columns].copy()
 
             # 数据校验
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_time', 'close', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_time", "close", "volume"]):
                 return result_df
             return pd.DataFrame()
 
@@ -306,13 +319,13 @@ class JoinQuantCollector(MarketDataCollector):
                         jq_code,
                         start_dt=date + " 09:30:00",
                         end_dt=date + " 15:00:00",
-                        fields=['time', 'current', 'volume', 'amount', 'b1_p', 'b1_v', 'a1_p', 'a1_v'],
-                        skip=False
+                        fields=["time", "current", "volume", "amount", "b1_p", "b1_v", "a1_p", "a1_v"],
+                        skip=False,
                     )
 
                     if not df.empty:
-                        df['stock_code'] = code
-                        df['trade_time'] = pd.to_datetime(df['time'])
+                        df["stock_code"] = code
+                        df["trade_time"] = pd.to_datetime(df["time"])
                         all_data.append(df)
 
                 except Exception as e:
@@ -325,18 +338,27 @@ class JoinQuantCollector(MarketDataCollector):
             result_df = pd.concat(all_data, ignore_index=True)
 
             # 重命名字段
-            result_df = result_df.rename(columns={
-                'current': 'price',
-                'b1_p': 'bid_price1',
-                'b1_v': 'bid_volume1',
-                'a1_p': 'ask_price1',
-                'a1_v': 'ask_volume1'
-            })
+            result_df = result_df.rename(
+                columns={
+                    "current": "price",
+                    "b1_p": "bid_price1",
+                    "b1_v": "bid_volume1",
+                    "a1_p": "ask_price1",
+                    "a1_v": "ask_volume1",
+                }
+            )
 
             # 保留需要的字段
             required_columns = [
-                'stock_code', 'trade_time', 'price', 'volume', 'amount',
-                'bid_price1', 'bid_volume1', 'ask_price1', 'ask_volume1'
+                "stock_code",
+                "trade_time",
+                "price",
+                "volume",
+                "amount",
+                "bid_price1",
+                "bid_volume1",
+                "ask_price1",
+                "ask_volume1",
             ]
 
             for col in required_columns:
@@ -346,7 +368,7 @@ class JoinQuantCollector(MarketDataCollector):
             result_df = result_df[required_columns].copy()
 
             # 数据校验
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_time', 'price', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_time", "price", "volume"]):
                 return result_df
             return pd.DataFrame()
 

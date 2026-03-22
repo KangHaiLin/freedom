@@ -1,9 +1,10 @@
 """
 Unit tests for batch_processor.py
 """
-import pytest
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from src.data_management.data_processing.batch_processor import BatchProcessor
 
 
@@ -11,13 +12,13 @@ def create_large_data(size: int = 50000):
     """创建大数据集"""
     np.random.seed(42)
     data = {
-        'ts_code': np.random.choice(['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ'], size=size),
-        'trade_date': pd.date_range('2024-01-01', periods=size//4).repeat(4),
-        'open': 10 + np.random.rand(size),
-        'high': 11 + np.random.rand(size),
-        'low': 9 + np.random.rand(size),
-        'close': 10 + np.random.rand(size),
-        'volume': np.random.randint(1000, 100000, size=size),
+        "ts_code": np.random.choice(["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ"], size=size),
+        "trade_date": pd.date_range("2024-01-01", periods=size // 4).repeat(4),
+        "open": 10 + np.random.rand(size),
+        "high": 11 + np.random.rand(size),
+        "low": 9 + np.random.rand(size),
+        "close": 10 + np.random.rand(size),
+        "volume": np.random.randint(1000, 100000, size=size),
     }
     return pd.DataFrame(data)
 
@@ -28,14 +29,14 @@ def test_process_pipeline():
 
     # 简单流水线：先筛选再添加列
     def add_return(df):
-        df['return'] = df['close'].pct_change()
+        df["return"] = df["close"].pct_change()
         return df
 
     df = create_large_data(1000)
     result = processor.process_pipeline(df, [add_return])
 
     assert isinstance(result, pd.DataFrame)
-    assert 'return' in result.columns
+    assert "return" in result.columns
     assert len(result) == len(df)
 
 
@@ -44,7 +45,7 @@ def test_process_in_chunks():
     processor = BatchProcessor(chunk_size=100)
 
     def add_col(df):
-        df['new_col'] = df['close'] * 2
+        df["new_col"] = df["close"] * 2
         return df
 
     df = create_large_data(500)
@@ -52,8 +53,8 @@ def test_process_in_chunks():
 
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 500
-    assert 'new_col' in result.columns
-    assert (result['new_col'] == result['close'] * 2).all()
+    assert "new_col" in result.columns
+    assert (result["new_col"] == result["close"] * 2).all()
 
 
 def test_process_by_stock():
@@ -62,15 +63,15 @@ def test_process_by_stock():
 
     # 对每个股票计算累计收益
     def calc_cum_return(df):
-        df = df.sort_values('trade_date')
-        df['cum_return'] = (1 + df['close'].pct_change()).cumprod() - 1
+        df = df.sort_values("trade_date")
+        df["cum_return"] = (1 + df["close"].pct_change()).cumprod() - 1
         return df
 
     df = create_large_data(1000)
-    result = processor.process_by_stock(df, calc_cum_return, code_col='ts_code')
+    result = processor.process_by_stock(df, calc_cum_return, code_col="ts_code")
 
     assert isinstance(result, pd.DataFrame)
-    assert 'cum_return' in result.columns
+    assert "cum_return" in result.columns
     # 每个股票至少一条数据
     assert len(result) == len(df)
 
@@ -80,16 +81,16 @@ def test_process():
     processor = BatchProcessor()
 
     def add_col(df):
-        df['test'] = 1
+        df["test"] = 1
         return df
 
     df = create_large_data(100)
     result = processor.process(df, [add_col])
 
     assert result.is_success()
-    assert 'input_rows' in result.metrics
+    assert "input_rows" in result.metrics
     assert result.data is not None
-    assert 'test' in result.data.columns
+    assert "test" in result.data.columns
 
 
 def test_empty_data():
@@ -98,7 +99,7 @@ def test_empty_data():
     df = pd.DataFrame()
 
     def add_col(df):
-        df['test'] = 1
+        df["test"] = 1
         return df
 
     result = processor.process(df, [add_col])
@@ -110,7 +111,7 @@ def test_large_data_processing():
     processor = BatchProcessor(chunk_size=1000)
 
     def simple_process(df):
-        df['processed'] = df['close'] * df['volume']
+        df["processed"] = df["close"] * df["volume"]
         return df
 
     df = create_large_data(10000)
@@ -118,4 +119,4 @@ def test_large_data_processing():
 
     assert result.is_success()
     assert len(result.data) == 10000
-    assert 'processed' in result.data.columns
+    assert "processed" in result.data.columns

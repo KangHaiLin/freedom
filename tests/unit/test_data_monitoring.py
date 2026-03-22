@@ -1,16 +1,18 @@
 """
 数据监控模块单元测试
 """
-import pytest
-import pandas as pd
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-import json
 
-from data_management.data_monitoring.base_monitor import AlertLevel, MonitorResult, BaseMonitor
-from data_management.data_monitoring.data_quality_monitor import DataQualityMonitor
-from data_management.data_monitoring.collection_monitor import CollectionMonitor
+import json
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, Mock, patch
+
+import pandas as pd
+import pytest
+
 from data_management.data_monitoring.alert_service import AlertService
+from data_management.data_monitoring.base_monitor import AlertLevel, BaseMonitor, MonitorResult
+from data_management.data_monitoring.collection_monitor import CollectionMonitor
+from data_management.data_monitoring.data_quality_monitor import DataQualityMonitor
 from data_management.data_monitoring.monitor_manager import MonitorManager
 
 
@@ -29,11 +31,7 @@ class TestMonitorResult:
 
     def test_success_result(self):
         """测试成功结果"""
-        result = MonitorResult.success(
-            monitor_name="test_monitor",
-            metrics={"score": 0.95},
-            message="检查通过"
-        )
+        result = MonitorResult.success(monitor_name="test_monitor", metrics={"score": 0.95}, message="检查通过")
         assert result.success
         assert result.alert_level == AlertLevel.INFO
         assert result.metrics["score"] == 0.95
@@ -42,10 +40,7 @@ class TestMonitorResult:
     def test_failure_result(self):
         """测试失败结果"""
         result = MonitorResult.failure(
-            monitor_name="test_monitor",
-            alert_level=AlertLevel.ERROR,
-            metrics={"score": 0.5},
-            message="数据质量不达标"
+            monitor_name="test_monitor", alert_level=AlertLevel.ERROR, metrics={"score": 0.5}, message="数据质量不达标"
         )
         assert not result.success
         assert result.alert_level == AlertLevel.ERROR
@@ -65,11 +60,7 @@ class TestBaseMonitor:
         monitor = self.TestMonitorImpl("test_monitor", check_interval=60, alert_cooldown=300)
 
         # 第一次告警
-        result1 = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试错误"
-        )
+        result1 = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试错误")
 
         assert monitor._should_send_alert(result1)
 
@@ -77,19 +68,11 @@ class TestBaseMonitor:
         monitor._last_alert_time = datetime.now().timestamp()
 
         # 5分钟内的告警应该被抑制
-        result2 = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试错误"
-        )
+        result2 = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试错误")
         assert not monitor._should_send_alert(result2)
 
         # 更高优先级的告警应该发送
-        result3 = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.CRITICAL,
-            message="严重错误"
-        )
+        result3 = MonitorResult.failure("test_monitor", AlertLevel.CRITICAL, message="严重错误")
         assert monitor._should_send_alert(result3)
 
     def test_failure_count(self):
@@ -125,18 +108,20 @@ class TestDataQualityMonitor:
             config={
                 "table_name": "realtime_quotes",
                 "metrics": ["completeness", "accuracy", "timeliness"],
-                "thresholds": {"overall_score": 0.8}
-            }
+                "thresholds": {"overall_score": 0.8},
+            },
         )
 
     def test_check_completeness(self):
         """测试完整性检查"""
         # 构造测试数据，有缺失值
-        data = pd.DataFrame({
-            "stock_code": ["000001.SZ", None, "600000.SH", "000001.SZ"],
-            "price": [10.0, 15.0, None, 10.1],
-            "time": [datetime.now()] * 4
-        })
+        data = pd.DataFrame(
+            {
+                "stock_code": ["000001.SZ", None, "600000.SH", "000001.SZ"],
+                "price": [10.0, 15.0, None, 10.1],
+                "time": [datetime.now()] * 4,
+            }
+        )
 
         completeness = self.monitor._check_completeness(data)
         # 总共有3个字段，4行 = 12个值
@@ -146,11 +131,13 @@ class TestDataQualityMonitor:
 
     def test_check_accuracy(self):
         """测试准确性检查"""
-        data = pd.DataFrame({
-            "stock_code": ["000001.SZ", "INVALID", "600000.SH"],
-            "price": [10.0, -1.0, 15.0],
-            "volume": [1000, 2000, -500]
-        })
+        data = pd.DataFrame(
+            {
+                "stock_code": ["000001.SZ", "INVALID", "600000.SH"],
+                "price": [10.0, -1.0, 15.0],
+                "volume": [1000, 2000, -500],
+            }
+        )
 
         accuracy = self.monitor._check_accuracy(data)
         # 3行数据，每行3个字段，共9个值
@@ -162,13 +149,9 @@ class TestDataQualityMonitor:
     def test_check_timeliness(self):
         """测试时效性检查"""
         now = datetime.now()
-        data = pd.DataFrame({
-            "time": [
-                now - timedelta(minutes=5),
-                now - timedelta(minutes=3),
-                now - timedelta(minutes=1)
-            ]
-        })
+        data = pd.DataFrame(
+            {"time": [now - timedelta(minutes=5), now - timedelta(minutes=3), now - timedelta(minutes=1)]}
+        )
 
         timeliness = self.monitor._check_timeliness(data, max_delay_minutes=10)
         # 最大延迟是5分钟，远小于10分钟，时效性应该很高
@@ -176,12 +159,14 @@ class TestDataQualityMonitor:
 
     def test_run_quality_check(self):
         """测试运行质量检查"""
-        mock_data = pd.DataFrame({
-            "stock_code": ["000001.SZ", "600000.SH"] * 100,
-            "price": [10.0 + i * 0.1 for i in range(200)],
-            "volume": [1000 + i * 10 for i in range(200)],
-            "time": [datetime.now() - timedelta(seconds=i) for i in range(200)]
-        })
+        mock_data = pd.DataFrame(
+            {
+                "stock_code": ["000001.SZ", "600000.SH"] * 100,
+                "price": [10.0 + i * 0.1 for i in range(200)],
+                "volume": [1000 + i * 10 for i in range(200)],
+                "time": [datetime.now() - timedelta(seconds=i) for i in range(200)],
+            }
+        )
 
         mock_storage = Mock()
         mock_storage.read.return_value = mock_data
@@ -203,10 +188,7 @@ class TestCollectionMonitor:
         self.monitor = CollectionMonitor(
             "collection_monitor",
             data_source_manager=self.data_source_manager,
-            config={
-                "success_rate_threshold": 0.9,
-                "response_time_threshold": 1000
-            }
+            config={"success_rate_threshold": 0.9, "response_time_threshold": 1000},
         )
 
     def test_check_data_source_health(self):
@@ -249,7 +231,7 @@ class TestCollectionMonitor:
             "success_requests": 950,
             "failed_requests": 50,
             "avg_response_time": 450.0,
-            "data_volume_per_minute": 10000
+            "data_volume_per_minute": 10000,
         }
 
         result = self.monitor.run()
@@ -263,50 +245,40 @@ class TestAlertService:
     """告警服务测试"""
 
     def setup_method(self):
-        self.alert_service = AlertService(config={
-            "default_channels": ["log", "webhook"],
-            "channels": {
-                "webhook": {
-                    "url": "http://localhost:8000/alert"
+        self.alert_service = AlertService(
+            config={
+                "default_channels": ["log", "webhook"],
+                "channels": {
+                    "webhook": {"url": "http://localhost:8000/alert"},
+                    "email": {
+                        "smtp_server": "smtp.gmail.com",
+                        "smtp_port": 465,
+                        "smtp_user": "test@example.com",
+                        "smtp_password": "password",
+                        "receivers": ["admin@example.com"],
+                    },
+                    "wecom": {"webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=test-key"},
                 },
-                "email": {
-                    "smtp_server": "smtp.gmail.com",
-                    "smtp_port": 465,
-                    "smtp_user": "test@example.com",
-                    "smtp_password": "password",
-                    "receivers": ["admin@example.com"]
-                },
-                "wecom": {
-                    "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=test-key"
-                }
             }
-        })
+        )
 
     def test_send_alert_log_channel(self):
         """测试通过日志渠道发送告警"""
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试告警")
 
-        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+        with patch("data_management.data_monitoring.alert_service.logger.warning") as mock_log:
             success = self.alert_service.send_alert(result, channels=["log"])
             assert success
             mock_log.assert_called_once()
 
-    @patch('requests.post')
+    @patch("requests.post")
     def test_send_alert_webhook_channel(self, mock_post):
         """测试通过Webhook渠道发送告警"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_post.return_value = mock_response
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试告警")
 
         success = self.alert_service.send_alert(result, channels=["webhook"])
         assert success
@@ -320,17 +292,13 @@ class TestAlertService:
         assert payload["alert"]["message"] == "测试告警"
         assert payload["alert"]["level"] == "error"
 
-    @patch('smtplib.SMTP_SSL')
+    @patch("smtplib.SMTP_SSL")
     def test_send_alert_email_channel_ssl(self, mock_smtp_ssl):
         """测试通过邮件渠道发送告警（SSL连接）"""
         mock_server = Mock()
         mock_smtp_ssl.return_value = mock_server
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试邮件告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试邮件告警")
 
         success = self.alert_service.send_alert(result, channels=["email"])
         assert success
@@ -339,20 +307,16 @@ class TestAlertService:
         mock_server.sendmail.assert_called_once()
         mock_server.quit.assert_called_once()
 
-    @patch('smtplib.SMTP')
+    @patch("smtplib.SMTP")
     def test_send_alert_email_channel_starttls(self, mock_smtp):
         """测试通过邮件渠道发送告警（STARTTLS连接）"""
         mock_server = Mock()
         mock_smtp.return_value = mock_server
 
         # 使用非SSL端口
-        self.alert_service.channel_configs['email']['smtp_port'] = 587
+        self.alert_service.channel_configs["email"]["smtp_port"] = 587
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试邮件告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试邮件告警")
 
         success = self.alert_service.send_alert(result, channels=["email"])
         assert success
@@ -365,31 +329,23 @@ class TestAlertService:
     def test_send_alert_email_channel_incomplete_config(self):
         """测试邮件告警配置不完整"""
         # 移除密码
-        self.alert_service.channel_configs['email'].pop('smtp_password')
+        self.alert_service.channel_configs["email"].pop("smtp_password")
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试邮件告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试邮件告警")
 
-        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+        with patch("data_management.data_monitoring.alert_service.logger.warning") as mock_log:
             success = self.alert_service.send_alert(result, channels=["email"])
             assert not success
             mock_log.assert_called_once()
 
-    @patch('requests.post')
+    @patch("requests.post")
     def test_send_alert_wecom_channel(self, mock_post):
         """测试通过企业微信渠道发送告警"""
         mock_response = Mock()
         mock_response.status_code = 200
         mock_post.return_value = mock_response
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试企业微信告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试企业微信告警")
 
         success = self.alert_service.send_alert(result, channels=["wecom"])
         assert success
@@ -402,20 +358,16 @@ class TestAlertService:
 
     def test_send_alert_wecom_channel_no_webhook(self):
         """测试企业微信未配置webhook"""
-        self.alert_service.channel_configs['wecom'].pop('webhook_url')
+        self.alert_service.channel_configs["wecom"].pop("webhook_url")
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试企业微信告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试企业微信告警")
 
-        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+        with patch("data_management.data_monitoring.alert_service.logger.warning") as mock_log:
             success = self.alert_service.send_alert(result, channels=["wecom"])
             assert not success
             mock_log.assert_called_once()
 
-    @patch('requests.post')
+    @patch("requests.post")
     def test_send_alert_dingtalk_channel(self, mock_post):
         """测试通过钉钉渠道发送告警"""
         mock_response = Mock()
@@ -423,15 +375,11 @@ class TestAlertService:
         mock_post.return_value = mock_response
 
         # 添加钉钉配置
-        self.alert_service.channel_configs['dingtalk'] = {
-            'webhook_url': 'https://oapi.dingtalk.com/robot/send?access_token=test-token'
+        self.alert_service.channel_configs["dingtalk"] = {
+            "webhook_url": "https://oapi.dingtalk.com/robot/send?access_token=test-token"
         }
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试钉钉告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试钉钉告警")
 
         success = self.alert_service.send_alert(result, channels=["dingtalk"])
         assert success
@@ -444,20 +392,16 @@ class TestAlertService:
 
     def test_send_alert_unknown_channel(self):
         """测试未知告警渠道"""
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试告警")
 
-        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+        with patch("data_management.data_monitoring.alert_service.logger.warning") as mock_log:
             success = self.alert_service.send_alert(result, channels=["unknown"])
             assert not success
             mock_log.assert_called_once()
 
     def test_send_test_alert(self):
         """测试发送测试告警"""
-        with patch('data_management.data_monitoring.alert_service.logger.warning') as mock_log:
+        with patch("data_management.data_monitoring.alert_service.logger.warning") as mock_log:
             success = self.alert_service.send_test_alert(channels=["log"])
             assert success
             mock_log.assert_called_once()
@@ -466,11 +410,7 @@ class TestAlertService:
         """测试禁用告警时不发送"""
         self.alert_service.enabled = False
 
-        result = MonitorResult.failure(
-            "test_monitor",
-            AlertLevel.ERROR,
-            message="测试告警"
-        )
+        result = MonitorResult.failure("test_monitor", AlertLevel.ERROR, message="测试告警")
 
         success = self.alert_service.send_alert(result, channels=["log"])
         assert not success

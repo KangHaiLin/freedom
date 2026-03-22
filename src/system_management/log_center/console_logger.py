@@ -2,9 +2,11 @@
 日志中心 - 控制台日志处理器
 支持彩色输出，格式化显示
 """
+
 import sys
 from datetime import datetime
 from typing import Optional
+
 from .base_logger import BaseLogger, LogLevel, LogRecord
 
 
@@ -13,13 +15,13 @@ class ConsoleLogger(BaseLogger):
 
     # ANSI 颜色代码
     COLORS = {
-        LogLevel.DEBUG: '\033[37m',      # 灰色
-        LogLevel.INFO: '\033[32m',       # 绿色
-        LogLevel.WARNING: '\033[33m',    # 黄色
-        LogLevel.ERROR: '\033[31m',      # 红色
-        LogLevel.CRITICAL: '\033[35;1m', # 紫红色加粗
+        LogLevel.DEBUG: "\033[37m",  # 灰色
+        LogLevel.INFO: "\033[32m",  # 绿色
+        LogLevel.WARNING: "\033[33m",  # 黄色
+        LogLevel.ERROR: "\033[31m",  # 红色
+        LogLevel.CRITICAL: "\033[35;1m",  # 紫红色加粗
     }
-    RESET = '\033[0m'
+    RESET = "\033[0m"
 
     def __init__(
         self,
@@ -58,7 +60,7 @@ class ConsoleLogger(BaseLogger):
         # 时间戳
         if self.show_timestamp:
             dt = datetime.fromtimestamp(record.timestamp)
-            time_str = dt.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+            time_str = dt.strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
             parts.append(f"[{time_str}]")
 
         # 级别

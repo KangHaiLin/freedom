@@ -2,13 +2,16 @@
 数据转换处理器
 负责数据格式转换、数据类型转换、列重命名、日期时间标准化、时间序列重采样
 """
-from typing import Any, Dict, List, Optional, Union
-import pandas as pd
-import numpy as np
+
 import logging
+from typing import Any, Dict, List, Optional, Union
+
+import numpy as np
+import pandas as pd
+
+from common.utils import DateTimeUtils, NumberUtils, StockCodeUtils
 
 from .base_processor import BaseProcessor
-from common.utils import DateTimeUtils, StockCodeUtils, NumberUtils
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +21,8 @@ class TransformationProcessor(BaseProcessor):
 
     def __init__(self, config: Dict = None):
         super().__init__(config=config)
-        self.default_date_format = self.config.get('default_date_format', '%Y-%m-%d')
-        self.default_datetime_format = self.config.get('default_datetime_format', '%Y-%m-%d %H:%M:%S')
+        self.default_date_format = self.config.get("default_date_format", "%Y-%m-%d")
+        self.default_datetime_format = self.config.get("default_datetime_format", "%Y-%m-%d %H:%M:%S")
 
     def process(self, data: Any, **kwargs) -> Any:
         """
@@ -37,21 +40,21 @@ class TransformationProcessor(BaseProcessor):
             logger.warning(f"{self.name}: 输入数据验证失败")
             return data
 
-        transform_type = kwargs.pop('transform_type', 'list_to_df')
+        transform_type = kwargs.pop("transform_type", "list_to_df")
 
-        if transform_type == 'list_to_df':
+        if transform_type == "list_to_df":
             return self.list_to_dataframe(data, **kwargs)
-        elif transform_type == 'df_to_list':
+        elif transform_type == "df_to_list":
             return self.dataframe_to_list(data, **kwargs)
-        elif transform_type == 'dtype':
+        elif transform_type == "dtype":
             return self.convert_dtypes(data, **kwargs)
-        elif transform_type == 'rename_columns':
+        elif transform_type == "rename_columns":
             return self.rename_columns(data, **kwargs)
-        elif transform_type == 'normalize_datetime':
+        elif transform_type == "normalize_datetime":
             return self.normalize_datetime(data, **kwargs)
-        elif transform_type == 'resample':
+        elif transform_type == "resample":
             return self.resample(data, **kwargs)
-        elif transform_type == 'stock_code_normalize':
+        elif transform_type == "stock_code_normalize":
             return self.normalize_stock_code(data, **kwargs)
         else:
             logger.warning(f"{self.name}: 未知的转换类型: {transform_type}")
@@ -71,7 +74,7 @@ class TransformationProcessor(BaseProcessor):
             df = df.set_index(index_col)
         return df
 
-    def dataframe_to_list(self, df: pd.DataFrame, orient: str = 'records') -> List[Dict]:
+    def dataframe_to_list(self, df: pd.DataFrame, orient: str = "records") -> List[Dict]:
         """
         将DataFrame转换为列表字典
         Args:
@@ -82,11 +85,7 @@ class TransformationProcessor(BaseProcessor):
         """
         return df.to_dict(orient)
 
-    def convert_dtypes(
-        self,
-        df: pd.DataFrame,
-        dtype_map: Dict[str, str]
-    ) -> pd.DataFrame:
+    def convert_dtypes(self, df: pd.DataFrame, dtype_map: Dict[str, str]) -> pd.DataFrame:
         """
         转换数据列类型
         Args:
@@ -99,13 +98,13 @@ class TransformationProcessor(BaseProcessor):
         for col, dtype in dtype_map.items():
             if col in df.columns:
                 try:
-                    if dtype == 'datetime' or dtype == 'datetime64':
+                    if dtype == "datetime" or dtype == "datetime64":
                         df[col] = pd.to_datetime(df[col])
-                    elif dtype == 'float':
-                        df[col] = pd.to_numeric(df[col], errors='coerce').astype(float)
-                    elif dtype == 'int':
-                        df[col] = pd.to_numeric(df[col], errors='coerce').astype('Int64')
-                    elif dtype == 'string':
+                    elif dtype == "float":
+                        df[col] = pd.to_numeric(df[col], errors="coerce").astype(float)
+                    elif dtype == "int":
+                        df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
+                    elif dtype == "string":
                         df[col] = df[col].astype(str)
                     else:
                         df[col] = df[col].astype(dtype)
@@ -125,11 +124,7 @@ class TransformationProcessor(BaseProcessor):
         return df.rename(columns=rename_map)
 
     def normalize_datetime(
-        self,
-        df: pd.DataFrame,
-        datetime_cols: List[str] = None,
-        date_cols: List[str] = None,
-        output_format: str = None
+        self, df: pd.DataFrame, datetime_cols: List[str] = None, date_cols: List[str] = None, output_format: str = None
     ) -> pd.DataFrame:
         """
         标准化日期时间格式
@@ -160,11 +155,7 @@ class TransformationProcessor(BaseProcessor):
 
         return df
 
-    def normalize_stock_code(
-        self,
-        df: pd.DataFrame,
-        code_col: str = 'ts_code'
-    ) -> pd.DataFrame:
+    def normalize_stock_code(self, df: pd.DataFrame, code_col: str = "ts_code") -> pd.DataFrame:
         """
         标准化股票代码
         Args:
@@ -179,11 +170,7 @@ class TransformationProcessor(BaseProcessor):
         return df
 
     def resample(
-        self,
-        df: pd.DataFrame,
-        rule: str,
-        datetime_col: str = 'trade_time',
-        agg_map: Optional[Dict[str, str]] = None
+        self, df: pd.DataFrame, rule: str, datetime_col: str = "trade_time", agg_map: Optional[Dict[str, str]] = None
     ) -> pd.DataFrame:
         """
         时间序列重采样（例如Tick数据转分钟线）
@@ -205,18 +192,18 @@ class TransformationProcessor(BaseProcessor):
         if agg_map is None:
             # 对于OHLC数据使用标准聚合
             default_agg = {}
-            if 'open' in df.columns:
-                default_agg['open'] = 'first'
-            if 'high' in df.columns:
-                default_agg['high'] = 'max'
-            if 'low' in df.columns:
-                default_agg['low'] = 'min'
-            if 'close' in df.columns:
-                default_agg['close'] = 'last'
-            if 'volume' in df.columns:
-                default_agg['volume'] = 'sum'
-            if 'amount' in df.columns:
-                default_agg['amount'] = 'sum'
+            if "open" in df.columns:
+                default_agg["open"] = "first"
+            if "high" in df.columns:
+                default_agg["high"] = "max"
+            if "low" in df.columns:
+                default_agg["low"] = "min"
+            if "close" in df.columns:
+                default_agg["close"] = "last"
+            if "volume" in df.columns:
+                default_agg["volume"] = "sum"
+            if "amount" in df.columns:
+                default_agg["amount"] = "sum"
             agg_map = default_agg
 
         # 执行重采样聚合
@@ -226,7 +213,7 @@ class TransformationProcessor(BaseProcessor):
         resampled = resampled.reset_index()
 
         # 价格保留两位小数（A股标准）
-        price_cols = ['open', 'high', 'low', 'close']
+        price_cols = ["open", "high", "low", "close"]
         for col in price_cols:
             if col in resampled.columns:
                 resampled[col] = resampled[col].apply(NumberUtils.round_price)

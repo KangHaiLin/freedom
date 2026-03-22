@@ -2,8 +2,9 @@
 事前风控检查
 下单前检查各种限制：资金充足性、持仓充足性、换手率限制、持仓集中度限制等
 """
-from typing import Dict, Tuple, Optional
+
 from datetime import datetime
+from typing import Dict, Optional, Tuple
 
 from src.trading_engine.base.base_order import OrderSide
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
@@ -76,8 +77,7 @@ class PreTradeChecker:
             if portfolio.get_position(ts_code) is None or portfolio.get_position(ts_code).is_empty():
                 if current_count >= self.max_concentration:
                     return PreTradeCheckResult(
-                        False,
-                        f"超出最大持仓数量限制: {current_count} >= {self.max_concentration}"
+                        False, f"超出最大持仓数量限制: {current_count} >= {self.max_concentration}"
                     )
 
         # 检查单票市值限制
@@ -93,8 +93,7 @@ class PreTradeChecker:
             if expected_mv > max_allowed:
                 return PreTradeCheckResult(
                     False,
-                    f"单票市值超出限制: {expected_mv:.2f} > {max_allowed:.2f} "
-                    f"({self.max_position_value*100:.1f}%)"
+                    f"单票市值超出限制: {expected_mv:.2f} > {max_allowed:.2f} " f"({self.max_position_value*100:.1f}%)",
                 )
 
         # 检查现金保留
@@ -105,15 +104,14 @@ class PreTradeChecker:
                 return PreTradeCheckResult(
                     False,
                     f"现金不足，预留不足: 需要预留 {total_asset * self.min_cash_reserve:.2f}, "
-                    f"剩余 {available_cash - required_cash:.2f}"
+                    f"剩余 {available_cash - required_cash:.2f}",
                 )
 
         # 检查日换手率
         expected_turnover = (today_traded_value + order_value) / total_asset
         if expected_turnover > self.max_daily_turnover:
             return PreTradeCheckResult(
-                False,
-                f"单日换手率超出限制: {expected_turnover*100:.1f}% > {self.max_daily_turnover*100:.1f}%"
+                False, f"单日换手率超出限制: {expected_turnover*100:.1f}% > {self.max_daily_turnover*100:.1f}%"
             )
 
         # 检查充足性
@@ -134,8 +132,5 @@ class PreTradeChecker:
     def check_max_position_count(self, current_count: int) -> PreTradeCheckResult:
         """检查持仓数量限制"""
         if current_count > self.max_concentration:
-            return PreTradeCheckResult(
-                False,
-                f"超出最大持仓数量: {current_count} > {self.max_concentration}"
-            )
+            return PreTradeCheckResult(False, f"超出最大持仓数量: {current_count} > {self.max_concentration}")
         return PreTradeCheckResult(True)

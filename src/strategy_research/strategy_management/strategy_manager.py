@@ -2,13 +2,15 @@
 策略管理器
 统一入口，管理策略的增删改查、版本切换
 """
-from typing import Dict, List, Optional, Tuple
+
 from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
 from src.strategy_research.base import BaseStrategy, StrategyStatus
+
+from .strategy_loader import StrategyLoader
 from .strategy_metadata import StrategyMetadata, StrategyVersion
 from .strategy_storage import StrategyStorage
-from .strategy_loader import StrategyLoader
 
 
 class StrategyManager:
@@ -124,7 +126,7 @@ class StrategyManager:
             return False
 
         for v in metadata.versions:
-            v.is_active = (v.version_id == version_id)
+            v.is_active = v.version_id == version_id
 
         metadata.current_version = version_id
         metadata.updated_at = datetime.now()
@@ -193,7 +195,7 @@ class StrategyManager:
 
     def instantiate_with_version(
         self,
-        strategy_id:str,
+        strategy_id: str,
         version_id: int,
     ) -> Optional[BaseStrategy]:
         """使用指定版本实例化策略"""
@@ -223,7 +225,7 @@ class StrategyManager:
     def health_check(self) -> Dict:
         """健康检查"""
         return {
-            'status': 'ok',
-            'total_strategies': self.count(),
-            'storage_dir': str(self._storage._storage_dir),
+            "status": "ok",
+            "total_strategies": self.count(),
+            "storage_dir": str(self._storage._storage_dir),
         }

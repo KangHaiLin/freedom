@@ -2,25 +2,26 @@
 统一交易管理器
 作为整个交易系统的统一入口，整合所有子模块提供一站式交易服务
 """
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
-import logging
 
-from src.trading_engine.base.base_order import OrderSide, OrderType, OrderStatus
+import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+from src.trading_engine.base.base_order import OrderSide, OrderStatus, OrderType
+from src.trading_engine.broker_adapter.broker_adapter_manager import BrokerAdapterManager
+from src.trading_engine.broker_adapter.interface import CommissionCalculator, CommissionConfig
+from src.trading_engine.broker_adapter.simulated_broker import SimulatedBrokerAdapter
+from src.trading_engine.execution_engine.execution_engine import ExecutionEngine
+from src.trading_engine.execution_engine.twap_algo import TWAPAlgo
+from src.trading_engine.execution_engine.vwap_algo import ParticipationVWAP, VWAPAlgo
 from src.trading_engine.order_management.order import Order
 from src.trading_engine.order_management.order_manager import OrderManager
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
 from src.trading_engine.position_management.position_calculator import PositionCalculator
+from src.trading_engine.risk_control.risk_controller import RiskCheckResult, RiskController
 from src.trading_engine.trade_record.trade_record import TradeRecord
 from src.trading_engine.trade_record.trade_record_manager import TradeRecordManager
 from src.trading_engine.trade_record.trade_statistics import TradeStatistics
-from src.trading_engine.broker_adapter.broker_adapter_manager import BrokerAdapterManager
-from src.trading_engine.broker_adapter.simulated_broker import SimulatedBrokerAdapter
-from src.trading_engine.broker_adapter.interface import CommissionConfig, CommissionCalculator
-from src.trading_engine.execution_engine.execution_engine import ExecutionEngine
-from src.trading_engine.execution_engine.vwap_algo import VWAPAlgo, ParticipationVWAP
-from src.trading_engine.execution_engine.twap_algo import TWAPAlgo
-from src.trading_engine.risk_control.risk_controller import RiskController, RiskCheckResult
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ class TradingManager:
             trade_record_manager=self._trade_recorder,
             commission_config=commission_config,
         )
-        self._broker_manager.register_adapter('default', broker, default=True)
+        self._broker_manager.register_adapter("default", broker, default=True)
         self._broker_manager.connect_all()
 
         # 初始化执行引擎
@@ -125,19 +126,24 @@ class TradingManager:
                 order = Order.create_stop_order(ts_code, side, quantity, stop_price, strategy_id)
             elif order_type == OrderType.STOP_LIMIT:
                 order = Order.create_stop_limit_order(
-                    ts_code, side, quantity, price, stop_price, strategy_id,
+                    ts_code,
+                    side,
+                    quantity,
+                    price,
+                    stop_price,
+                    strategy_id,
                 )
             else:
                 return {
-                    'success': False,
-                    'message': f'不支持的订单类型: {order_type}',
-                    'order_id': None,
+                    "success": False,
+                    "message": f"不支持的订单类型: {order_type}",
+                    "order_id": None,
                 }
         except Exception as e:
             return {
-                'success': False,
-                'message': f'创建订单失败: {str(e)}',
-                'order_id': None,
+                "success": False,
+                "message": f"创建订单失败: {str(e)}",
+                "order_id": None,
             }
 
         # 2. 风控检查
@@ -153,10 +159,10 @@ class TradingManager:
             )
             if not risk_result.passed:
                 return {
-                    'success': False,
-                    'message': risk_result.message,
-                    'order_id': order.order_id,
-                    'risk_result': risk_result,
+                    "success": False,
+                    "message": risk_result.message,
+                    "order_id": order.order_id,
+                    "risk_result": risk_result,
                 }
 
         # 3. 提交订单到订单管理器
@@ -167,9 +173,9 @@ class TradingManager:
         broker = self._broker_manager.get_default_adapter()
         if broker is None:
             return {
-                'success': False,
-                'message': '没有可用的券商适配器',
-                'order_id': order.order_id,
+                "success": False,
+                "message": "没有可用的券商适配器",
+                "order_id": order.order_id,
             }
 
         # 如果有价格，更新到券商（模拟券商需要）
@@ -180,19 +186,19 @@ class TradingManager:
         if not broker_result:
             order.reject()
             return {
-                'success': False,
-                'message': '券商拒绝订单',
-                'order_id': order.order_id,
+                "success": False,
+                "message": "券商拒绝订单",
+                "order_id": order.order_id,
             }
 
         # 模拟券商已经立即成交，不需要额外处理
         # 真实券商需要等待成交回报，这里不处理
 
         return {
-            'success': True,
-            'message': '订单提交成功',
-            'order_id': order.order_id,
-            'order': order,
+            "success": True,
+            "message": "订单提交成功",
+            "order_id": order.order_id,
+            "order": order,
         }
 
     def _process_filled_order(
@@ -213,7 +219,10 @@ class TradingManager:
         commission = 0.0
         if broker is not None:
             commission = broker.get_commission(
-                order.ts_code, order.side, filled_quantity, price,
+                order.ts_code,
+                order.side,
+                filled_quantity,
+                price,
             )
 
         # 更新投资组合持仓
@@ -265,28 +274,28 @@ class TradingManager:
         order = self._order_manager.get_order(order_id)
         if order is None:
             return {
-                'success': False,
-                'message': f'订单不存在: {order_id}',
+                "success": False,
+                "message": f"订单不存在: {order_id}",
             }
 
         if not order.can_cancel():
             return {
-                'success': False,
-                'message': f'订单状态不允许取消: {order.status}',
+                "success": False,
+                "message": f"订单状态不允许取消: {order.status}",
             }
 
         # 券商端取消
         broker = self._broker_manager.get_default_adapter()
         if broker is not None:
             result = broker.cancel_order(order_id)
-            if not result['success']:
+            if not result["success"]:
                 return result
 
         order.cancel()
         return {
-            'success': True,
-            'message': '订单取消成功',
-            'order': order,
+            "success": True,
+            "message": "订单取消成功",
+            "order": order,
         }
 
     def get_order(self, order_id: str) -> Optional[Order]:
@@ -311,10 +320,7 @@ class TradingManager:
     def get_all_positions(self) -> Dict[str, Dict[str, Any]]:
         """获取所有持仓"""
         positions = self._portfolio.get_all_positions()
-        return {
-            ts_code: pos.to_dict()
-            for ts_code, pos in positions.items()
-        }
+        return {ts_code: pos.to_dict() for ts_code, pos in positions.items()}
 
     def get_portfolio_summary(self) -> Dict[str, float]:
         """获取投资组合汇总信息"""
@@ -323,12 +329,12 @@ class TradingManager:
     def get_total_asset(self) -> float:
         """获取总资产"""
         summary = self._portfolio.get_summary()
-        return summary.get('total_asset', 0.0)
+        return summary.get("total_asset", 0.0)
 
     def get_total_pnl(self) -> float:
         """获取总盈亏"""
         summary = self._portfolio.get_summary()
-        return summary.get('total_pnl', 0.0)
+        return summary.get("total_pnl", 0.0)
 
     def get_all_trades(self) -> List[TradeRecord]:
         """获取所有成交记录"""
@@ -380,7 +386,7 @@ class TradingManager:
         if self._risk_controller:
             # 使用当前价格估算
             # 这里简化处理，实际执行时每笔拆分订单会再次风控检查
-            approx_price = kwargs.get('current_price', 0.0)
+            approx_price = kwargs.get("current_price", 0.0)
             risk_result = self._risk_controller.check_order(
                 ts_code=ts_code,
                 side=side,
@@ -391,9 +397,9 @@ class TradingManager:
             )
             if not risk_result.passed:
                 return {
-                    'success': False,
-                    'message': risk_result.message,
-                    'execution_id': None,
+                    "success": False,
+                    "message": risk_result.message,
+                    "execution_id": None,
                 }
 
         # 提交到执行引擎
@@ -410,9 +416,9 @@ class TradingManager:
         )
 
         return {
-            'success': True,
-            'message': 'VWAP算法订单提交成功',
-            'execution_id': execution_id,
+            "success": True,
+            "message": "VWAP算法订单提交成功",
+            "execution_id": execution_id,
         }
 
     def submit_twap_order(
@@ -450,7 +456,7 @@ class TradingManager:
         if self._risk_controller:
             # 使用当前价格估算
             # 这里简化处理，实际执行时每笔拆分订单会再次风控检查
-            approx_price = kwargs.get('current_price', 0.0)
+            approx_price = kwargs.get("current_price", 0.0)
             risk_result = self._risk_controller.check_order(
                 ts_code=ts_code,
                 side=side,
@@ -461,9 +467,9 @@ class TradingManager:
             )
             if not risk_result.passed:
                 return {
-                    'success': False,
-                    'message': risk_result.message,
-                    'execution_id': None,
+                    "success": False,
+                    "message": risk_result.message,
+                    "execution_id": None,
                 }
 
         # 提交到执行引擎
@@ -480,18 +486,18 @@ class TradingManager:
         )
 
         return {
-            'success': True,
-            'message': 'TWAP算法订单提交成功',
-            'execution_id': execution_id,
+            "success": True,
+            "message": "TWAP算法订单提交成功",
+            "execution_id": execution_id,
         }
 
     def cancel_execution(self, execution_id: str) -> Dict[str, Any]:
         """取消算法执行"""
         success = self._execution_engine.cancel_execution(execution_id)
         if success:
-            return {'success': True, 'message': '算法执行已取消'}
+            return {"success": True, "message": "算法执行已取消"}
         else:
-            return {'success': False, 'message': '取消失败，执行不存在'}
+            return {"success": False, "message": "取消失败，执行不存在"}
 
     def get_execution_statistics(self) -> Dict[str, Any]:
         """获取执行引擎统计"""
@@ -508,9 +514,10 @@ class TradingManager:
         """检查投资组合整体风险"""
         if self._risk_controller:
             return self._risk_controller.check_portfolio_risk(
-                self._portfolio, max_drawdown,
+                self._portfolio,
+                max_drawdown,
             )
-        return {'alert': False, 'message': '风控未启用'}
+        return {"alert": False, "message": "风控未启用"}
 
     def register_custom_broker(
         self,
@@ -556,26 +563,26 @@ class TradingManager:
         execution_health = self._execution_engine.health_check()
 
         all_ok = (
-            portfolio_health['status'] == 'ok'
-            and order_health['status'] == 'ok'
-            and trade_health['status'] == 'ok'
-            and all(adapter['status'] == 'ok' for name, adapter in broker_health.items())
-            and execution_health['status'] == 'ok'
+            portfolio_health["status"] == "ok"
+            and order_health["status"] == "ok"
+            and trade_health["status"] == "ok"
+            and all(adapter["status"] == "ok" for name, adapter in broker_health.items())
+            and execution_health["status"] == "ok"
         )
 
         return {
-            'status': 'ok' if all_ok else 'degraded',
-            'uptime_seconds': uptime,
-            'portfolio': portfolio_health,
-            'order_manager': order_health,
-            'trade_recorder': trade_health,
-            'broker_manager': broker_health,
-            'execution_engine': execution_health,
-            'stats': {
-                'total_orders': len(self._order_manager.get_all_orders()),
-                'active_orders': len(self._order_manager.get_active_orders()),
-                'total_positions': len(self._portfolio.get_all_positions()),
-                'total_trades': len(self._trade_recorder.get_all_records()),
-                'running_executions': len(self._execution_engine._active_executions),
+            "status": "ok" if all_ok else "degraded",
+            "uptime_seconds": uptime,
+            "portfolio": portfolio_health,
+            "order_manager": order_health,
+            "trade_recorder": trade_health,
+            "broker_manager": broker_health,
+            "execution_engine": execution_health,
+            "stats": {
+                "total_orders": len(self._order_manager.get_all_orders()),
+                "active_orders": len(self._order_manager.get_active_orders()),
+                "total_positions": len(self._portfolio.get_all_positions()),
+                "total_trades": len(self._trade_recorder.get_all_records()),
+                "running_executions": len(self._execution_engine._active_executions),
             },
         }

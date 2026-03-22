@@ -2,14 +2,16 @@
 行情数据采集器基类
 所有行情数据源都需要继承此基类，实现统一接口
 """
-from abc import ABC, abstractmethod
-from typing import List, Dict, Optional
-import pandas as pd
-import time
-import logging
-from datetime import datetime
 
-from common.constants import BusinessConstants, DEFAULT_QUALITY_RULES
+import logging
+import time
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Dict, List, Optional
+
+import pandas as pd
+
+from common.constants import DEFAULT_QUALITY_RULES, BusinessConstants
 from common.utils import DateTimeUtils
 
 logger = logging.getLogger(__name__)
@@ -21,15 +23,15 @@ class MarketDataCollector(ABC):
     def __init__(self, source: str, config: Dict):
         self.source = source  # 数据源名称（Wind/Tushare/交易所）
         self.config = config  # 采集配置
-        self.priority = config.get('priority', 999)  # 优先级，数字越小优先级越高
-        self.weight = config.get('weight', 1.0)  # 权重，用于负载均衡
+        self.priority = config.get("priority", 999)  # 优先级，数字越小优先级越高
+        self.weight = config.get("weight", 1.0)  # 权重，用于负载均衡
         self.availability = 1.0  # 可用性，0-1之间
         self.avg_response_time = 0.0  # 平均响应时间（毫秒）
         self.error_count = 0  # 错误次数
         self.last_sync_time: Optional[datetime] = None
         self.last_error_time: Optional[float] = None
-        self.max_retry_times = config.get('max_retry_times', 3)
-        self.retry_interval = config.get('retry_interval', 1)  # 重试间隔（秒）
+        self.max_retry_times = config.get("max_retry_times", 3)
+        self.retry_interval = config.get("retry_interval", 1)  # 重试间隔（秒）
 
     @abstractmethod
     def get_realtime_quote(self, stock_codes: List[str]) -> pd.DataFrame:
@@ -94,18 +96,18 @@ class MarketDataCollector(ABC):
             logger.warning(f"[{self.source}] 采集的数据为空")
             return False
 
-        required_columns = required_columns or ['stock_code', 'time', 'price', 'volume']
+        required_columns = required_columns or ["stock_code", "time", "price", "volume"]
         for col in required_columns:
             if col not in df.columns:
                 logger.warning(f"[{self.source}] 采集的数据缺少必要字段：{col}")
                 return False
 
         # 检查数据时间范围合理性
-        if 'time' in df.columns:
-            latest_time = df['time'].max()
+        if "time" in df.columns:
+            latest_time = df["time"].max()
             if isinstance(latest_time, datetime):
                 time_diff = (DateTimeUtils.now() - latest_time).total_seconds()
-                if time_diff > DEFAULT_QUALITY_RULES['realtime_data_delay_max']:  # 数据延迟超过阈值
+                if time_diff > DEFAULT_QUALITY_RULES["realtime_data_delay_max"]:  # 数据延迟超过阈值
                     logger.warning(f"[{self.source}] 数据延迟过大：{time_diff:.2f}秒")
                     return False
 
@@ -135,7 +137,9 @@ class MarketDataCollector(ABC):
         self.last_error_time = time.time()
         # 可用性下降
         self.availability = max(0.0, self.availability - 0.3)
-        logger.error(f"[{self.source}] 请求失败，错误：{error_msg}，错误次数：{self.error_count}，可用性：{self.availability:.2f}")
+        logger.error(
+            f"[{self.source}] 请求失败，错误：{error_msg}，错误次数：{self.error_count}，可用性：{self.availability:.2f}"
+        )
 
     def is_available(self) -> bool:
         """
@@ -189,5 +193,5 @@ class MarketDataCollector(ABC):
             "avg_response_time": self.avg_response_time,
             "error_count": self.error_count,
             "is_available": self.is_available(),
-            "last_sync_time": self.last_sync_time.isoformat() if self.last_sync_time else None
+            "last_sync_time": self.last_sync_time.isoformat() if self.last_sync_time else None,
         }

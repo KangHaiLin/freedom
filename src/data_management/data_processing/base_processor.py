@@ -2,12 +2,14 @@
 数据处理器抽象基类
 所有数据处理器都需要继承此基类，实现统一的处理接口
 """
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Union
+
 import logging
 import time
-import pandas as pd
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional, Union
+
 import numpy as np
+import pandas as pd
 
 from common.exceptions import DataException
 from common.utils import DateTimeUtils
@@ -27,7 +29,7 @@ class BaseProcessor(ABC):
         """
         self.name = name or self.__class__.__name__
         self.config = config or {}
-        self.enabled = self.config.get('enabled', True)
+        self.enabled = self.config.get("enabled", True)
         self.process_count = 0
         self.total_processing_time = 0.0
 
@@ -75,13 +77,13 @@ class BaseProcessor(ABC):
         """
         avg_time = self.total_processing_time / self.process_count if self.process_count > 0 else 0
         return {
-            'name': self.name,
-            'type': self.__class__.__name__,
-            'enabled': self.enabled,
-            'process_count': self.process_count,
-            'total_processing_time': self.total_processing_time,
-            'average_processing_time': avg_time,
-            'config': self.config
+            "name": self.name,
+            "type": self.__class__.__name__,
+            "enabled": self.enabled,
+            "process_count": self.process_count,
+            "total_processing_time": self.total_processing_time,
+            "average_processing_time": avg_time,
+            "config": self.config,
         }
 
     def _record_processing(self, start_time: float):
@@ -98,11 +100,11 @@ class BaseProcessor(ABC):
         """
         avg_time = self.total_processing_time / self.process_count if self.process_count > 0 else 0
         return {
-            'name': self.name,
-            'status': 'healthy' if self.enabled else 'disabled',
-            'process_count': self.process_count,
-            'average_processing_time_ms': avg_time * 1000,
-            'check_time': DateTimeUtils.now_str()
+            "name": self.name,
+            "status": "healthy" if self.enabled else "disabled",
+            "process_count": self.process_count,
+            "average_processing_time_ms": avg_time * 1000,
+            "check_time": DateTimeUtils.now_str(),
         }
 
     def enable(self):

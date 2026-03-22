@@ -2,7 +2,9 @@
 持仓计算器
 提供投资组合层面的市值、盈亏、权重计算
 """
+
 from typing import Dict, List, Optional
+
 from src.trading_engine.position_management.position import Position
 
 
@@ -66,7 +68,9 @@ class PositionCalculator:
         return total
 
     @staticmethod
-    def calculate_weights(positions: Dict[str, Position], total_market_value: Optional[float] = None) -> Dict[str, float]:
+    def calculate_weights(
+        positions: Dict[str, Position], total_market_value: Optional[float] = None
+    ) -> Dict[str, float]:
         """
         计算各持仓权重
         Args:
@@ -88,10 +92,7 @@ class PositionCalculator:
         return weights
 
     @staticmethod
-    def calculate_portfolio_pnl_percentage(
-        positions: Dict[str, Position],
-        total_cash: float = 0.0
-    ) -> float:
+    def calculate_portfolio_pnl_percentage(positions: Dict[str, Position], total_cash: float = 0.0) -> float:
         """
         计算投资组合整体收益率
         Args:
@@ -120,10 +121,7 @@ class PositionCalculator:
         return [pos for pos in positions.values() if not pos.is_empty()]
 
     @staticmethod
-    def calculate_portfolio_summary(
-        positions: Dict[str, Position],
-        cash: float = 0.0
-    ) -> Dict[str, float]:
+    def calculate_portfolio_summary(positions: Dict[str, Position], cash: float = 0.0) -> Dict[str, float]:
         """
         计算投资组合汇总统计
         Args:
@@ -142,17 +140,19 @@ class PositionCalculator:
         weights = PositionCalculator.calculate_weights(positions, total_market_value)
 
         return {
-            'position_count': len(non_empty),
-            'total_market_value': total_market_value,
-            'total_cost': total_cost,
-            'cash': cash,
-            'total_asset': total_asset,
-            'total_unrealized_pnl': total_unrealized_pnl,
-            'total_realized_pnl': total_realized_pnl,
-            'total_pnl': total_unrealized_pnl + total_realized_pnl,
-            'pnl_percentage': pnl_pct * 100,  # 转百分比
-            'unrealized_pnl_percentage': (total_unrealized_pnl / (total_cost + cash) * 100) if total_cost + cash > 0 else 0,
-            'weights': weights,
+            "position_count": len(non_empty),
+            "total_market_value": total_market_value,
+            "total_cost": total_cost,
+            "cash": cash,
+            "total_asset": total_asset,
+            "total_unrealized_pnl": total_unrealized_pnl,
+            "total_realized_pnl": total_realized_pnl,
+            "total_pnl": total_unrealized_pnl + total_realized_pnl,
+            "pnl_percentage": pnl_pct * 100,  # 转百分比
+            "unrealized_pnl_percentage": (
+                (total_unrealized_pnl / (total_cost + cash) * 100) if total_cost + cash > 0 else 0
+            ),
+            "weights": weights,
         }
 
     @staticmethod

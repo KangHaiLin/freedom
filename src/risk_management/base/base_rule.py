@@ -2,28 +2,31 @@
 规则抽象基类
 定义风控规则的统一接口
 """
+
 from abc import ABC, abstractmethod
-from enum import Enum
-from typing import Dict, Any, Optional
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class RuleLevel(Enum):
     """规则级别 - 决定违规时的处理方式"""
-    INFO = "info"          # 仅提示信息
-    WARNING = "warning"    # 警告，允许交易但告警
-    ERROR = "error"        # 错误，拒绝交易
-    BLOCK = "block"        # 拦截，严重违规阻断交易
+
+    INFO = "info"  # 仅提示信息
+    WARNING = "warning"  # 警告，允许交易但告警
+    ERROR = "error"  # 错误，拒绝交易
+    BLOCK = "block"  # 拦截，严重违规阻断交易
 
 
 class RuleType(Enum):
     """规则类型"""
-    PRE_TRADE = "pre_trade"        # 交易前检查
-    INTRA_DAY = "intra_day"        # 盘中监控
-    COMPLIANCE = "compliance"      # 合规检查
-    POSITION = "position"          # 持仓风险
-    MARKET = "market"              # 市场风险
-    OPERATION = "operation"        # 操作风险
+
+    PRE_TRADE = "pre_trade"  # 交易前检查
+    INTRA_DAY = "intra_day"  # 盘中监控
+    COMPLIANCE = "compliance"  # 合规检查
+    POSITION = "position"  # 持仓风险
+    MARKET = "market"  # 市场风险
+    OPERATION = "operation"  # 操作风险
 
 
 class BaseRule(ABC):
@@ -119,19 +122,19 @@ class BaseRule(ABC):
     def to_dict(self) -> Dict[str, Any]:
         """序列化为字典"""
         return {
-            'rule_id': self.rule_id,
-            'rule_name': self.rule_name,
-            'rule_group': self.rule_group,
-            'level': self.level.value,
-            'enabled': self.enabled,
-            'priority': self.priority,
-            'description': self.description,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat(),
+            "rule_id": self.rule_id,
+            "rule_name": self.rule_name,
+            "rule_group": self.rule_group,
+            "level": self.level.value,
+            "enabled": self.enabled,
+            "priority": self.priority,
+            "description": self.description,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'BaseRule':
+    def from_dict(cls, data: Dict[str, Any]) -> "BaseRule":
         """从字典反序列化"""
         # 子类需要覆盖此方法
         raise NotImplementedError("子类必须实现 from_dict 方法")

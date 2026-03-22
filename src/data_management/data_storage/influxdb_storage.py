@@ -2,17 +2,19 @@
 InfluxDB存储适配器
 实现InfluxDB时序数据库的存储操作，适用于实时监控、指标数据存储
 """
-from typing import List, Dict, Optional, Any, Union
+
+import logging
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
-import logging
-from datetime import datetime
 
-from .base_storage import BaseStorage
+from common.config import settings
 from common.exceptions import StorageException
 from common.utils import DateTimeUtils
-from common.config import settings
+
+from .base_storage import BaseStorage
 
 logger = logging.getLogger(__name__)
 
@@ -22,31 +24,26 @@ class InfluxDBStorage(BaseStorage):
 
     def __init__(self, config: Dict):
         super().__init__(config)
-        self.url = config.get('url', 'http://localhost:8086')
-        self.token = config.get('token')
-        self.org = config.get('org', 'default')
-        self.bucket = config.get('bucket', 'default')
-        self.timeout = config.get('timeout', 30000)
-        self.precision = config.get('precision', WritePrecision.NS)
+        self.url = config.get("url", "http://localhost:8086")
+        self.token = config.get("token")
+        self.org = config.get("org", "default")
+        self.bucket = config.get("bucket", "default")
+        self.timeout = config.get("timeout", 30000)
+        self.precision = config.get("precision", WritePrecision.NS)
 
         # 测试环境和开发环境下不强制检查token（允许未配置）
-        token_is_empty = not self.token or self.token == 'your-influxdb-token'
+        token_is_empty = not self.token or self.token == "your-influxdb-token"
         if token_is_empty and not (settings.is_test or settings.is_development):
             raise StorageException("InfluxDB Token未配置")
 
     def connect(self) -> bool:
         """建立InfluxDB连接"""
         try:
-            self.connection = InfluxDBClient(
-                url=self.url,
-                token=self.token,
-                org=self.org,
-                timeout=self.timeout
-            )
+            self.connection = InfluxDBClient(url=self.url, token=self.token, org=self.org, timeout=self.timeout)
 
             # 测试连接
             health = self.connection.health()
-            if health.status != 'pass':
+            if health.status != "pass":
                 raise StorageException(f"InfluxDB健康检查失败：{health.message}")
 
             self.write_api = self.connection.write_api(write_options=SYNCHRONOUS)
@@ -94,13 +91,13 @@ class InfluxDBStorage(BaseStorage):
                 return 0
 
             # 检查时间字段
-            if 'time' not in df.columns:
+            if "time" not in df.columns:
                 raise StorageException("InfluxDB写入数据必须包含time字段")
 
             # 标签字段
-            tag_columns = kwargs.get('tags', [])
+            tag_columns = kwargs.get("tags", [])
             # 字段字段（除了time和tags之外的所有列）
-            field_columns = [col for col in df.columns if col != 'time' and col not in tag_columns]
+            field_columns = [col for col in df.columns if col != "time" and col not in tag_columns]
 
             points = []
             for _, row in df.iterrows():
@@ -117,15 +114,11 @@ class InfluxDBStorage(BaseStorage):
                         point.field(field, row[field])
 
                 # 添加时间
-                point.time(row['time'], write_precision=self.precision)
+                point.time(row["time"], write_precision=self.precision)
                 points.append(point)
 
             # 批量写入
-            self.write_api.write(
-                bucket=self.bucket,
-                org=self.org,
-                record=points
-            )
+            self.write_api.write(bucket=self.bucket, org=self.org, record=points)
 
             rows_written = len(points)
             logger.debug(f"InfluxDB写入成功，measurement：{table_name}，记录数：{rows_written}")
@@ -151,9 +144,9 @@ class InfluxDBStorage(BaseStorage):
             flux_query = f'from(bucket: "{self.bucket}")'
 
             # 时间范围
-            start = kwargs.get('start', '-1h')
-            stop = kwargs.get('stop', 'now()')
-            flux_query += f' |> range(start: {start}, stop: {stop})'
+            start = kwargs.get("start", "-1h")
+            stop = kwargs.get("stop", "now()")
+            flux_query += f" |> range(start: {start}, stop: {stop})"
 
             # 选择measurement
             flux_query += f' |> filter(fn: (r) => r._measurement == "{table_name}")'
@@ -161,23 +154,23 @@ class InfluxDBStorage(BaseStorage):
             # 标签过滤
             if query and isinstance(query, dict):
                 for key, value in query.items():
-                    if key not in ['start', 'stop']:
+                    if key not in ["start", "stop"]:
                         if isinstance(value, list):
-                            conditions = ' or '.join([f'r.{key} == "{v}"' for v in value])
-                            flux_query += f' |> filter(fn: (r) => {conditions})'
+                            conditions = " or ".join([f'r.{key} == "{v}"' for v in value])
+                            flux_query += f" |> filter(fn: (r) => {conditions})"
                         else:
                             flux_query += f' |> filter(fn: (r) => r.{key} == "{value}")'
 
             # 字段过滤
-            if 'fields' in kwargs:
-                fields = kwargs['fields']
+            if "fields" in kwargs:
+                fields = kwargs["fields"]
                 if isinstance(fields, list):
-                    conditions = ' or '.join([f'r._field == "{f}"' for f in fields])
-                    flux_query += f' |> filter(fn: (r) => {conditions})'
+                    conditions = " or ".join([f'r._field == "{f}"' for f in fields])
+                    flux_query += f" |> filter(fn: (r) => {conditions})"
 
             # 聚合操作
-            if 'aggregate' in kwargs:
-                agg = kwargs['aggregate']
+            if "aggregate" in kwargs:
+                agg = kwargs["aggregate"]
                 flux_query += f' |> aggregateWindow(every: {agg["window"]}, fn: {agg["func"]})'
 
             # 透视表转换为宽格式
@@ -198,7 +191,7 @@ class InfluxDBStorage(BaseStorage):
 
             # 清理不必要的列
             if not df.empty:
-                keep_columns = ['time'] + [col for col in df.columns if not col.startswith('_')]
+                keep_columns = ["time"] + [col for col in df.columns if not col.startswith("_")]
                 df = df[keep_columns].copy()
 
             logger.debug(f"InfluxDB查询成功，返回{len(df)}条记录")
@@ -213,26 +206,20 @@ class InfluxDBStorage(BaseStorage):
         self.ensure_connection()
 
         try:
-            start = query.get('start', '1970-01-01T00:00:00Z')
-            stop = query.get('stop', DateTimeUtils.now().isoformat())
+            start = query.get("start", "1970-01-01T00:00:00Z")
+            stop = query.get("stop", DateTimeUtils.now().isoformat())
 
             # 构建删除谓词
             predicate = f'_measurement="{table_name}"'
             for key, value in query.items():
-                if key not in ['start', 'stop']:
+                if key not in ["start", "stop"]:
                     if isinstance(value, list):
-                        conditions = ' or '.join([f'{key}="{v}"' for v in value])
-                        predicate += f' and ({conditions})'
+                        conditions = " or ".join([f'{key}="{v}"' for v in value])
+                        predicate += f" and ({conditions})"
                     else:
                         predicate += f' and {key}="{value}"'
 
-            self.delete_api.delete(
-                start=start,
-                stop=stop,
-                predicate=predicate,
-                bucket=self.bucket,
-                org=self.org
-            )
+            self.delete_api.delete(start=start, stop=stop, predicate=predicate, bucket=self.bucket, org=self.org)
 
             logger.debug(f"InfluxDB删除成功，measurement：{table_name}，条件：{predicate}")
             return 1  # InfluxDB不返回具体删除行数
@@ -257,12 +244,12 @@ class InfluxDBStorage(BaseStorage):
         self.ensure_connection()
 
         try:
-            flux_query = f'''
+            flux_query = f"""
                 from(bucket: "{self.bucket}")
                 |> range(start: -1m)
                 |> filter(fn: (r) => r._measurement == "{table_name}")
                 |> limit(n: 1)
-            '''
+            """
             result = self.query_api.query(flux_query, org=self.org)
             return len(result) > 0
         except Exception as e:
@@ -282,12 +269,12 @@ class InfluxDBStorage(BaseStorage):
 
             health = self.connection.health()
             return {
-                "status": "healthy" if health.status == 'pass' else "unhealthy",
+                "status": "healthy" if health.status == "pass" else "unhealthy",
                 "url": self.url,
                 "org": self.org,
                 "bucket": self.bucket,
                 "version": health.version,
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }
 
         except Exception as e:
@@ -297,5 +284,5 @@ class InfluxDBStorage(BaseStorage):
                 "org": self.org,
                 "bucket": self.bucket,
                 "error": str(e),
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }

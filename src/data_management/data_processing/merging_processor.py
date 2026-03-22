@@ -2,10 +2,12 @@
 数据合并处理器
 负责按股票+日期合并行情和基本面、合并多个数据集、对齐时间范围、缺失值填充
 """
-from typing import Any, Dict, List, Optional, Union
-import pandas as pd
-import numpy as np
+
 import logging
+from typing import Any, Dict, List, Optional, Union
+
+import numpy as np
+import pandas as pd
 
 from .base_processor import BaseProcessor
 
@@ -18,7 +20,7 @@ class MergingProcessor(BaseProcessor):
     def __init__(self, config: Dict = None):
         super().__init__(config=config)
 
-    def process(self, data: Any, merge_type: str = 'market_fundamental', **kwargs) -> Optional[pd.DataFrame]:
+    def process(self, data: Any, merge_type: str = "market_fundamental", **kwargs) -> Optional[pd.DataFrame]:
         """
         合并处理入口
         Args:
@@ -45,13 +47,13 @@ class MergingProcessor(BaseProcessor):
 
         # merge_type已经作为位置参数弹出了，不需要处理
 
-        if merge_type == 'market_fundamental':
+        if merge_type == "market_fundamental":
             return self.merge_market_fundamental(data[0], data[1], **kwargs)
-        elif merge_type == 'concat':
+        elif merge_type == "concat":
             return self.concat_datasets(data, **kwargs)
-        elif merge_type == 'join':
+        elif merge_type == "join":
             return self.join_datasets(data, **kwargs)
-        elif merge_type == 'align_time':
+        elif merge_type == "align_time":
             return self.align_time_range(data, **kwargs)
         else:
             logger.warning(f"{self.name}: 未知的合并类型: {merge_type}")
@@ -61,10 +63,10 @@ class MergingProcessor(BaseProcessor):
         self,
         market_data: pd.DataFrame,
         fundamental_data: pd.DataFrame,
-        how: str = 'left',
-        code_col: str = 'ts_code',
-        date_col: str = 'trade_date',
-        ffill: bool = True
+        how: str = "left",
+        code_col: str = "ts_code",
+        date_col: str = "trade_date",
+        ffill: bool = True,
     ) -> pd.DataFrame:
         """
         合并行情数据和基本面数据，按股票代码+日期合并
@@ -92,22 +94,18 @@ class MergingProcessor(BaseProcessor):
 
         # 合并
         merged = pd.merge(
-            market_data,
-            fundamental_data,
-            on=[code_col, date_col],
-            how=how,
-            suffixes=('_market', '_fund')
+            market_data, fundamental_data, on=[code_col, date_col], how=how, suffixes=("_market", "_fund")
         )
 
         # 前向填充基本面数据（因为基本面不每天更新，需要填充）
-        if ffill and how == 'left':
+        if ffill and how == "left":
             # 找出所有来自基本面的列（不是合并键，也不是market原有的）
             market_cols = set(market_data.columns)
             fund_cols = []
             for col in merged.columns:
                 if col not in [code_col, date_col] and col not in market_cols:
                     fund_cols.append(col)
-                elif col.endswith('_fund'):
+                elif col.endswith("_fund"):
                     fund_cols.append(col)
             if fund_cols:
                 merged[fund_cols] = merged.groupby(code_col)[fund_cols].ffill()
@@ -118,10 +116,7 @@ class MergingProcessor(BaseProcessor):
         return merged
 
     def concat_datasets(
-        self,
-        datasets: List[pd.DataFrame],
-        ignore_index: bool = True,
-        verify_integrity: bool = False
+        self, datasets: List[pd.DataFrame], ignore_index: bool = True, verify_integrity: bool = False
     ) -> pd.DataFrame:
         """
         垂直拼接多个数据集（按行拼接），常用于合并多股票数据、多日期数据
@@ -146,10 +141,7 @@ class MergingProcessor(BaseProcessor):
         return result
 
     def join_datasets(
-        self,
-        datasets: List[pd.DataFrame],
-        on: Union[str, List[str]] = None,
-        how: str = 'inner'
+        self, datasets: List[pd.DataFrame], on: Union[str, List[str]] = None, how: str = "inner"
     ) -> pd.DataFrame:
         """
         水平连接多个数据集（按列连接），常用于合并不同来源的同时间数据
@@ -168,16 +160,16 @@ class MergingProcessor(BaseProcessor):
             if df.empty:
                 logger.warning(f"{self.name}: 第{i}个数据集为空，跳过")
                 continue
-            result = pd.merge(result, df, on=on, how=how, suffixes=(f'_{i-1}', f'_{i}'))
+            result = pd.merge(result, df, on=on, how=how, suffixes=(f"_{i-1}", f"_{i}"))
 
         return result
 
     def align_time_range(
         self,
         datasets: List[pd.DataFrame],
-        time_col: str = 'trade_date',
+        time_col: str = "trade_date",
         intersection: bool = True,
-        fill_missing: str = 'ffill'
+        fill_missing: str = "ffill",
     ) -> List[pd.DataFrame]:
         """
         对齐多个数据集的时间范围，使所有数据集覆盖相同的时间区间
@@ -232,16 +224,16 @@ class MergingProcessor(BaseProcessor):
             df_aligned = df.reindex(target_dates)
 
             # 填充缺失值
-            if fill_missing == 'ffill':
+            if fill_missing == "ffill":
                 df_aligned = df_aligned.ffill()
-            elif fill_missing == 'bfill':
+            elif fill_missing == "bfill":
                 df_aligned = df_aligned.bfill()
-            elif fill_missing == 'drop':
+            elif fill_missing == "drop":
                 df_aligned = df_aligned.dropna()
 
             # 恢复时间列
             df_aligned = df_aligned.reset_index()
-            df_aligned = df_aligned.rename(columns={'index': time_col})
+            df_aligned = df_aligned.rename(columns={"index": time_col})
 
             result_datasets.append(df_aligned)
 
@@ -251,10 +243,10 @@ class MergingProcessor(BaseProcessor):
         self,
         left_df: pd.DataFrame,
         right_df: pd.DataFrame,
-        code_col: str = 'ts_code',
-        date_col: str = 'trade_date',
-        how: str = 'left',
-        suffixes: tuple = ('_left', '_right')
+        code_col: str = "ts_code",
+        date_col: str = "trade_date",
+        how: str = "left",
+        suffixes: tuple = ("_left", "_right"),
     ) -> pd.DataFrame:
         """
         通用的按股票代码+日期合并
@@ -275,13 +267,7 @@ class MergingProcessor(BaseProcessor):
         left_df[date_col] = pd.to_datetime(left_df[date_col])
         right_df[date_col] = pd.to_datetime(right_df[date_col])
 
-        merged = pd.merge(
-            left_df,
-            right_df,
-            on=[code_col, date_col],
-            how=how,
-            suffixes=suffixes
-        )
+        merged = pd.merge(left_df, right_df, on=[code_col, date_col], how=how, suffixes=suffixes)
 
         # 排序
         merged = merged.sort_values([code_col, date_col]).reset_index(drop=True)

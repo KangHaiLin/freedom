@@ -2,16 +2,19 @@
 回测投资组合
 管理现金、持仓、成交记录
 """
-from typing import Dict, List, Optional
-from dataclasses import dataclass
 
-from src.strategy_research.base import TradeRecord, TradeDirection, PositionSnapshot
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
+from src.strategy_research.base import PositionSnapshot, TradeDirection, TradeRecord
+
 from .backtest_config import BacktestConfig
 
 
 @dataclass
 class Position:
     """单个持仓"""
+
     ts_code: str
     quantity: int = 0
     avg_cost: float = 0.0

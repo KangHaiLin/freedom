@@ -2,19 +2,21 @@
 历史数据同步任务注册模块
 负责创建各类型同步任务，注册到调度器，提供手动触发入口
 """
-from typing import Dict, Any, Optional
-import logging
 
-from system_management.task_scheduler.scheduler_manager import get_scheduler_manager
+import logging
+from typing import Any, Dict, Optional
+
+from common.config import settings
 from system_management.task_scheduler.scheduled_task import ScheduledTask
+from system_management.task_scheduler.scheduler_manager import get_scheduler_manager
+
 from .historical_sync_task import (
-    HistoricalSyncTask,
     DailyHistoricalSyncTask,
+    HistoricalSyncTask,
     Minute1HistoricalSyncTask,
     Minute5HistoricalSyncTask,
     TickHistoricalSyncTask,
 )
-from common.config import settings
 
 logger = logging.getLogger(__name__)
 

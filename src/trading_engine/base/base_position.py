@@ -2,20 +2,16 @@
 持仓抽象基类
 定义持仓的通用接口和基础属性
 """
+
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 
 class BasePosition(ABC):
     """持仓抽象基类"""
 
-    def __init__(
-        self,
-        ts_code: str,
-        quantity: int = 0,
-        avg_cost: float = 0.0
-    ):
+    def __init__(self, ts_code: str, quantity: int = 0, avg_cost: float = 0.0):
         """
         初始化持仓
         Args:

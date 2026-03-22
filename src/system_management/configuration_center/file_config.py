@@ -2,12 +2,15 @@
 配置中心 - 文件配置源
 支持 YAML 和 JSON 配置文件，支持热重载
 """
+
 import json
 import os
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional
 from pathlib import Path
+from typing import Any, Callable, Dict, Optional
+
 import yaml
+
 from .base_config import ConfigSource
 
 
@@ -42,26 +45,26 @@ class FileConfigSource(ConfigSource):
     def _detect_format(self) -> str:
         """检测文件格式"""
         suffix = self.config_path.suffix.lower()
-        if suffix in ('.yaml', '.yml'):
-            return 'yaml'
-        elif suffix in ('.json'):
-            return 'json'
+        if suffix in (".yaml", ".yml"):
+            return "yaml"
+        elif suffix in (".json"):
+            return "json"
         else:
             # 默认尝试 yaml
-            return 'yaml'
+            return "yaml"
 
     def _load_file(self) -> Dict[str, Any]:
         """加载配置文件"""
         if not self.config_path.exists():
             return {}
 
-        with open(self.config_path, 'r', encoding='utf-8') as f:
+        with open(self.config_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         fmt = self._detect_format()
-        if fmt == 'yaml':
+        if fmt == "yaml":
             data = yaml.safe_load(content) or {}
-        elif fmt == 'json':
+        elif fmt == "json":
             data = json.loads(content)
         else:
             data = {}
@@ -115,16 +118,16 @@ class FileConfigSource(ConfigSource):
         """设置配置值并保存回文件"""
         # 先获取当前完整嵌套结构
         full_data = self._unflatten_dict(self._cache)
-        self._set_nested(full_data, key.split('.'), value)
+        self._set_nested(full_data, key.split("."), value)
         self._cache[key] = value
 
         # 写入文件
         try:
             fmt = self._detect_format()
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                if fmt == 'yaml':
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                if fmt == "yaml":
                     yaml.dump(full_data, f, default_flow_style=False, allow_unicode=True)
-                elif fmt == 'json':
+                elif fmt == "json":
                     json.dump(full_data, f, indent=2, ensure_ascii=False)
             self._last_modified = os.path.getmtime(self.config_path)
             return True
@@ -135,7 +138,7 @@ class FileConfigSource(ConfigSource):
         """将扁平化字典还原为嵌套字典"""
         result = {}
         for key, value in flat.items():
-            parts = key.split('.')
+            parts = key.split(".")
             current = result
             for i, part in enumerate(parts[:-1]):
                 if part not in current:

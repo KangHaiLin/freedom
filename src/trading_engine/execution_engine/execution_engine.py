@@ -2,27 +2,29 @@
 执行引擎
 负责接收算法订单，调度算法执行，提交订单到券商
 """
-from typing import Dict, List, Any, Optional, Callable
-from datetime import datetime
+
 import logging
-from queue import Queue, Empty
+from datetime import datetime
+from queue import Empty, Queue
 from threading import Thread, Timer
+from typing import Any, Callable, Dict, List, Optional
 
 from src.trading_engine.base.base_broker_adapter import BaseBrokerAdapter
 from src.trading_engine.base.base_order import BaseOrder, OrderSide
+from src.trading_engine.execution_engine.twap_algo import TWAPAlgo
+from src.trading_engine.execution_engine.vwap_algo import VWAPAlgo
 from src.trading_engine.order_management.order import Order
 from src.trading_engine.order_management.order_manager import OrderManager
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.execution_engine.vwap_algo import VWAPAlgo
-from src.trading_engine.execution_engine.twap_algo import TWAPAlgo
 
 logger = logging.getLogger(__name__)
 
 
 class ExecutionAlgo:
     """执行算法类型"""
-    VWAP = 'vwap'
-    TWAP = 'twap'
+
+    VWAP = "vwap"
+    TWAP = "twap"
 
 
 class ActiveExecution:
@@ -230,17 +232,19 @@ class ExecutionEngine:
         """获取所有活跃执行"""
         result = []
         for exec_id, exec in self._active_executions.items():
-            result.append({
-                'exec_id': exec_id,
-                'order_id': exec.order_id,
-                'ts_code': exec.ts_code,
-                'side': exec.side.name,
-                'total_quantity': exec.total_quantity,
-                'progress': exec.algo.get_progress(),
-                'remaining': exec.algo.get_remaining_quantity(),
-                'done': exec.algo.is_done(),
-                'created_time': exec.created_time.isoformat(),
-            })
+            result.append(
+                {
+                    "exec_id": exec_id,
+                    "order_id": exec.order_id,
+                    "ts_code": exec.ts_code,
+                    "side": exec.side.name,
+                    "total_quantity": exec.total_quantity,
+                    "progress": exec.algo.get_progress(),
+                    "remaining": exec.algo.get_remaining_quantity(),
+                    "done": exec.algo.is_done(),
+                    "created_time": exec.created_time.isoformat(),
+                }
+            )
         return result
 
     def _execution_loop(self) -> None:
@@ -295,21 +299,21 @@ class ExecutionEngine:
         if not success:
             logger.warning(f"Chunk执行失败: {order_id}, {chunk}")
             # 失败了把数量加回去
-            if hasattr(active.algo, 'remaining_quantity'):
+            if hasattr(active.algo, "remaining_quantity"):
                 active.algo.remaining_quantity += chunk
 
     def get_statistics(self) -> Dict[str, Any]:
         """获取执行统计"""
         return {
-            'active_executions': len(self._active_executions),
-            'running': self._running,
-            'poll_interval': self._poll_interval,
+            "active_executions": len(self._active_executions),
+            "running": self._running,
+            "poll_interval": self._poll_interval,
         }
 
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok' if self._running else 'stopped',
-            'active_count': len(self._active_executions),
-            'thread_alive': self._thread.is_alive() if self._thread else False,
+            "status": "ok" if self._running else "stopped",
+            "active_count": len(self._active_executions),
+            "thread_alive": self._thread.is_alive() if self._thread else False,
         }

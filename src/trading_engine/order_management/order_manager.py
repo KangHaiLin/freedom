@@ -2,9 +2,10 @@
 订单管理器
 管理所有订单，提供查询、新增、取消等功能
 """
-from typing import Dict, List, Optional, Tuple, Any
-from datetime import datetime
+
 import logging
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.trading_engine.base.base_order import BaseOrder, OrderStatus
 from src.trading_engine.order_management.order import Order
@@ -117,7 +118,9 @@ class OrderManager:
         logger.info(f"订单已取消: {order_id}")
         return True, None
 
-    def fill_order(self, order_id: str, filled_quantity: int, filled_price: float, filled_time: datetime) -> Tuple[bool, Optional[str]]:
+    def fill_order(
+        self, order_id: str, filled_quantity: int, filled_price: float, filled_time: datetime
+    ) -> Tuple[bool, Optional[str]]:
         """
         成交处理
         Args:
@@ -160,7 +163,7 @@ class OrderManager:
             return False, f"订单不存在: {order_id}"
         order.reject()
         if reason:
-            order.extra_info['reject_reason'] = reason
+            order.extra_info["reject_reason"] = reason
         logger.info(f"订单被拒绝: {order_id}, 原因: {reason}")
         return True, None
 
@@ -231,8 +234,8 @@ class OrderManager:
         stats = {status.name: 0 for status in OrderStatus}
         for order in self._orders.values():
             stats[order.status.name] += 1
-        stats['total'] = len(self._orders)
-        stats['active'] = len(self.get_active_orders())
+        stats["total"] = len(self._orders)
+        stats["active"] = len(self.get_active_orders())
         return stats
 
     def clear_all(self) -> None:
@@ -248,7 +251,7 @@ class OrderManager:
         """健康检查"""
         stats = self.get_statistics()
         return {
-            'status': 'ok',
-            'total_orders': stats['total'],
-            'active_orders': stats['active'],
+            "status": "ok",
+            "total_orders": stats["total"],
+            "active_orders": stats["active"],
         }

@@ -1,12 +1,14 @@
 """
 模拟交易配置
 """
+
 from dataclasses import dataclass
 
 
 @dataclass
 class SimulationConfig:
     """模拟交易配置"""
+
     initial_capital: float = 1000000.0
     commission_rate: float = 0.0003  # 佣金率万分之三
     min_commission: float = 5.0  # 最低佣金

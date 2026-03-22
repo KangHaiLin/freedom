@@ -2,7 +2,9 @@
 规则执行结果封装类
 封装一次规则检查的结果
 """
-from typing import List, Dict, Any
+
+from typing import Any, Dict, List
+
 from src.risk_management.base.base_violation import BaseViolation, ViolationLevel
 
 
@@ -70,7 +72,7 @@ class RuleResult:
     def to_dict(self) -> Dict[str, Any]:
         """序列化为字典"""
         return {
-            'passed': self._passed,
-            'violations': [v.to_dict() for v in self._violations],
-            'fired_rules': self._fired_rules,
+            "passed": self._passed,
+            "violations": [v.to_dict() for v in self._violations],
+            "fired_rules": self._fired_rules,
         }

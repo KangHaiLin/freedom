@@ -3,16 +3,19 @@ AKShare数据源适配器
 实现AKShare数据接口的对接
 AKShare是开源免费的财经数据接口库，不需要API Key
 """
-import pandas as pd
-from typing import List, Dict
-import akshare as ak
+
+import logging
 import time
+from typing import Dict, List
+
+import akshare as ak
+import pandas as pd
+
+from common.constants import BusinessConstants
+from common.exceptions import DataSourceException
+from common.utils import DateTimeUtils, StockCodeUtils
 
 from .market_collector import MarketDataCollector
-from common.constants import BusinessConstants
-from common.utils import StockCodeUtils, DateTimeUtils
-from common.exceptions import DataSourceException
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +27,7 @@ class AKShareCollector(MarketDataCollector):
         super().__init__(BusinessConstants.DATA_SOURCE_AKSHARE, config)
         self.request_count = 0
         self.last_request_time = 0
-        self.rate_limit = config.get('rate_limit', 200)  # 每分钟请求次数限制
+        self.rate_limit = config.get("rate_limit", 200)  # 每分钟请求次数限制
         self._stock_code_cache: Dict[str, str] = {}  # 代码转换缓存
 
     def _rate_limit_check(self):
@@ -83,7 +86,7 @@ class AKShareCollector(MarketDataCollector):
 
             # 筛选指定股票
             target_codes = [self._convert_stock_code(code) for code in stock_codes]
-            df = df[df['代码'].isin(target_codes)]
+            df = df[df["代码"].isin(target_codes)]
 
             if df.empty:
                 logger.warning("指定的股票代码未找到行情")
@@ -93,42 +96,54 @@ class AKShareCollector(MarketDataCollector):
             def _normalize_code(ak_code: str) -> str:
                 prefix = ak_code[:2]
                 code = ak_code[2:]
-                if prefix == 'sh':
+                if prefix == "sh":
                     return f"{code}.{StockCodeUtils.EXCHANGE_SH}"
-                elif prefix == 'sz':
+                elif prefix == "sz":
                     return f"{code}.{StockCodeUtils.EXCHANGE_SZ}"
-                elif prefix == 'bj':
+                elif prefix == "bj":
                     return f"{code}.{StockCodeUtils.EXCHANGE_BJ}"
                 return ak_code
 
-            df['stock_code'] = df['代码'].apply(_normalize_code)
+            df["stock_code"] = df["代码"].apply(_normalize_code)
             now_time = DateTimeUtils.now()
-            df['time'] = now_time
+            df["time"] = now_time
 
             # 重命名字段，标准化输出
-            df = df.rename(columns={
-                '开盘': 'open',
-                '最高': 'high',
-                '最低': 'low',
-                '最新': 'price',
-                '成交量': 'volume',
-                '成交额': 'amount',
-            })
+            df = df.rename(
+                columns={
+                    "开盘": "open",
+                    "最高": "high",
+                    "最低": "low",
+                    "最新": "price",
+                    "成交量": "volume",
+                    "成交额": "amount",
+                }
+            )
 
             # AKShare不提供买卖盘口数据，设为None
-            df['bid_price1'] = None
-            df['bid_volume1'] = None
-            df['ask_price1'] = None
-            df['ask_volume1'] = None
+            df["bid_price1"] = None
+            df["bid_volume1"] = None
+            df["ask_price1"] = None
+            df["ask_volume1"] = None
 
             # 添加数据源标记
-            df['source'] = self.source
+            df["source"] = self.source
 
             # 保留需要的字段
             required_columns = [
-                'stock_code', 'time', 'price', 'open', 'high', 'low',
-                'volume', 'amount', 'bid_price1', 'bid_volume1',
-                'ask_price1', 'ask_volume1', 'source'
+                "stock_code",
+                "time",
+                "price",
+                "open",
+                "high",
+                "low",
+                "volume",
+                "amount",
+                "bid_price1",
+                "bid_volume1",
+                "ask_price1",
+                "ask_volume1",
+                "source",
             ]
 
             for col in required_columns:
@@ -160,22 +175,22 @@ class AKShareCollector(MarketDataCollector):
                     df = ak.stock_zh_a_daily(symbol=ak_code, start_date=start_date, end_date=end_date, adjust="qfq")
 
                     if not df.empty:
-                        df['stock_code'] = code
+                        df["stock_code"] = code
                         # 处理不同返回格式：
                         # 1. 沪市深市：日期是index，名为trade_date
                         # 2. 北交所：日期是列，名为date
-                        if 'date' in df.columns:
+                        if "date" in df.columns:
                             # 北交所格式，date列 → trade_date
-                            df.rename(columns={'date': 'trade_date'}, inplace=True)
-                        elif 'trade_date' not in df.columns and df.index.name != 'trade_date':
+                            df.rename(columns={"date": "trade_date"}, inplace=True)
+                        elif "trade_date" not in df.columns and df.index.name != "trade_date":
                             # AKShare某些版本将日期放在第一列
                             df = df.reset_index()
-                            df.rename(columns={df.columns[0]: 'trade_date'}, inplace=True)
-                        elif df.index.name == 'trade_date':
+                            df.rename(columns={df.columns[0]: "trade_date"}, inplace=True)
+                        elif df.index.name == "trade_date":
                             # 标准沪市深市格式，日期是index
                             df = df.reset_index()
                         # 确保trade_date是datetime类型
-                        df['trade_date'] = pd.to_datetime(df['trade_date'])
+                        df["trade_date"] = pd.to_datetime(df["trade_date"])
                         all_data.append(df)
                 except Exception as e:
                     logger.warning(f"获取{code}日线行情失败：{e}")
@@ -187,23 +202,32 @@ class AKShareCollector(MarketDataCollector):
             result_df = pd.concat(all_data, ignore_index=True)
 
             # 重命名字段，标准化输出
-            result_df = result_df.rename(columns={
-                'open': 'open',
-                'high': 'high',
-                'low': 'low',
-                'close': 'close',
-                'volume': 'volume',
-                'amount': 'amount'
-            })
+            result_df = result_df.rename(
+                columns={
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "volume": "volume",
+                    "amount": "amount",
+                }
+            )
 
             # 添加复权因子，AKShare默认前复权，这里无法获取复权因子设为1.0
-            if 'adjust_factor' not in result_df.columns:
-                result_df['adjust_factor'] = 1.0
+            if "adjust_factor" not in result_df.columns:
+                result_df["adjust_factor"] = 1.0
 
             # 保留需要的字段
             required_columns = [
-                'stock_code', 'trade_date', 'open', 'high', 'low', 'close',
-                'volume', 'amount', 'adjust_factor'
+                "stock_code",
+                "trade_date",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "amount",
+                "adjust_factor",
             ]
 
             for col in required_columns:
@@ -213,7 +237,7 @@ class AKShareCollector(MarketDataCollector):
             result_df = result_df[required_columns].copy()
 
             # 数据校验
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_date', 'close', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_date", "close", "volume"]):
                 return result_df
             return pd.DataFrame()
 
@@ -233,14 +257,8 @@ class AKShareCollector(MarketDataCollector):
                     ak_code = self._convert_stock_code(code)
 
                     # AKShare获取分钟线，period参数转换
-                    period_map = {
-                        1: '1min',
-                        5: '5min',
-                        15: '15min',
-                        30: '30min',
-                        60: '60min'
-                    }
-                    period_str = period_map.get(period, '1min')
+                    period_map = {1: "1min", 5: "5min", 15: "15min", 30: "30min", 60: "60min"}
+                    period_str = period_map.get(period, "1min")
 
                     # 获取分钟线数据
                     df = ak.stock_zh_a_minute(symbol=ak_code, period=period_str)
@@ -249,11 +267,11 @@ class AKShareCollector(MarketDataCollector):
                         # 按日期范围筛选
                         start_dt = pd.to_datetime(start_date)
                         end_dt = pd.to_datetime(end_date)
-                        df = df[(df['date'] >= start_dt) & (df['date'] <= end_dt)]
+                        df = df[(df["date"] >= start_dt) & (df["date"] <= end_dt)]
 
                         if not df.empty:
-                            df['stock_code'] = code
-                            df = df.rename(columns={'date': 'trade_time'})
+                            df["stock_code"] = code
+                            df = df.rename(columns={"date": "trade_time"})
                             all_data.append(df)
                 except Exception as e:
                     logger.warning(f"获取{code}分钟线行情失败：{e}")
@@ -265,20 +283,19 @@ class AKShareCollector(MarketDataCollector):
             result_df = pd.concat(all_data, ignore_index=True)
 
             # 重命名字段，标准化输出
-            result_df = result_df.rename(columns={
-                'open': 'open',
-                'high': 'high',
-                'low': 'low',
-                'close': 'close',
-                'volume': 'volume',
-                'amount': 'amount'
-            })
+            result_df = result_df.rename(
+                columns={
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "volume": "volume",
+                    "amount": "amount",
+                }
+            )
 
             # 保留需要的字段
-            required_columns = [
-                'stock_code', 'trade_time', 'open', 'high', 'low', 'close',
-                'volume', 'amount'
-            ]
+            required_columns = ["stock_code", "trade_time", "open", "high", "low", "close", "volume", "amount"]
 
             for col in required_columns:
                 if col not in result_df.columns:
@@ -287,7 +304,7 @@ class AKShareCollector(MarketDataCollector):
             result_df = result_df[required_columns].copy()
 
             # 数据校验
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_time', 'close', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_time", "close", "volume"]):
                 return result_df
             return pd.DataFrame()
 
@@ -311,12 +328,12 @@ class AKShareCollector(MarketDataCollector):
 
                     if not df.empty:
                         # 按日期筛选
-                        df['trade_time'] = pd.to_datetime(df['成交时间'])
+                        df["trade_time"] = pd.to_datetime(df["成交时间"])
                         target_date = pd.to_datetime(date)
-                        df = df[df['trade_time'].dt.date == target_date.date()]
+                        df = df[df["trade_time"].dt.date == target_date.date()]
 
                         if not df.empty:
-                            df['stock_code'] = code
+                            df["stock_code"] = code
                             all_data.append(df)
                 except Exception as e:
                     logger.warning(f"获取{code}Tick行情失败：{e}")
@@ -328,23 +345,32 @@ class AKShareCollector(MarketDataCollector):
             result_df = pd.concat(all_data, ignore_index=True)
 
             # 重命名字段，标准化输出
-            result_df = result_df.rename(columns={
-                '成交价': 'price',
-                '成交量': 'volume',
-                '成交额': 'amount',
-                'price': 'price',
-                'volume': 'volume',
-                'amount': 'amount',
-                'bid1': 'bid_price1',
-                'bid1_vol': 'bid_volume1',
-                'ask1': 'ask_price1',
-                'ask1_vol': 'ask_volume1'
-            })
+            result_df = result_df.rename(
+                columns={
+                    "成交价": "price",
+                    "成交量": "volume",
+                    "成交额": "amount",
+                    "price": "price",
+                    "volume": "volume",
+                    "amount": "amount",
+                    "bid1": "bid_price1",
+                    "bid1_vol": "bid_volume1",
+                    "ask1": "ask_price1",
+                    "ask1_vol": "ask_volume1",
+                }
+            )
 
             # 保留需要的字段
             required_columns = [
-                'stock_code', 'trade_time', 'price', 'volume', 'amount',
-                'bid_price1', 'bid_volume1', 'ask_price1', 'ask_volume1'
+                "stock_code",
+                "trade_time",
+                "price",
+                "volume",
+                "amount",
+                "bid_price1",
+                "bid_volume1",
+                "ask_price1",
+                "ask_volume1",
             ]
 
             for col in required_columns:
@@ -354,7 +380,7 @@ class AKShareCollector(MarketDataCollector):
             result_df = result_df[required_columns].copy()
 
             # 数据校验
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_time', 'price', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_time", "price", "volume"]):
                 return result_df
             return pd.DataFrame()
 

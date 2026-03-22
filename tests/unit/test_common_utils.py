@@ -1,12 +1,14 @@
 """
 公共工具类单元测试
 """
-import pytest
-from datetime import datetime, date
-import pandas as pd
 
-from common.utils import DateTimeUtils, NumberUtils, StockCodeUtils, CryptoUtils
+from datetime import date, datetime
+
+import pandas as pd
+import pytest
+
 from common.constants import BusinessConstants
+from common.utils import CryptoUtils, DateTimeUtils, NumberUtils, StockCodeUtils
 
 
 class TestDateTimeUtils:
@@ -36,19 +38,21 @@ class TestDateTimeUtils:
 
 
 import decimal
+
+
 class TestNumberUtils:
     """数字工具类测试"""
 
     def test_round_price(self):
         """测试价格四舍五入"""
-        assert NumberUtils.round_price(10.123) == decimal.Decimal('10.12')
-        assert NumberUtils.round_price(10.126) == decimal.Decimal('10.13')
-        assert NumberUtils.round_price(10.0) == decimal.Decimal('10.00')
+        assert NumberUtils.round_price(10.123) == decimal.Decimal("10.12")
+        assert NumberUtils.round_price(10.126) == decimal.Decimal("10.13")
+        assert NumberUtils.round_price(10.0) == decimal.Decimal("10.00")
 
     def test_round_ratio(self):
         """测试比率四舍五入"""
-        assert NumberUtils.round_ratio(1.1234) == decimal.Decimal('1.1234')
-        assert NumberUtils.round_ratio(1.12345) == decimal.Decimal('1.1235')
+        assert NumberUtils.round_ratio(1.1234) == decimal.Decimal("1.1234")
+        assert NumberUtils.round_ratio(1.12345) == decimal.Decimal("1.1235")
 
     def test_format_percent(self):
         """测试百分比格式化"""

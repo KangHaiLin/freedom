@@ -2,15 +2,18 @@
 AKShare数据源基本面数据适配器
 实现AKShare基本面数据接口的对接
 """
-import pandas as pd
-from typing import List, Dict
-import akshare as ak
-import time
-import logging
 
-from .fundamentals_collector import FundamentalsCollector
+import logging
+import time
+from typing import Dict, List
+
+import akshare as ak
+import pandas as pd
+
 from common.constants import BusinessConstants
 from common.utils import StockCodeUtils
+
+from .fundamentals_collector import FundamentalsCollector
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +25,7 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         super().__init__(BusinessConstants.DATA_SOURCE_AKSHARE, config)
         self.request_count = 0
         self.last_request_time = 0
-        self.rate_limit = config.get('rate_limit', 120)  # 每分钟请求次数限制
+        self.rate_limit = config.get("rate_limit", 120)  # 每分钟请求次数限制
         self._stock_code_cache: Dict[str, str] = {}  # 代码转换缓存
 
     def _rate_limit_check(self):
@@ -67,7 +70,7 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
             logger.warning(f"无效的股票代码：{code}, 错误：{e}")
             return code
 
-    def get_stock_basic(self, list_status: str = 'L') -> pd.DataFrame:
+    def get_stock_basic(self, list_status: str = "L") -> pd.DataFrame:
         """
         获取股票列表基本信息
         Args:
@@ -89,36 +92,44 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
 
         # 获取交易所信息
         def _get_exchange(code: str) -> str:
-            if code.startswith('60') or code.startswith('688'):
+            if code.startswith("60") or code.startswith("688"):
                 return StockCodeUtils.EXCHANGE_SH
-            elif code.startswith('00') or code.startswith('30'):
+            elif code.startswith("00") or code.startswith("30"):
                 return StockCodeUtils.EXCHANGE_SZ
-            elif code.startswith('8') or code.startswith('4'):
+            elif code.startswith("8") or code.startswith("4"):
                 return StockCodeUtils.EXCHANGE_BJ
             else:
-                return ''
+                return ""
 
         # 标准化代码
         def _format_code(code: str) -> str:
             exchange = _get_exchange(code)
             return f"{code}.{exchange}" if exchange else code
 
-        df['stock_code'] = df['code'].apply(_format_code)
-        df['ts_code'] = df['stock_code']
+        df["stock_code"] = df["code"].apply(_format_code)
+        df["ts_code"] = df["stock_code"]
 
         # AKShare不提供这些详细信息，设为None
-        df['fullname'] = None
-        df['enname'] = None
-        df['industry'] = None
-        df['market'] = None
-        df['list_date'] = None
-        df['delist_date'] = None
-        df['is_hs'] = None
+        df["fullname"] = None
+        df["enname"] = None
+        df["industry"] = None
+        df["market"] = None
+        df["list_date"] = None
+        df["delist_date"] = None
+        df["is_hs"] = None
 
         # 保留需要的字段
         required_columns = [
-            'stock_code', 'ts_code', 'name', 'fullname', 'enname',
-            'industry', 'market', 'list_date', 'delist_date', 'is_hs'
+            "stock_code",
+            "ts_code",
+            "name",
+            "fullname",
+            "enname",
+            "industry",
+            "market",
+            "list_date",
+            "delist_date",
+            "is_hs",
         ]
 
         for col in required_columns:
@@ -130,7 +141,7 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = df[required_columns].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code', 'name']):
+        if self.validate_data(result_df, required_columns=["stock_code", "name"]):
             return result_df
         return pd.DataFrame()
 
@@ -160,10 +171,10 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
                 if not df.empty:
                     # 获取市盈率、市净率等信息需要从其他接口获取
                     # AKShare的stock_zh_a_daily已经包含这些数据
-                    df['stock_code'] = code
-                    df.index.name = 'trade_date'
+                    df["stock_code"] = code
+                    df.index.name = "trade_date"
                     df = df.reset_index()
-                    df['trade_date'] = pd.to_datetime(df['trade_date'])
+                    df["trade_date"] = pd.to_datetime(df["trade_date"])
                     all_data.append(df)
             except Exception as e:
                 logger.warning(f"获取{code}每日基本面失败：{e}")
@@ -176,14 +187,14 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
 
         # 重命名字段，标准化输出
         rename_map = {
-            'outstanding_share': 'float_share',
-            'total_share': 'total_share',
-            'outstanding_share': 'float_share',
-            'total_mv': 'total_mv',
-            'circ_mv': 'circ_mv',
-            'pe': 'pe',
-            'pb': 'pb',
-            'turnover': 'turnover_rate'
+            "outstanding_share": "float_share",
+            "total_share": "total_share",
+            "outstanding_share": "float_share",
+            "total_mv": "total_mv",
+            "circ_mv": "circ_mv",
+            "pe": "pe",
+            "pb": "pb",
+            "turnover": "turnover_rate",
         }
 
         for col in rename_map:
@@ -192,8 +203,15 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
 
         # 保留需要的字段
         required_columns = [
-            'stock_code', 'trade_date', 'total_share', 'float_share',
-            'total_mv', 'circ_mv', 'pe', 'pb', 'turnover_rate'
+            "stock_code",
+            "trade_date",
+            "total_share",
+            "float_share",
+            "total_mv",
+            "circ_mv",
+            "pe",
+            "pb",
+            "turnover_rate",
         ]
 
         for col in required_columns:
@@ -203,7 +221,7 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = result_df[required_columns].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code', 'trade_date']):
+        if self.validate_data(result_df, required_columns=["stock_code", "trade_date"]):
             return result_df
         return pd.DataFrame()
 
@@ -224,9 +242,9 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         all_data = []
         # AKShare接口名称映射（新浪财经接口）
         api_func_map = {
-            'income': ak.stock_profit_sheet_by_report_em,
-            'balance': ak.stock_balance_sheet_by_report_em,
-            'cashflow': ak.stock_cash_flow_sheet_by_report_em
+            "income": ak.stock_profit_sheet_by_report_em,
+            "balance": ak.stock_balance_sheet_by_report_em,
+            "cashflow": ak.stock_cash_flow_sheet_by_report_em,
         }
 
         if report_type not in api_func_map:
@@ -244,7 +262,7 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
                 df = api_func(symbol=num_code)
 
                 if not df.empty:
-                    df['stock_code'] = code
+                    df["stock_code"] = code
                     all_data.append(df)
             except Exception as e:
                 logger.warning(f"获取{code} {report_type}财务报告失败：{e}")
@@ -256,18 +274,18 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = pd.concat(all_data, ignore_index=True)
 
         # 转换日期格式 - AKShare已经是datetime格式
-        if 'report_date' in result_df.columns:
-            result_df['end_date'] = pd.to_datetime(result_df['report_date'])
-        if 'announce_date' in result_df.columns:
-            result_df['ann_date'] = pd.to_datetime(result_df['announce_date'])
+        if "report_date" in result_df.columns:
+            result_df["end_date"] = pd.to_datetime(result_df["report_date"])
+        if "announce_date" in result_df.columns:
+            result_df["ann_date"] = pd.to_datetime(result_df["announce_date"])
 
         # 添加report_type
-        result_df['report_type'] = report_type
+        result_df["report_type"] = report_type
 
         # 数据校验
-        required_cols = ['stock_code']
-        if 'end_date' in result_df.columns:
-            required_cols.append('end_date')
+        required_cols = ["stock_code"]
+        if "end_date" in result_df.columns:
+            required_cols.append("end_date")
         if self.validate_data(result_df, required_columns=required_cols):
             return result_df
         return pd.DataFrame()
@@ -300,12 +318,12 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
 
                 if not df.empty:
                     # 按日期范围筛选
-                    if 'date' in df.columns:
-                        df['date'] = pd.to_datetime(df['date'])
-                        df = df[(df['date'] >= start_dt) & (df['date'] <= end_dt)]
+                    if "date" in df.columns:
+                        df["date"] = pd.to_datetime(df["date"])
+                        df = df[(df["date"] >= start_dt) & (df["date"] <= end_dt)]
 
                     if not df.empty:
-                        df['stock_code'] = code
+                        df["stock_code"] = code
                         all_data.append(df)
             except Exception as e:
                 logger.warning(f"获取{code}财务指标失败：{e}")
@@ -317,20 +335,20 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = pd.concat(all_data, ignore_index=True)
 
         # 转换日期格式
-        if 'date' in result_df.columns:
-            result_df['end_date'] = pd.to_datetime(result_df['date'])
+        if "date" in result_df.columns:
+            result_df["end_date"] = pd.to_datetime(result_df["date"])
 
         # 重命名关键指标字段（保持接口标准化）
         rename_map = {
-            '净资产收益率': 'roe',
-            '总资产净利润率': 'roa',
-            '销售毛利率': 'gross_margin',
-            '销售净利率': 'net_margin',
-            '资产负债率': 'debt_ratio',
-            '流动比率': 'current_ratio',
-            '速动比率': 'quick_ratio',
-            '每股收益': 'eps',
-            '每股净资产': 'bvps'
+            "净资产收益率": "roe",
+            "总资产净利润率": "roa",
+            "销售毛利率": "gross_margin",
+            "销售净利率": "net_margin",
+            "资产负债率": "debt_ratio",
+            "流动比率": "current_ratio",
+            "速动比率": "quick_ratio",
+            "每股收益": "eps",
+            "每股净资产": "bvps",
         }
 
         for old_name, new_name in rename_map.items():
@@ -339,9 +357,17 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
 
         # 保留标准字段
         required_columns = [
-            'stock_code', 'end_date', 'roe', 'roa',
-            'gross_margin', 'net_margin', 'debt_ratio',
-            'current_ratio', 'quick_ratio', 'eps', 'bvps'
+            "stock_code",
+            "end_date",
+            "roe",
+            "roa",
+            "gross_margin",
+            "net_margin",
+            "debt_ratio",
+            "current_ratio",
+            "quick_ratio",
+            "eps",
+            "bvps",
         ]
 
         for col in required_columns:
@@ -351,9 +377,9 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = result_df[required_columns].copy()
 
         # 数据校验
-        required_cols = ['stock_code']
-        if 'end_date' in result_df.columns:
-            required_cols.append('end_date')
+        required_cols = ["stock_code"]
+        if "end_date" in result_df.columns:
+            required_cols.append("end_date")
         if self.validate_data(result_df, required_columns=required_cols):
             return result_df
         return pd.DataFrame()
@@ -380,7 +406,7 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
                 df = ak.stock_history_dividend(symbol=num_code)
 
                 if not df.empty:
-                    df['stock_code'] = code
+                    df["stock_code"] = code
                     all_data.append(df)
             except Exception as e:
                 logger.warning(f"获取{code}分红数据失败：{e}")
@@ -392,27 +418,20 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = pd.concat(all_data, ignore_index=True)
 
         # 转换日期格式
-        date_columns = {
-            'ex_dividend_date': 'ex_date',
-            'record_date': 'record_date',
-            'pay_date': 'pay_date'
-        }
+        date_columns = {"ex_dividend_date": "ex_date", "record_date": "record_date", "pay_date": "pay_date"}
 
         for col in date_columns:
             if col in result_df.columns:
-                result_df[date_columns[col]] = pd.to_datetime(result_df[col], errors='coerce')
+                result_df[date_columns[col]] = pd.to_datetime(result_df[col], errors="coerce")
 
         # 重命名字段
-        if 'cash_dividend' in result_df.columns:
-            result_df = result_df.rename(columns={'cash_dividend': 'dividend_per_share'})
-        if 'stock_dividend' in result_df.columns:
-            result_df = result_df.rename(columns={'stock_dividend': 'bonus_ratio'})
+        if "cash_dividend" in result_df.columns:
+            result_df = result_df.rename(columns={"cash_dividend": "dividend_per_share"})
+        if "stock_dividend" in result_df.columns:
+            result_df = result_df.rename(columns={"stock_dividend": "bonus_ratio"})
 
         # 保留需要的字段
-        required_columns = [
-            'stock_code', 'ex_date', 'record_date', 'pay_date',
-            'dividend_per_share', 'bonus_ratio'
-        ]
+        required_columns = ["stock_code", "ex_date", "record_date", "pay_date", "dividend_per_share", "bonus_ratio"]
 
         for col in required_columns:
             if col not in result_df.columns:
@@ -421,7 +440,7 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = result_df[required_columns].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code']):
+        if self.validate_data(result_df, required_columns=["stock_code"]):
             return result_df
         return pd.DataFrame()
 
@@ -451,19 +470,21 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
                 return pd.DataFrame()
 
             # 转换日期格式
-            df['trade_date'] = pd.to_datetime(df['信用交易日期'], format='%Y%m%d')
+            df["trade_date"] = pd.to_datetime(df["信用交易日期"], format="%Y%m%d")
 
             # 按日期范围筛选
             start_dt = pd.to_datetime(start_date)
             end_dt = pd.to_datetime(end_date)
-            df = df[(df['trade_date'] >= start_dt) & (df['trade_date'] <= end_dt)]
+            df = df[(df["trade_date"] >= start_dt) & (df["trade_date"] <= end_dt)]
 
             # 重命名字段（AKShare返回中文列名）
-            df = df.rename(columns={
-                '融资余额': 'margin_balance',
-                '融券余量': 'short_balance',
-                '融资买入额': 'margin_buy',
-            })
+            df = df.rename(
+                columns={
+                    "融资余额": "margin_balance",
+                    "融券余量": "short_balance",
+                    "融资买入额": "margin_buy",
+                }
+            )
 
             # 如果有具体股票代码，可以筛选
             # AKShare只提供汇总数据，不提供单只股票，这里保持原样
@@ -482,20 +503,18 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         result_df = pd.concat(all_data, ignore_index=True)
 
         # 保留需要的字段
-        required_columns = [
-            'trade_date', 'margin_balance', 'margin_buy', 'short_balance'
-        ]
+        required_columns = ["trade_date", "margin_balance", "margin_buy", "short_balance"]
 
         for col in required_columns:
             if col not in result_df.columns:
                 result_df[col] = None
 
         # AKShare不提供单只股票数据
-        result_df['stock_code'] = None
+        result_df["stock_code"] = None
 
-        result_df = result_df[['stock_code'] + required_columns].copy()
+        result_df = result_df[["stock_code"] + required_columns].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['trade_date']):
+        if self.validate_data(result_df, required_columns=["trade_date"]):
             return result_df
         return pd.DataFrame()

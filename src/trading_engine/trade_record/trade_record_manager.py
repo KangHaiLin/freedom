@@ -2,15 +2,16 @@
 成交记录管理器
 管理所有成交记录，提供查询和统计
 """
-import uuid
-from typing import List, Optional, Dict, Any
-from datetime import datetime
-import logging
 
-from src.trading_engine.trade_record.trade_record import TradeRecord
-from src.trading_engine.order_management.order import Order
+import logging
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from src.trading_engine.base.base_order import OrderSide, OrderStatus
+from src.trading_engine.order_management.order import Order
 from src.trading_engine.position_management.position import Position
+from src.trading_engine.trade_record.trade_record import TradeRecord
 
 logger = logging.getLogger(__name__)
 
@@ -168,14 +169,14 @@ class TradeRecordManager:
         buys = [r for r in self._records.values() if r.is_buy]
         sells = [r for r in self._records.values() if r.is_sell]
         return {
-            'total_trades': self.get_trade_count(),
-            'buy_trades': len(buys),
-            'sell_trades': len(sells),
-            'total_turnover': self.get_total_turnover(),
-            'buy_turnover': sum(r.turnover for r in buys),
-            'sell_turnover': sum(r.turnover for r in sells),
-            'total_commission': self.get_total_commission(),
-            'total_realized_pnl': self.get_realized_pnl_total(),
+            "total_trades": self.get_trade_count(),
+            "buy_trades": len(buys),
+            "sell_trades": len(sells),
+            "total_turnover": self.get_total_turnover(),
+            "buy_turnover": sum(r.turnover for r in buys),
+            "sell_turnover": sum(r.turnover for r in sells),
+            "total_commission": self.get_total_commission(),
+            "total_realized_pnl": self.get_realized_pnl_total(),
         }
 
     def to_list_dict(self) -> List[Dict[str, Any]]:
@@ -192,8 +193,8 @@ class TradeRecordManager:
         """健康检查"""
         stats = self.get_statistics()
         return {
-            'status': 'ok',
-            'total_trades': stats['total_trades'],
-            'total_turnover': stats['total_turnover'],
-            'total_commission': stats['total_commission'],
+            "status": "ok",
+            "total_trades": stats["total_trades"],
+            "total_turnover": stats["total_turnover"],
+            "total_commission": stats["total_commission"],
         }

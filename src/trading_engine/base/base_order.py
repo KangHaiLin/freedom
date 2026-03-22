@@ -2,14 +2,16 @@
 订单抽象基类
 定义订单的通用接口和基础属性
 """
+
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class OrderSide(Enum):
     """订单方向枚举"""
+
     BUY = 1
     SELL = 2
     HOLD = 3
@@ -17,21 +19,23 @@ class OrderSide(Enum):
 
 class OrderType(Enum):
     """订单类型枚举"""
-    MARKET = 1      # 市价单
-    LIMIT = 2       # 限价单
-    STOP = 3        # 止损单
+
+    MARKET = 1  # 市价单
+    LIMIT = 2  # 限价单
+    STOP = 3  # 止损单
     STOP_LIMIT = 4  # 止损限价单
 
 
 class OrderStatus(Enum):
     """订单状态枚举"""
-    PENDING = 1       # 待处理
-    SUBMITTED = 2     # 已提交
-    PARTIAL = 3       # 部分成交
-    FILLED = 4        # 完全成交
-    CANCELLED = 5     # 已取消
-    REJECTED = 6      # 已拒绝
-    EXPIRED = 7       # 已过期
+
+    PENDING = 1  # 待处理
+    SUBMITTED = 2  # 已提交
+    PARTIAL = 3  # 部分成交
+    FILLED = 4  # 完全成交
+    CANCELLED = 5  # 已取消
+    REJECTED = 6  # 已拒绝
+    EXPIRED = 7  # 已过期
 
 
 class BaseOrder(ABC):
@@ -45,7 +49,7 @@ class BaseOrder(ABC):
         order_type: OrderType = OrderType.MARKET,
         price: Optional[float] = None,
         stop_price: Optional[float] = None,
-        strategy_id: Optional[str] = None
+        strategy_id: Optional[str] = None,
     ):
         """
         初始化订单

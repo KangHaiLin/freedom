@@ -2,13 +2,15 @@
 策略存储
 持久化存储策略元数据和版本
 """
-from typing import Dict, List, Optional
+
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+from src.strategy_research.base import StrategyStatus
 
 from .strategy_metadata import StrategyMetadata, StrategyVersion
-from src.strategy_research.base import StrategyStatus
 
 
 class StrategyStorage:
@@ -24,42 +26,42 @@ class StrategyStorage:
     def _load_index(self) -> None:
         """加载索引"""
         if self._index_file.exists():
-            with open(self._index_file, 'r', encoding='utf-8') as f:
+            with open(self._index_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 for item in data:
                     versions = [
                         StrategyVersion(
-                            version_id=v['version_id'],
-                            strategy_id=v['strategy_id'],
-                            version_code=v['version_code'],
-                            params=v['params'],
-                            created_at=datetime.fromisoformat(v['created_at']),
-                            created_by=v['created_by'],
-                            change_note=v['change_note'],
-                            is_active=v['is_active'],
+                            version_id=v["version_id"],
+                            strategy_id=v["strategy_id"],
+                            version_code=v["version_code"],
+                            params=v["params"],
+                            created_at=datetime.fromisoformat(v["created_at"]),
+                            created_by=v["created_by"],
+                            change_note=v["change_note"],
+                            is_active=v["is_active"],
                         )
-                        for v in item['versions']
+                        for v in item["versions"]
                     ]
                     metadata = StrategyMetadata(
-                        strategy_id=item['strategy_id'],
-                        strategy_name=item['strategy_name'],
-                        strategy_class_path=item['strategy_class_path'],
-                        description=item['description'],
-                        author=item['author'],
-                        status=StrategyStatus(item['status']),
-                        created_at=datetime.fromisoformat(item['created_at']),
-                        updated_at=datetime.fromisoformat(item['updated_at']),
+                        strategy_id=item["strategy_id"],
+                        strategy_name=item["strategy_name"],
+                        strategy_class_path=item["strategy_class_path"],
+                        description=item["description"],
+                        author=item["author"],
+                        status=StrategyStatus(item["status"]),
+                        created_at=datetime.fromisoformat(item["created_at"]),
+                        updated_at=datetime.fromisoformat(item["updated_at"]),
                         versions=versions,
-                        current_version=item['current_version'],
-                        tags=item['tags'],
-                        extra=item.get('extra', {}),
+                        current_version=item["current_version"],
+                        tags=item["tags"],
+                        extra=item.get("extra", {}),
                     )
                     self._cache[metadata.strategy_id] = metadata
 
     def _save_index(self) -> None:
         """保存索引"""
         data = [m.to_dict() for m in self._cache.values()]
-        with open(self._index_file, 'w', encoding='utf-8') as f:
+        with open(self._index_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def list_strategies(self) -> List[StrategyMetadata]:

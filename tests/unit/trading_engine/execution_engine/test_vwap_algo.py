@@ -1,10 +1,13 @@
 """
 Unit tests for vwap_algo.py
 """
-import pytest
+
 from datetime import datetime, timedelta
-from src.trading_engine.execution_engine.vwap_algo import VWAPAlgo
+
+import pytest
+
 from src.trading_engine.base.base_order import OrderSide
+from src.trading_engine.execution_engine.vwap_algo import VWAPAlgo
 
 
 def test_init():

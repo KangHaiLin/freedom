@@ -2,74 +2,75 @@
 数据采集模块
 负责从各数据源采集行情、基本面等数据，完成清洗和标准化
 """
-from .market_collector import MarketDataCollector
+
+from .akshare_collector import AKShareCollector
+from .akshare_fundamentals import AKShareFundamentalsCollector
+from .data_cleaner import DataCleaner, data_cleaner
+from .data_source_manager import DataSourceManager, data_source_manager
 from .fundamentals_collector import FundamentalsCollector
+from .fundamentals_manager import FundamentalsManager, fundamentals_manager
+from .historical_sync_task import (
+    DailyHistoricalSyncTask,
+    DataFrequency,
+    HistoricalSyncTask,
+    Minute1HistoricalSyncTask,
+    Minute5HistoricalSyncTask,
+    SyncResult,
+    TickHistoricalSyncTask,
+)
+from .init_data_sources import (
+    get_fundamentals_manager,
+    get_market_data_source_manager,
+    init_all_data_sources,
+    init_fundamentals_data_sources,
+    init_market_data_sources,
+)
+from .joinquant_collector import JoinQuantCollector
+from .joinquant_fundamentals import JoinQuantFundamentalsCollector
+from .market_collector import MarketDataCollector
+from .sync_task_registry import (
+    SyncTaskFactory,
+    get_sync_task_status,
+    register_sync_tasks_to_scheduler,
+    trigger_manual_sync,
+)
 from .tushare_collector import TushareCollector
 from .tushare_fundamentals import TushareFundamentalsCollector
 from .wind_collector import WindCollector
 from .wind_fundamentals import WindFundamentalsCollector
-from .joinquant_collector import JoinQuantCollector
-from .joinquant_fundamentals import JoinQuantFundamentalsCollector
-from .akshare_collector import AKShareCollector
-from .akshare_fundamentals import AKShareFundamentalsCollector
-from .data_source_manager import DataSourceManager, data_source_manager
-from .data_cleaner import DataCleaner, data_cleaner
-from .fundamentals_manager import FundamentalsManager, fundamentals_manager
-from .init_data_sources import (
-    init_market_data_sources,
-    init_fundamentals_data_sources,
-    init_all_data_sources,
-    get_market_data_source_manager,
-    get_fundamentals_manager,
-)
-from .historical_sync_task import (
-    HistoricalSyncTask,
-    DailyHistoricalSyncTask,
-    Minute1HistoricalSyncTask,
-    Minute5HistoricalSyncTask,
-    TickHistoricalSyncTask,
-    SyncResult,
-    DataFrequency,
-)
-from .sync_task_registry import (
-    SyncTaskFactory,
-    register_sync_tasks_to_scheduler,
-    trigger_manual_sync,
-    get_sync_task_status,
-)
 
 __all__ = [
-    'MarketDataCollector',
-    'FundamentalsCollector',
-    'TushareCollector',
-    'TushareFundamentalsCollector',
-    'WindCollector',
-    'WindFundamentalsCollector',
-    'JoinQuantCollector',
-    'JoinQuantFundamentalsCollector',
-    'AKShareCollector',
-    'AKShareFundamentalsCollector',
-    'DataSourceManager',
-    'data_source_manager',
-    'DataCleaner',
-    'data_cleaner',
-    'FundamentalsManager',
-    'fundamentals_manager',
-    'init_market_data_sources',
-    'init_fundamentals_data_sources',
-    'init_all_data_sources',
-    'get_market_data_source_manager',
-    'get_fundamentals_manager',
+    "MarketDataCollector",
+    "FundamentalsCollector",
+    "TushareCollector",
+    "TushareFundamentalsCollector",
+    "WindCollector",
+    "WindFundamentalsCollector",
+    "JoinQuantCollector",
+    "JoinQuantFundamentalsCollector",
+    "AKShareCollector",
+    "AKShareFundamentalsCollector",
+    "DataSourceManager",
+    "data_source_manager",
+    "DataCleaner",
+    "data_cleaner",
+    "FundamentalsManager",
+    "fundamentals_manager",
+    "init_market_data_sources",
+    "init_fundamentals_data_sources",
+    "init_all_data_sources",
+    "get_market_data_source_manager",
+    "get_fundamentals_manager",
     # 历史同步任务
-    'HistoricalSyncTask',
-    'DailyHistoricalSyncTask',
-    'Minute1HistoricalSyncTask',
-    'Minute5HistoricalSyncTask',
-    'TickHistoricalSyncTask',
-    'SyncResult',
-    'DataFrequency',
-    'SyncTaskFactory',
-    'register_sync_tasks_to_scheduler',
-    'trigger_manual_sync',
-    'get_sync_task_status',
+    "HistoricalSyncTask",
+    "DailyHistoricalSyncTask",
+    "Minute1HistoricalSyncTask",
+    "Minute5HistoricalSyncTask",
+    "TickHistoricalSyncTask",
+    "SyncResult",
+    "DataFrequency",
+    "SyncTaskFactory",
+    "register_sync_tasks_to_scheduler",
+    "trigger_manual_sync",
+    "get_sync_task_status",
 ]

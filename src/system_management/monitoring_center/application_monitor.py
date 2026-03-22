@@ -2,9 +2,11 @@
 监控中心 - 应用性能监控
 统计请求计数、QPS、延迟分布、错误率等应用指标
 """
+
 import time
 from collections import deque
 from typing import Any, Dict, List, Optional
+
 from .base_monitor import BaseMonitor
 
 
@@ -53,12 +55,14 @@ class ApplicationMonitor(BaseMonitor):
     def _create_new_bucket(self) -> None:
         """创建新的时间桶"""
         now = time.time()
-        self._buckets.append({
-            'start_time': now,
-            'request_count': 0,
-            'error_count': 0,
-            'latencies': [],
-        })
+        self._buckets.append(
+            {
+                "start_time": now,
+                "request_count": 0,
+                "error_count": 0,
+                "latencies": [],
+            }
+        )
         self._last_bucket_time = now
 
         # 如果超过最大桶数，移除最早的桶
@@ -81,12 +85,12 @@ class ApplicationMonitor(BaseMonitor):
             is_error: 是否出错
         """
         bucket = self._get_current_bucket()
-        bucket['request_count'] += 1
-        bucket['latencies'].append(latency_seconds)
+        bucket["request_count"] += 1
+        bucket["latencies"].append(latency_seconds)
         self._request_count += 1
 
         if is_error:
-            bucket['error_count'] += 1
+            bucket["error_count"] += 1
             self._error_count += 1
 
     def increment(self, metric_name: str, value: float = 1.0) -> None:
@@ -126,15 +130,15 @@ class ApplicationMonitor(BaseMonitor):
     def collect(self) -> Dict[str, Any]:
         """收集应用性能指标"""
         # 聚合所有桶的数据
-        total_requests = sum(b['request_count'] for b in self._buckets)
-        total_errors = sum(b['error_count'] for b in self._buckets)
+        total_requests = sum(b["request_count"] for b in self._buckets)
+        total_errors = sum(b["error_count"] for b in self._buckets)
         all_latencies = []
         for b in self._buckets:
-            all_latencies.extend(b['latencies'])
+            all_latencies.extend(b["latencies"])
 
         # 计算时间窗口
         if len(self._buckets) >= 2:
-            time_window = self._buckets[-1]['start_time'] - self._buckets[0]['start_time']
+            time_window = self._buckets[-1]["start_time"] - self._buckets[0]["start_time"]
         else:
             time_window = self.bucket_seconds
 
@@ -143,33 +147,33 @@ class ApplicationMonitor(BaseMonitor):
 
         # QPS
         if time_window > 0:
-            metrics['qps'] = total_requests / time_window
+            metrics["qps"] = total_requests / time_window
         else:
-            metrics['qps'] = total_requests
+            metrics["qps"] = total_requests
 
         # 错误率
         if total_requests > 0:
-            metrics['error_rate'] = total_errors / total_requests * 100
+            metrics["error_rate"] = total_errors / total_requests * 100
         else:
-            metrics['error_rate'] = 0.0
+            metrics["error_rate"] = 0.0
 
         # 延迟统计
         if all_latencies:
-            metrics['latency_avg_ms'] = sum(all_latencies) / len(all_latencies) * 1000
-            metrics['latency_min_ms'] = min(all_latencies) * 1000
-            metrics['latency_max_ms'] = max(all_latencies) * 1000
-            metrics['latency_p50_ms'] = self._calculate_percentile(all_latencies, 50) * 1000
-            metrics['latency_p95_ms'] = self._calculate_percentile(all_latencies, 95) * 1000
-            metrics['latency_p99_ms'] = self._calculate_percentile(all_latencies, 99) * 1000
+            metrics["latency_avg_ms"] = sum(all_latencies) / len(all_latencies) * 1000
+            metrics["latency_min_ms"] = min(all_latencies) * 1000
+            metrics["latency_max_ms"] = max(all_latencies) * 1000
+            metrics["latency_p50_ms"] = self._calculate_percentile(all_latencies, 50) * 1000
+            metrics["latency_p95_ms"] = self._calculate_percentile(all_latencies, 95) * 1000
+            metrics["latency_p99_ms"] = self._calculate_percentile(all_latencies, 99) * 1000
         else:
-            metrics['latency_avg_ms'] = 0
-            metrics['latency_p95_ms'] = 0
-            metrics['latency_p99_ms'] = 0
+            metrics["latency_avg_ms"] = 0
+            metrics["latency_p95_ms"] = 0
+            metrics["latency_p99_ms"] = 0
 
         # 累计统计
-        metrics['total_requests'] = self._request_count
-        metrics['total_errors'] = self._error_count
-        metrics['uptime_seconds'] = time.time() - self._start_time
+        metrics["total_requests"] = self._request_count
+        metrics["total_errors"] = self._error_count
+        metrics["uptime_seconds"] = time.time() - self._start_time
 
         # 自定义指标
         metrics.update(self._custom_metrics)

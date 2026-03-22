@@ -2,21 +2,18 @@
 公共异常定义
 所有业务异常都继承自BaseAppException
 """
-from typing import Optional, Dict
+
+from typing import Dict, Optional
 
 
 class BaseAppException(Exception):
     """应用基础异常类"""
+
     code: int = 500
     message: str = "服务器内部错误"
     details: Optional[Dict] = None
 
-    def __init__(
-        self,
-        message: str = None,
-        code: int = None,
-        details: Optional[Dict] = None
-    ):
+    def __init__(self, message: str = None, code: int = None, details: Optional[Dict] = None):
         self.message = message or self.message
         self.code = code or self.code
         self.details = details
@@ -27,7 +24,7 @@ class BaseAppException(Exception):
             "code": self.code,
             "message": self.message,
             "details": self.details,
-            "error_type": self.__class__.__name__
+            "error_type": self.__class__.__name__,
         }
 
 

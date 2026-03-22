@@ -1,12 +1,15 @@
 """
 Unit tests for realtime monitor
 """
-import pytest
+
 from datetime import datetime, timedelta
-from src.risk_management.rule_engine.rule_manager import RuleManager
-from src.risk_management.rule_engine.rule_executor import RuleExecutor
+
+import pytest
+
 from src.risk_management.realtime_monitor.alert_generator import AlertGenerator, AlertLevel
 from src.risk_management.realtime_monitor.risk_scanner import RealtimeRiskScanner
+from src.risk_management.rule_engine.rule_executor import RuleExecutor
+from src.risk_management.rule_engine.rule_manager import RuleManager
 
 
 def test_alert_generator_deduplication():
@@ -17,7 +20,7 @@ def test_alert_generator_deduplication():
     alert1 = generator.generate(
         level=AlertLevel.WARNING,
         message="Test warning",
-        data={'key': 'value'},
+        data={"key": "value"},
         risk_type="test",
     )
 
@@ -27,7 +30,7 @@ def test_alert_generator_deduplication():
     alert2 = generator.generate(
         level=AlertLevel.WARNING,
         message="Test warning",
-        data={'key': 'value'},
+        data={"key": "value"},
         risk_type="test",
     )
 
@@ -37,7 +40,7 @@ def test_alert_generator_deduplication():
     alert3 = generator.generate(
         level=AlertLevel.WARNING,
         message="Test warning 2",
-        data={'key': 'value2'},
+        data={"key": "value2"},
         risk_type="test",
     )
 
@@ -52,7 +55,7 @@ def test_alert_generator_get_recent():
         generator.generate(
             level=AlertLevel.INFO,
             message=f"Test {i}",
-            data={'index': i},
+            data={"index": i},
             risk_type="test",
         )
 
@@ -94,15 +97,15 @@ def test_alert_to_dict():
     alert = generator.generate(
         level=AlertLevel.WARNING,
         message="Test message",
-        data={'ts_code': '000001.SZ', 'value': 100},
+        data={"ts_code": "000001.SZ", "value": 100},
         risk_type="position_risk",
     )
 
     data = alert.to_dict()
-    assert data['level'] == 'warning'
-    assert data['message'] == 'Test message'
-    assert data['risk_type'] == 'position_risk'
-    assert data['data']['ts_code'] == '000001.SZ'
+    assert data["level"] == "warning"
+    assert data["message"] == "Test message"
+    assert data["risk_type"] == "position_risk"
+    assert data["data"]["ts_code"] == "000001.SZ"
 
 
 def test_realtime_scanner_init():
@@ -115,7 +118,7 @@ def test_realtime_scanner_init():
 
     assert scanner.is_running() is False
     stats = scanner.get_statistics()
-    assert stats['running'] is False
+    assert stats["running"] is False
 
 
 def test_realtime_scanner_callbacks():
@@ -143,7 +146,7 @@ def test_health_check():
     scanner = RealtimeRiskScanner(executor, generator)
 
     health = generator.health_check()
-    assert health['status'] == 'ok'
+    assert health["status"] == "ok"
 
     health_scanner = scanner.health_check()
-    assert health_scanner['status'] == 'stopped'
+    assert health_scanner["status"] == "stopped"

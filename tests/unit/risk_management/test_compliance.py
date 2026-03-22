@@ -1,12 +1,15 @@
 """
 Unit tests for compliance management
 """
-import pytest
+
 from datetime import datetime
-from src.risk_management.rule_engine.rule_manager import RuleManager
-from src.risk_management.rule_engine.rule_executor import RuleExecutor
-from src.risk_management.compliance_management.compliance_checker import ComplianceChecker
+
+import pytest
+
 from src.risk_management.compliance_management.abnormal_detector import AbnormalTradeDetector
+from src.risk_management.compliance_management.compliance_checker import ComplianceChecker
+from src.risk_management.rule_engine.rule_executor import RuleExecutor
+from src.risk_management.rule_engine.rule_manager import RuleManager
 
 
 def test_t1_restriction():
@@ -20,7 +23,7 @@ def test_t1_restriction():
         today_bought=300,
     )
     # actually_available = 1000 - 300 = 700 >= 500
-    assert result['passed'] is True
+    assert result["passed"] is True
 
     # Not enough
     result = checker.check_t1_restriction(
@@ -29,8 +32,8 @@ def test_t1_restriction():
         today_bought=300,
     )
     # actually_available = 700 < 800
-    assert result['passed'] is False
-    assert 'T+1限制' in result['message']
+    assert result["passed"] is False
+    assert "T+1限制" in result["message"]
 
 
 def test_price_limit_check():
@@ -39,17 +42,17 @@ def test_price_limit_check():
 
     # Price within limit
     result = checker.check_price_limit(10.5, 11.0, 9.0)
-    assert result['passed'] is True
+    assert result["passed"] is True
 
     # Above limit up
     result = checker.check_price_limit(11.5, 11.0, 9.0)
-    assert result['passed'] is False
-    assert '超过涨停价' in result['message']
+    assert result["passed"] is False
+    assert "超过涨停价" in result["message"]
 
     # Below limit down
     result = checker.check_price_limit(8.5, 11.0, 9.0)
-    assert result['passed'] is False
-    assert '低于跌停价' in result['message']
+    assert result["passed"] is False
+    assert "低于跌停价" in result["message"]
 
 
 def test_lot_size_check():
@@ -58,12 +61,12 @@ def test_lot_size_check():
 
     # Valid
     result = checker.check_lot_size(1000)
-    assert result['passed'] is True
+    assert result["passed"] is True
 
     # Invalid
     result = checker.check_lot_size(150)
-    assert result['passed'] is False
-    assert '不是100的整数倍' in result['message']
+    assert result["passed"] is False
+    assert "不是100的整数倍" in result["message"]
 
 
 def test_trading_hours_check():
@@ -74,19 +77,19 @@ def test_trading_hours_check():
     # Create a Saturday
     dt = datetime(2026, 3, 15)  # This is a Saturday
     result = checker.check_trading_hours(dt)
-    assert result['passed'] is False
-    assert result['is_trading_day'] is False
+    assert result["passed"] is False
+    assert result["is_trading_day"] is False
 
     # Check during trading hours on weekday
     dt = datetime(2026, 3, 13, 10, 0)  # Friday 10:00, trading hours
     result = checker.check_trading_hours(dt)
-    assert result['passed'] is True
-    assert result['is_trading_hours'] is True
+    assert result["passed"] is True
+    assert result["is_trading_hours"] is True
 
     # Check before market open
     dt = datetime(2026, 3, 14, 8, 0)
     result = checker.check_trading_hours(dt)
-    assert result['passed'] is False
+    assert result["passed"] is False
 
 
 def test_abnormal_large_order():
@@ -94,13 +97,13 @@ def test_abnormal_large_order():
     detector = AbnormalTradeDetector(large_order_threshold=1000000)
 
     trades = [
-        {'trade_id': 1, 'price': 10, 'quantity': 50000},  # 500,000 < 1M
-        {'trade_id': 2, 'price': 20, 'quantity': 100000},  # 2,000,000 > 1M
+        {"trade_id": 1, "price": 10, "quantity": 50000},  # 500,000 < 1M
+        {"trade_id": 2, "price": 20, "quantity": 100000},  # 2,000,000 > 1M
     ]
 
     anomalies = detector.detect_large_order(trades)
     assert len(anomalies) == 1
-    assert anomalies[0]['trade_id'] == 2
+    assert anomalies[0]["trade_id"] == 2
 
 
 def test_abnormal_frequent_trading():
@@ -110,15 +113,17 @@ def test_abnormal_frequent_trading():
     trades = []
     # 6 trades on same day
     for i in range(6):
-        trades.append({
-            'trade_id': i,
-            'filled_time': datetime(2026, 3, 15, 9 + i, 0).isoformat(),
-        })
+        trades.append(
+            {
+                "trade_id": i,
+                "filled_time": datetime(2026, 3, 15, 9 + i, 0).isoformat(),
+            }
+        )
 
     anomalies = detector.detect_frequent_trading(trades)
     assert len(anomalies) == 1
-    assert anomalies[0]['count'] == 6
-    assert anomalies[0]['threshold'] == 5
+    assert anomalies[0]["count"] == 6
+    assert anomalies[0]["threshold"] == 5
 
 
 def test_abnormal_detect_all():
@@ -126,17 +131,27 @@ def test_abnormal_detect_all():
     detector = AbnormalTradeDetector()
 
     trades = [
-        {'trade_id': 1, 'side': 'BUY', 'price': 10, 'quantity': 200000,
-         'filled_time': datetime(2026, 3, 15, 10, 0).isoformat()},
-        {'trade_id': 2, 'side': 'SELL', 'price': 10, 'quantity': 200000,
-         'filled_time': datetime(2026, 3, 15, 10, 5).isoformat()},
+        {
+            "trade_id": 1,
+            "side": "BUY",
+            "price": 10,
+            "quantity": 200000,
+            "filled_time": datetime(2026, 3, 15, 10, 0).isoformat(),
+        },
+        {
+            "trade_id": 2,
+            "side": "SELL",
+            "price": 10,
+            "quantity": 200000,
+            "filled_time": datetime(2026, 3, 15, 10, 5).isoformat(),
+        },
     ]
 
     result = detector.detect_all(trades)
-    assert 'total_anomalies' in result
-    assert 'has_anomalies' in result
+    assert "total_anomalies" in result
+    assert "has_anomalies" in result
     # Large order threshold default 1M, 2M will be detected
-    assert result['total_anomalies'] >= 2
+    assert result["total_anomalies"] >= 2
 
 
 def test_set_thresholds():
@@ -149,6 +164,6 @@ def test_set_thresholds():
     )
 
     # Check thresholds updated
-    trades = [{'trade_id': 1, 'price': 10, 'quantity': 150000}]  # 1.5M < 2M
+    trades = [{"trade_id": 1, "price": 10, "quantity": 150000}]  # 1.5M < 2M
     anomalies = detector.detect_large_order(trades)
     assert len(anomalies) == 0

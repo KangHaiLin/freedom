@@ -2,10 +2,12 @@
 基础策略抽象基类
 所有具体策略都必须继承此类
 """
+
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Tuple
-from pandas import DataFrame
+from typing import Any, Dict, List, Optional, Tuple
+
 import pandas as pd
+from pandas import DataFrame
 
 from .enums import TradeDirection
 

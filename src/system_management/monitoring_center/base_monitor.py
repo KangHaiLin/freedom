@@ -2,6 +2,7 @@
 监控中心 - 监控抽象基类
 定义监控收集器的基础接口
 """
+
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 

@@ -2,10 +2,11 @@
 策略加载器
 动态加载策略类
 """
+
 import importlib
 import sys
-from typing import Type, Optional
 from pathlib import Path
+from typing import Optional, Type
 
 from src.strategy_research.base import BaseStrategy
 
@@ -29,8 +30,8 @@ class StrategyLoader:
             策略类，加载失败返回None
         """
         try:
-            if '.' in class_path:
-                module_name, class_name = class_path.rsplit('.', 1)
+            if "." in class_path:
+                module_name, class_name = class_path.rsplit(".", 1)
             else:
                 module_name = class_path
                 class_name = class_path
@@ -44,13 +45,14 @@ class StrategyLoader:
             return strategy_class
         except Exception as e:
             import logging
+
             logging.error(f"Failed to load strategy {class_path}: {e}")
             return None
 
     def reload_class(self, class_path: str) -> Optional[Type[BaseStrategy]]:
         """重新加载策略类"""
-        if '.' in class_path:
-            module_name, _ = class_path.rsplit('.', 1)
+        if "." in class_path:
+            module_name, _ = class_path.rsplit(".", 1)
         else:
             module_name = class_path
 

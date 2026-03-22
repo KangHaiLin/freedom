@@ -2,19 +2,21 @@
 存储管理器
 统一管理所有存储实例，提供统一的存储访问接口，支持多存储引擎路由
 """
-from typing import List, Dict, Optional, Any, Union
-import pandas as pd
-import logging
-from datetime import datetime
 
-from .base_storage import BaseStorage
-from .postgresql_storage import PostgreSQLStorage
-from .clickhouse_storage import ClickHouseStorage
-from .influxdb_storage import InfluxDBStorage
-from .redis_storage import RedisStorage
+import logging
+from typing import Any, Dict, List, Optional, Union
+
+import pandas as pd
+
 from common.config import settings
 from common.exceptions import StorageException
 from common.utils import DateTimeUtils
+
+from .base_storage import BaseStorage
+from .clickhouse_storage import ClickHouseStorage
+from .influxdb_storage import InfluxDBStorage
+from .postgresql_storage import PostgreSQLStorage
+from .redis_storage import RedisStorage
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ class StorageManager:
         """加载存储配置"""
         try:
             for storage_name, config in self.storage_configs.items():
-                storage_type = config.get('type')
+                storage_type = config.get("type")
                 if not storage_type:
                     logger.warning(f"存储配置{storage_name}缺少type字段，跳过")
                     continue
@@ -42,7 +44,7 @@ class StorageManager:
                 self.storages[storage_name] = storage
 
                 # 设置默认存储
-                if config.get('default', False):
+                if config.get("default", False):
                     self.default_storage = storage_name
 
                 logger.info(f"加载存储实例：{storage_name}，类型：{storage_type}")
@@ -58,13 +60,13 @@ class StorageManager:
     def _create_storage(self, storage_type: str, config: Dict) -> BaseStorage:
         """根据类型创建存储实例"""
         storage_type = storage_type.lower()
-        if storage_type == 'postgresql':
+        if storage_type == "postgresql":
             return PostgreSQLStorage(config)
-        elif storage_type == 'clickhouse':
+        elif storage_type == "clickhouse":
             return ClickHouseStorage(config)
-        elif storage_type == 'influxdb':
+        elif storage_type == "influxdb":
             return InfluxDBStorage(config)
-        elif storage_type == 'redis':
+        elif storage_type == "redis":
             return RedisStorage(config)
         else:
             raise StorageException(f"不支持的存储类型：{storage_type}")
@@ -85,7 +87,9 @@ class StorageManager:
 
         return self.storages[storage_name]
 
-    def write(self, table_name: str, data: Union[pd.DataFrame, List[Dict]], storage_name: Optional[str] = None, **kwargs) -> int:
+    def write(
+        self, table_name: str, data: Union[pd.DataFrame, List[Dict]], storage_name: Optional[str] = None, **kwargs
+    ) -> int:
         """写入数据
         Args:
             table_name: 表名/measurement名/键前缀
@@ -98,7 +102,9 @@ class StorageManager:
         storage = self.get_storage(storage_name)
         return storage.write(table_name, data, **kwargs)
 
-    def read(self, table_name: str, query: Optional[Dict] = None, storage_name: Optional[str] = None, **kwargs) -> pd.DataFrame:
+    def read(
+        self, table_name: str, query: Optional[Dict] = None, storage_name: Optional[str] = None, **kwargs
+    ) -> pd.DataFrame:
         """查询数据
         Args:
             table_name: 表名/measurement名/键前缀
@@ -170,7 +176,7 @@ class StorageManager:
             "healthy_storages": 0,
             "default_storage": self.default_storage,
             "storages": {},
-            "check_time": DateTimeUtils.now_str()
+            "check_time": DateTimeUtils.now_str(),
         }
 
         for name, storage in self.storages.items():
@@ -180,12 +186,13 @@ class StorageManager:
                 if status.get("status") == "healthy":
                     health_status["healthy_storages"] += 1
             except Exception as e:
-                health_status["storages"][name] = {
-                    "status": "unhealthy",
-                    "error": str(e)
-                }
+                health_status["storages"][name] = {"status": "unhealthy", "error": str(e)}
 
-        health_status["health_score"] = health_status["healthy_storages"] / health_status["total_storages"] if health_status["total_storages"] > 0 else 0
+        health_status["health_score"] = (
+            health_status["healthy_storages"] / health_status["total_storages"]
+            if health_status["total_storages"] > 0
+            else 0
+        )
         return health_status
 
     def connect_all(self) -> bool:

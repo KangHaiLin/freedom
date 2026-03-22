@@ -1,10 +1,12 @@
 """
 Unit tests for strategy validation
 """
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
+from src.strategy_research.backtest_engine import BacktestConfig, BacktestEngine
 from src.strategy_research.base import BaseStrategy, TradeDirection
-from src.strategy_research.backtest_engine import BacktestEngine, BacktestConfig
 from src.strategy_research.strategy_validator import detect_overfit, scan_parameter
 from src.strategy_research.strategy_validator.overfit_detector import calculate_information_ratio
 
@@ -26,15 +28,17 @@ def test_detect_overfit():
     data = []
     date = 20240101
     for i in range(252):
-        data.append({
-            'trade_date': date + i,
-            'ts_code': '000001.SZ',
-            'open': 10,
-            'high': 11,
-            'low': 9.5,
-            'close': 10 + i * 0.01,
-            'vol': 1000000,
-        })
+        data.append(
+            {
+                "trade_date": date + i,
+                "ts_code": "000001.SZ",
+                "open": 10,
+                "high": 11,
+                "low": 9.5,
+                "close": 10 + i * 0.01,
+                "vol": 1000000,
+            }
+        )
     df = pd.DataFrame(data)
 
     config = BacktestConfig(initial_capital=100000)
@@ -43,9 +47,9 @@ def test_detect_overfit():
     result = engine.run(strategy)
 
     detection = detect_overfit(result)
-    assert 'is_overfit' in detection
-    assert 'sharpe_ratio' in detection
-    assert 'calmar_ratio' in detection
+    assert "is_overfit" in detection
+    assert "sharpe_ratio" in detection
+    assert "calmar_ratio" in detection
 
 
 def test_scan_parameter():
@@ -53,15 +57,17 @@ def test_scan_parameter():
     data = []
     date = 20240101
     for i in range(60):
-        data.append({
-            'trade_date': date + i,
-            'ts_code': '000001.SZ',
-            'open': 10,
-            'high': 11,
-            'low': 9.5,
-            'close': 10,
-            'vol': 1000000,
-        })
+        data.append(
+            {
+                "trade_date": date + i,
+                "ts_code": "000001.SZ",
+                "open": 10,
+                "high": 11,
+                "low": 9.5,
+                "close": 10,
+                "vol": 1000000,
+            }
+        )
     df = pd.DataFrame(data)
 
     from src.strategy_research.base import BaseStrategy
@@ -70,18 +76,18 @@ def test_scan_parameter():
         def on_bar(self, bar_data, current_date, portfolio):
             return {}
 
-    base_params = {'param1': 10}
+    base_params = {"param1": 10}
     config = BacktestConfig(initial_capital=100000)
     engine = BacktestEngine(df, config)
 
     result = scan_parameter(
-        'param2',
+        "param2",
         [1, 2, 3, 4, 5],
         base_params,
         TestStrategy,
         engine,
     )
 
-    assert result['parameter_name'] == 'param2'
-    assert len(result['results']) == 5
-    assert 'return_std' in result
+    assert result["parameter_name"] == "param2"
+    assert len(result["results"]) == 5
+    assert "return_std" in result

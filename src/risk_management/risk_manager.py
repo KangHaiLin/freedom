@@ -2,31 +2,28 @@
 统一风险管理管理器
 作为风险管理子系统的统一入口，整合所有子模块提供一站式风险管控服务
 """
-from typing import Dict, Any, List, Optional, Callable
+
 import logging
 from datetime import date, datetime
-
-from src.risk_management.base.base_rule import BaseRule, RuleLevel
-from src.risk_management.rule_engine.rule import Rule, RuleVersion
-from src.risk_management.rule_engine.rule_result import RuleResult, RuleViolation
-from src.risk_management.rule_engine.rule_manager import RuleManager
-from src.risk_management.rule_engine.rule_executor import RuleExecutor
-from src.risk_management.rule_engine.builtins import get_default_pre_trade_rules
-
-from src.risk_management.realtime_monitor.risk_scanner import RealtimeRiskScanner
-from src.risk_management.realtime_monitor.alert_generator import AlertGenerator, Alert
-
-from src.risk_management.compliance_management.compliance_checker import ComplianceChecker
-from src.risk_management.compliance_management.abnormal_detector import AbnormalTradeDetector
-from src.risk_management.compliance_management.report_generator import ComplianceReportGenerator
-
-from src.risk_management.risk_calculation.var_calculator import VaRCalculator
-from src.risk_management.risk_calculation.stress_tester import StressTester
-from src.risk_management.risk_calculation.scenario_analyzer import ScenarioAnalyzer
-from src.risk_management.risk_calculation.limit_manager import LimitManager, RiskLimit, LimitType
+from typing import Any, Callable, Dict, List, Optional
 
 from src.risk_management.audit_trail.operation_logger import OperationLogger, OperationType
-from src.risk_management.audit_trail.risk_event_store import RiskEventStore, RiskEvent
+from src.risk_management.audit_trail.risk_event_store import RiskEvent, RiskEventStore
+from src.risk_management.base.base_rule import BaseRule, RuleLevel
+from src.risk_management.compliance_management.abnormal_detector import AbnormalTradeDetector
+from src.risk_management.compliance_management.compliance_checker import ComplianceChecker
+from src.risk_management.compliance_management.report_generator import ComplianceReportGenerator
+from src.risk_management.realtime_monitor.alert_generator import Alert, AlertGenerator
+from src.risk_management.realtime_monitor.risk_scanner import RealtimeRiskScanner
+from src.risk_management.risk_calculation.limit_manager import LimitManager, LimitType, RiskLimit
+from src.risk_management.risk_calculation.scenario_analyzer import ScenarioAnalyzer
+from src.risk_management.risk_calculation.stress_tester import StressTester
+from src.risk_management.risk_calculation.var_calculator import VaRCalculator
+from src.risk_management.rule_engine.builtins import get_default_pre_trade_rules
+from src.risk_management.rule_engine.rule import Rule, RuleVersion
+from src.risk_management.rule_engine.rule_executor import RuleExecutor
+from src.risk_management.rule_engine.rule_manager import RuleManager
+from src.risk_management.rule_engine.rule_result import RuleResult, RuleViolation
 
 logger = logging.getLogger(__name__)
 
@@ -67,10 +64,14 @@ class RiskManager:
 
         # ========== 实时监控 ==========
         self._alert_generator = AlertGenerator()
-        self._realtime_scanner = RealtimeRiskScanner(
-            self._rule_executor,
-            self._alert_generator,
-        ) if enable_realtime_monitor else None
+        self._realtime_scanner = (
+            RealtimeRiskScanner(
+                self._rule_executor,
+                self._alert_generator,
+            )
+            if enable_realtime_monitor
+            else None
+        )
 
         # ========== 合规管理 ==========
         self._compliance_checker = ComplianceChecker(self._rule_executor)
@@ -118,21 +119,21 @@ class RiskManager:
             检查结果
         """
         context = {
-            'user_id': user_id,
-            'ts_code': ts_code,
-            'side': side,
-            'price': price,
-            'quantity': quantity,
+            "user_id": user_id,
+            "ts_code": ts_code,
+            "side": side,
+            "price": price,
+            "quantity": quantity,
             **kwargs,
         }
-        result = self._rule_executor.execute('pre_trade', context, user_id)
+        result = self._rule_executor.execute("pre_trade", context, user_id)
 
         # 记录风险事件
         if not result.passed():
             for violation in result.get_violations():
                 self._risk_event_store.add_from_violation(
                     violation=violation,
-                    event_type='pre_trade',
+                    event_type="pre_trade",
                     user_id=user_id,
                     ts_code=ts_code,
                 )
@@ -142,12 +143,12 @@ class RiskManager:
             operation_type=OperationType.RISK_CHECK,
             operator_id=user_id,
             details={
-                'ts_code': ts_code,
-                'side': side,
-                'price': price,
-                'quantity': quantity,
-                'passed': result.passed(),
-                'violations': len(result.get_violations()),
+                "ts_code": ts_code,
+                "side": side,
+                "price": price,
+                "quantity": quantity,
+                "passed": result.passed(),
+                "violations": len(result.get_violations()),
             },
         )
 
@@ -172,11 +173,11 @@ class RiskManager:
 
         # 记录操作日志
         self._operation_logger.log(
-            operation_type=OperationType.RULE_CREATE if version.version_id == '1' else OperationType.RULE_UPDATE,
+            operation_type=OperationType.RULE_CREATE if version.version_id == "1" else OperationType.RULE_UPDATE,
             operator_id=created_by,
             details={
-                'rule_id': rule.rule_id,
-                'version_id': version.version_id,
+                "rule_id": rule.rule_id,
+                "version_id": version.version_id,
             },
         )
 
@@ -194,7 +195,7 @@ class RiskManager:
             self._operation_logger.log(
                 operation_type=OperationType.RULE_ENABLE,
                 operator_id=operator_id,
-                details={'rule_id': rule_id},
+                details={"rule_id": rule_id},
             )
 
         return result
@@ -211,7 +212,7 @@ class RiskManager:
             self._operation_logger.log(
                 operation_type=OperationType.RULE_DISABLE,
                 operator_id=operator_id,
-                details={'rule_id': rule_id},
+                details={"rule_id": rule_id},
             )
 
         return result
@@ -228,7 +229,7 @@ class RiskManager:
             self._operation_logger.log(
                 operation_type=OperationType.RULE_DELETE,
                 operator_id=operator_id,
-                details={'rule_id': rule_id},
+                details={"rule_id": rule_id},
             )
 
         return result
@@ -247,6 +248,7 @@ class RiskManager:
         """启动实时风险监控"""
         if self._realtime_scanner:
             import asyncio
+
             asyncio.create_task(self._realtime_scanner.start())
             logger.info("Realtime risk monitor started")
 
@@ -254,6 +256,7 @@ class RiskManager:
         """停止实时风险监控"""
         if self._realtime_scanner:
             import asyncio
+
             asyncio.create_task(self._realtime_scanner.stop())
             logger.info("Realtime risk monitor stopped")
 
@@ -280,9 +283,7 @@ class RiskManager:
         today_bought: int,
     ) -> Dict[str, Any]:
         """检查T+1限制"""
-        return self._compliance_checker.check_t1_restriction(
-            available_quantity, sell_quantity, today_bought
-        )
+        return self._compliance_checker.check_t1_restriction(available_quantity, sell_quantity, today_bought)
 
     def compliance_check_price_limit(
         self,
@@ -291,9 +292,7 @@ class RiskManager:
         limit_down: float,
     ) -> Dict[str, Any]:
         """检查价格涨跌停限制"""
-        return self._compliance_checker.check_price_limit(
-            price, limit_up, limit_down
-        )
+        return self._compliance_checker.check_price_limit(price, limit_up, limit_down)
 
     def detect_abnormal_trades(
         self,
@@ -324,14 +323,14 @@ class RiskManager:
         self,
         returns,
         portfolio_value: float,
-        method: str = 'historical',
+        method: str = "historical",
     ) -> Dict[str, Any]:
         """计算VaR风险价值"""
-        if method == 'parametric':
+        if method == "parametric":
             return self._var_calculator.parametric_var(returns, portfolio_value)
-        elif method == 'historical':
+        elif method == "historical":
             return self._var_calculator.historical_simulation(returns, portfolio_value)
-        elif method == 'monte_carlo':
+        elif method == "monte_carlo":
             return self._var_calculator.monte_carlo_simulation(returns, portfolio_value)
         else:
             raise ValueError(f"Unknown method: {method}")
@@ -351,9 +350,7 @@ class RiskManager:
         current_value: float,
     ) -> Dict[str, Any]:
         """执行情景分析"""
-        return self._scenario_analyzer.analyze(
-            scenario_id, exposures, current_value
-        )
+        return self._scenario_analyzer.analyze(scenario_id, exposures, current_value)
 
     def check_limit(
         self,
@@ -363,9 +360,7 @@ class RiskManager:
         ts_code: Optional[str] = None,
     ) -> Dict[str, Any]:
         """检查是否超过风险限额"""
-        return self._limit_manager.check_limit(
-            limit_type, current_value, user_id, ts_code
-        )
+        return self._limit_manager.check_limit(limit_type, current_value, user_id, ts_code)
 
     def add_limit(self, limit: RiskLimit) -> int:
         """添加风险限额"""
@@ -374,9 +369,9 @@ class RiskManager:
             operation_type=OperationType.LIMIT_UPDATE,
             operator_id=1,  # system
             details={
-                'limit_id': limit_id,
-                'limit_type': limit.limit_type,
-                'limit_value': limit.limit_value,
+                "limit_id": limit_id,
+                "limit_type": limit.limit_type,
+                "limit_value": limit.limit_value,
             },
         )
         return limit_id
@@ -394,9 +389,7 @@ class RiskManager:
         **kwargs,
     ) -> List[RiskEvent]:
         """查询风险事件"""
-        return self._risk_event_store.query_events(
-            start_date=start_date, end_date=end_date, **kwargs
-        )
+        return self._risk_event_store.query_events(start_date=start_date, end_date=end_date, **kwargs)
 
     def get_risk_statistics(
         self,
@@ -413,9 +406,7 @@ class RiskManager:
         **kwargs,
     ) -> List:
         """查询操作日志"""
-        return self._operation_logger.query_logs(
-            start_time=start_time, end_time=end_time, **kwargs
-        )
+        return self._operation_logger.query_logs(start_time=start_time, end_time=end_time, **kwargs)
 
     def mark_event_handled(
         self,
@@ -431,8 +422,8 @@ class RiskManager:
                 operation_type=OperationType.VIOLATION_HANDLE,
                 operator_id=handled_by,
                 details={
-                    'event_id': event_id,
-                    'note': note,
+                    "event_id": event_id,
+                    "note": note,
                 },
             )
 
@@ -443,22 +434,20 @@ class RiskManager:
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'rule_engine': self._rule_manager.health_check(),
-            'alert_generator': self._alert_generator.health_check(),
-            'compliance_checker': self._compliance_checker.health_check(),
-            'limit_manager': self._limit_manager.health_check(),
-            'operation_logger': self._operation_logger.health_check(),
-            'risk_event_store': self._risk_event_store.health_check(),
-            'realtime_monitor': (
-                self._realtime_scanner.health_check()
-                if self._realtime_scanner
-                else {'status': 'disabled'}
+            "status": "ok",
+            "rule_engine": self._rule_manager.health_check(),
+            "alert_generator": self._alert_generator.health_check(),
+            "compliance_checker": self._compliance_checker.health_check(),
+            "limit_manager": self._limit_manager.health_check(),
+            "operation_logger": self._operation_logger.health_check(),
+            "risk_event_store": self._risk_event_store.health_check(),
+            "realtime_monitor": (
+                self._realtime_scanner.health_check() if self._realtime_scanner else {"status": "disabled"}
             ),
-            'stats': {
-                'total_rules': len(self._rule_manager.get_all_rules()),
-                'total_risk_events': self._risk_event_store.count_events(),
-                'total_operation_logs': self._operation_logger.count_logs(),
+            "stats": {
+                "total_rules": len(self._rule_manager.get_all_rules()),
+                "total_risk_events": self._risk_event_store.count_events(),
+                "total_operation_logs": self._operation_logger.count_logs(),
             },
         }
 

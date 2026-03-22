@@ -2,10 +2,12 @@
 交易统计分析
 计算胜率、盈亏比、最大回撤、收益曲线等统计指标
 """
-from typing import List, Dict, Any, Optional
+
 from datetime import datetime
-import pandas as pd
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+import pandas as pd
 
 from src.trading_engine.trade_record.trade_record import TradeRecord
 
@@ -24,28 +26,28 @@ class TradeStatistics:
         """
         if not trades:
             return {
-                'total_trades': 0,
-                'winning_trades': 0,
-                'losing_trades': 0,
-                'win_rate': 0.0,
-                'total_pnl': 0.0,
-                'average_pnl': 0.0,
-                'max_pnl': 0.0,
-                'min_pnl': 0.0,
+                "total_trades": 0,
+                "winning_trades": 0,
+                "losing_trades": 0,
+                "win_rate": 0.0,
+                "total_pnl": 0.0,
+                "average_pnl": 0.0,
+                "max_pnl": 0.0,
+                "min_pnl": 0.0,
             }
 
         # 过滤有盈亏数据的交易
         pnl_trades = [t for t in trades if t.pnl is not None]
         if not pnl_trades:
             return {
-                'total_trades': len(trades),
-                'winning_trades': 0,
-                'losing_trades': 0,
-                'win_rate': 0.0,
-                'total_pnl': 0.0,
-                'average_pnl': 0.0,
-                'max_pnl': 0.0,
-                'min_pnl': 0.0,
+                "total_trades": len(trades),
+                "winning_trades": 0,
+                "losing_trades": 0,
+                "win_rate": 0.0,
+                "total_pnl": 0.0,
+                "average_pnl": 0.0,
+                "max_pnl": 0.0,
+                "min_pnl": 0.0,
             }
 
         pnls = [t.pnl for t in pnl_trades]
@@ -56,16 +58,16 @@ class TradeStatistics:
         avg_pnl = total_pnl / len(pnls)
 
         return {
-            'total_trades': len(pnl_trades),
-            'winning_trades': len(winning),
-            'losing_trades': len(losing),
-            'win_rate': len(winning) / len(pnl_trades) if pnl_trades else 0.0,
-            'total_pnl': total_pnl,
-            'average_pnl': avg_pnl,
-            'median_pnl': np.median(pnls) if pnls else 0.0,
-            'std_pnl': np.std(pnls) if pnls else 0.0,
-            'max_pnl': max(pnls) if pnls else 0.0,
-            'min_pnl': min(pnls) if pnls else 0.0,
+            "total_trades": len(pnl_trades),
+            "winning_trades": len(winning),
+            "losing_trades": len(losing),
+            "win_rate": len(winning) / len(pnl_trades) if pnl_trades else 0.0,
+            "total_pnl": total_pnl,
+            "average_pnl": avg_pnl,
+            "median_pnl": np.median(pnls) if pnls else 0.0,
+            "std_pnl": np.std(pnls) if pnls else 0.0,
+            "max_pnl": max(pnls) if pnls else 0.0,
+            "min_pnl": min(pnls) if pnls else 0.0,
         }
 
     @staticmethod
@@ -79,19 +81,19 @@ class TradeStatistics:
         """
         if not trades:
             return {
-                'profit_ratio': 0.0,
-                'average_win': 0.0,
-                'average_loss': 0.0,
-                'expectancy': 0.0,
+                "profit_ratio": 0.0,
+                "average_win": 0.0,
+                "average_loss": 0.0,
+                "expectancy": 0.0,
             }
 
         pnl_trades = [t for t in trades if t.pnl is not None]
         if not pnl_trades:
             return {
-                'profit_ratio': 0.0,
-                'average_win': 0.0,
-                'average_loss': 0.0,
-                'expectancy': 0.0,
+                "profit_ratio": 0.0,
+                "average_win": 0.0,
+                "average_loss": 0.0,
+                "expectancy": 0.0,
             }
 
         winning = [t.pnl for t in pnl_trades if t.pnl > 0]
@@ -107,11 +109,11 @@ class TradeStatistics:
         expectancy = win_rate * avg_win - loss_rate * avg_loss
 
         return {
-            'profit_ratio': profit_ratio,
-            'average_win': avg_win,
-            'average_loss': avg_loss,
-            'win_rate': win_rate,
-            'expectancy': expectancy,
+            "profit_ratio": profit_ratio,
+            "average_win": avg_win,
+            "average_loss": avg_loss,
+            "win_rate": win_rate,
+            "expectancy": expectancy,
         }
 
     @staticmethod
@@ -142,15 +144,17 @@ class TradeStatistics:
             if current_drawdown > max_drawdown:
                 max_drawdown = current_drawdown
 
-            cumulative.append({
-                'trade_id': t.trade_id,
-                'ts_code': t.ts_code,
-                'filled_time': t.filled_time.isoformat(),
-                'pnl': t.pnl,
-                'cumulative_pnl': total,
-                'running_max': running_max,
-                'drawdown': current_drawdown,
-            })
+            cumulative.append(
+                {
+                    "trade_id": t.trade_id,
+                    "ts_code": t.ts_code,
+                    "filled_time": t.filled_time.isoformat(),
+                    "pnl": t.pnl,
+                    "cumulative_pnl": total,
+                    "running_max": running_max,
+                    "drawdown": current_drawdown,
+                }
+            )
 
         return cumulative
 
@@ -165,7 +169,7 @@ class TradeStatistics:
         """
         if not cumulative:
             return 0.0
-        return max(item['drawdown'] for item in cumulative)
+        return max(item["drawdown"] for item in cumulative)
 
     @staticmethod
     def calculate_by_strategy(trades: List[TradeRecord]) -> Dict[str, Dict[str, Any]]:
@@ -178,7 +182,7 @@ class TradeStatistics:
         """
         strategy_trades: Dict[str, List[TradeRecord]] = {}
         for trade in trades:
-            sid = trade.strategy_id or 'unknown'
+            sid = trade.strategy_id or "unknown"
             if sid not in strategy_trades:
                 strategy_trades[sid] = []
             strategy_trades[sid].append(trade)
@@ -225,11 +229,11 @@ class TradeStatistics:
         """
         if not trades:
             return {
-                'total_trades': 0,
-                'total_turnover': 0.0,
-                'total_commission': 0.0,
-                'average_turnover_per_trade': 0.0,
-                'average_commission_per_trade': 0.0,
+                "total_trades": 0,
+                "total_turnover": 0.0,
+                "total_commission": 0.0,
+                "average_turnover_per_trade": 0.0,
+                "average_commission_per_trade": 0.0,
             }
 
         total_turnover = sum(t.turnover for t in trades)
@@ -237,12 +241,12 @@ class TradeStatistics:
         n = len(trades)
 
         return {
-            'total_trades': n,
-            'total_turnover': total_turnover,
-            'total_commission': total_commission,
-            'average_turnover_per_trade': total_turnover / n,
-            'average_commission_per_trade': total_commission / n,
-            'commission_ratio': total_commission / total_turnover if total_turnover > 0 else 0.0,
+            "total_trades": n,
+            "total_turnover": total_turnover,
+            "total_commission": total_commission,
+            "average_turnover_per_trade": total_turnover / n,
+            "average_commission_per_trade": total_commission / n,
+            "commission_ratio": total_commission / total_turnover if total_turnover > 0 else 0.0,
         }
 
     @staticmethod
@@ -256,24 +260,26 @@ class TradeStatistics:
         """
         data = []
         for t in trades:
-            data.append({
-                'trade_id': t.trade_id,
-                'order_id': t.order_id,
-                'ts_code': t.ts_code,
-                'side': t.side.name,
-                'filled_quantity': t.filled_quantity,
-                'filled_price': t.filled_price,
-                'filled_time': t.filled_time,
-                'strategy_id': t.strategy_id,
-                'commission': t.commission,
-                'slippage': t.slippage,
-                'pnl': t.pnl,
-                'turnover': t.turnover,
-                'net_turnover': t.net_turnover,
-            })
+            data.append(
+                {
+                    "trade_id": t.trade_id,
+                    "order_id": t.order_id,
+                    "ts_code": t.ts_code,
+                    "side": t.side.name,
+                    "filled_quantity": t.filled_quantity,
+                    "filled_price": t.filled_price,
+                    "filled_time": t.filled_time,
+                    "strategy_id": t.strategy_id,
+                    "commission": t.commission,
+                    "slippage": t.slippage,
+                    "pnl": t.pnl,
+                    "turnover": t.turnover,
+                    "net_turnover": t.net_turnover,
+                }
+            )
         df = pd.DataFrame(data)
         if not df.empty:
-            df = df.sort_values('filled_time')
+            df = df.sort_values("filled_time")
         return df
 
     @staticmethod
@@ -297,13 +303,13 @@ class TradeStatistics:
         by_stock = TradeStatistics.calculate_by_stock(trades)
 
         return {
-            'basic': basic,
-            'profit_ratio': profit_ratio,
-            'max_drawdown': max_dd,
-            'turnover': turnover,
-            'by_strategy': by_strategy,
-            'by_stock': by_stock,
-            'cumulative_pnl': cumulative,
-            'total_trades_all': len(trades),
-            'sell_trades_with_pnl': len(sell_trades),
+            "basic": basic,
+            "profit_ratio": profit_ratio,
+            "max_drawdown": max_dd,
+            "turnover": turnover,
+            "by_strategy": by_strategy,
+            "by_stock": by_stock,
+            "cumulative_pnl": cumulative,
+            "total_trades_all": len(trades),
+            "sell_trades_with_pnl": len(sell_trades),
         }

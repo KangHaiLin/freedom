@@ -2,17 +2,19 @@
 日期时间工具类
 提供A股交易相关的日期时间处理功能
 """
-from datetime import datetime, date, timedelta
-from typing import Union, List, Optional
+
+from datetime import date, datetime, timedelta
+from typing import List, Optional, Union
+
+import holidays
 import pandas as pd
 import pytz
-import holidays
 
 
 class DateTimeUtils:
     """日期时间工具类"""
 
-    SH_TZ = pytz.timezone('Asia/Shanghai')
+    SH_TZ = pytz.timezone("Asia/Shanghai")
     UTC_TZ = pytz.UTC
 
     # A股节假日数据（可动态更新）
@@ -24,7 +26,7 @@ class DateTimeUtils:
         return datetime.now(cls.SH_TZ)
 
     @classmethod
-    def now_str(cls, format_str: str = '%Y-%m-%d %H:%M:%S') -> str:
+    def now_str(cls, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
         """获取当前时间字符串"""
         return cls.now().strftime(format_str)
 
@@ -34,24 +36,24 @@ class DateTimeUtils:
         return cls.now().date()
 
     @classmethod
-    def today_str(cls, format_str: str = '%Y-%m-%d') -> str:
+    def today_str(cls, format_str: str = "%Y-%m-%d") -> str:
         """获取当前日期字符串"""
         return cls.today().strftime(format_str)
 
     @classmethod
-    def to_str(cls, dt: Union[datetime, date, str], format_str: str = '%Y-%m-%d %H:%M:%S') -> str:
+    def to_str(cls, dt: Union[datetime, date, str], format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
         """将日期时间对象转换为字符串，如果已经是字符串直接返回"""
         if isinstance(dt, str):
             return dt
         if isinstance(dt, date):
-            return dt.strftime('%Y-%m-%d')
+            return dt.strftime("%Y-%m-%d")
         return dt.strftime(format_str)
 
     @classmethod
     def is_trading_day(cls, dt: Union[date, str]) -> bool:
         """判断是否是A股交易日"""
         if isinstance(dt, str):
-            dt = datetime.strptime(dt, '%Y-%m-%d').date()
+            dt = datetime.strptime(dt, "%Y-%m-%d").date()
 
         # 周末不是交易日
         if dt.weekday() >= 5:
@@ -66,8 +68,8 @@ class DateTimeUtils:
     @classmethod
     def get_trading_days(cls, start_date: str, end_date: str) -> List[date]:
         """获取指定日期范围内的交易日列表"""
-        start = datetime.strptime(start_date, '%Y-%m-%d').date()
-        end = datetime.strptime(end_date, '%Y-%m-%d').date()
+        start = datetime.strptime(start_date, "%Y-%m-%d").date()
+        end = datetime.strptime(end_date, "%Y-%m-%d").date()
 
         days = []
         current = start
@@ -83,7 +85,7 @@ class DateTimeUtils:
         if dt is None:
             dt = cls.today()
         elif isinstance(dt, str):
-            dt = datetime.strptime(dt, '%Y-%m-%d').date()
+            dt = datetime.strptime(dt, "%Y-%m-%d").date()
 
         current = dt - timedelta(days=1)
         while not cls.is_trading_day(current):
@@ -96,7 +98,7 @@ class DateTimeUtils:
         if dt is None:
             dt = cls.today()
         elif isinstance(dt, str):
-            dt = datetime.strptime(dt, '%Y-%m-%d').date()
+            dt = datetime.strptime(dt, "%Y-%m-%d").date()
 
         current = dt + timedelta(days=1)
         while not cls.is_trading_day(current):
@@ -115,20 +117,22 @@ class DateTimeUtils:
         time = dt.time()
 
         # 早盘：9:30-11:30
-        morning_start = datetime.strptime('09:30:00', '%H:%M:%S').time()
-        morning_end = datetime.strptime('11:30:00', '%H:%M:%S').time()
+        morning_start = datetime.strptime("09:30:00", "%H:%M:%S").time()
+        morning_end = datetime.strptime("11:30:00", "%H:%M:%S").time()
 
         # 午盘：13:00-15:00
-        afternoon_start = datetime.strptime('13:00:00', '%H:%M:%S').time()
-        afternoon_end = datetime.strptime('15:00:00', '%H:%M:%S').time()
+        afternoon_start = datetime.strptime("13:00:00", "%H:%M:%S").time()
+        afternoon_end = datetime.strptime("15:00:00", "%H:%M:%S").time()
 
         # 集合竞价时间：9:15-9:25
-        call_auction_start = datetime.strptime('09:15:00', '%H:%M:%S').time()
-        call_auction_end = datetime.strptime('09:25:00', '%H:%M:%S').time()
+        call_auction_start = datetime.strptime("09:15:00", "%H:%M:%S").time()
+        call_auction_end = datetime.strptime("09:25:00", "%H:%M:%S").time()
 
-        return (call_auction_start <= time <= call_auction_end) or \
-               (morning_start <= time <= morning_end) or \
-               (afternoon_start <= time <= afternoon_end)
+        return (
+            (call_auction_start <= time <= call_auction_end)
+            or (morning_start <= time <= morning_end)
+            or (afternoon_start <= time <= afternoon_end)
+        )
 
     @classmethod
     def is_market_open(cls) -> bool:
@@ -141,23 +145,23 @@ class DateTimeUtils:
         dt = dt or cls.now()
         time = dt.time()
 
-        call_auction_start = datetime.strptime('09:15:00', '%H:%M:%S').time()
-        call_auction_end = datetime.strptime('09:25:00', '%H:%M:%S').time()
-        morning_start = datetime.strptime('09:30:00', '%H:%M:%S').time()
-        morning_end = datetime.strptime('11:30:00', '%H:%M:%S').time()
-        afternoon_start = datetime.strptime('13:00:00', '%H:%M:%S').time()
-        afternoon_end = datetime.strptime('15:00:00', '%H:%M:%S').time()
+        call_auction_start = datetime.strptime("09:15:00", "%H:%M:%S").time()
+        call_auction_end = datetime.strptime("09:25:00", "%H:%M:%S").time()
+        morning_start = datetime.strptime("09:30:00", "%H:%M:%S").time()
+        morning_end = datetime.strptime("11:30:00", "%H:%M:%S").time()
+        afternoon_start = datetime.strptime("13:00:00", "%H:%M:%S").time()
+        afternoon_end = datetime.strptime("15:00:00", "%H:%M:%S").time()
 
         if call_auction_start <= time <= call_auction_end:
-            return 'call_auction'
+            return "call_auction"
         elif morning_start <= time <= morning_end:
-            return 'morning_session'
+            return "morning_session"
         elif time > morning_end and time < afternoon_start:
-            return 'midday_break'
+            return "midday_break"
         elif afternoon_start <= time <= afternoon_end:
-            return 'afternoon_session'
+            return "afternoon_session"
         else:
-            return 'closed'
+            return "closed"
 
     @classmethod
     def to_shanghai_time(cls, dt: datetime) -> datetime:
@@ -202,11 +206,7 @@ class DateTimeUtils:
             return datetime.combine(dt, datetime.min.time())
         if isinstance(dt, str):
             # 尝试多种格式解析
-            formats = [
-                '%Y-%m-%d %H:%M:%S',
-                '%Y-%m-%d %H:%M',
-                '%Y-%m-%d'
-            ]
+            formats = ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"]
             for fmt in formats:
                 try:
                     return datetime.strptime(dt, fmt)

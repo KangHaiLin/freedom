@@ -2,9 +2,10 @@
 成交记录类
 存储单次成交的详细信息
 """
-from dataclasses import dataclass, asdict
+
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from src.trading_engine.base.base_order import OrderSide
 
@@ -15,6 +16,7 @@ class TradeRecord:
     成交记录
     存储单次成交的详细信息
     """
+
     trade_id: str
     order_id: str
     ts_code: str
@@ -32,9 +34,9 @@ class TradeRecord:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         data = asdict(self)
-        data['side'] = self.side.name
-        data['side_code'] = self.side.value
-        data['filled_time'] = self.filled_time.isoformat()
+        data["side"] = self.side.name
+        data["side_code"] = self.side.value
+        data["filled_time"] = self.filled_time.isoformat()
         return data
 
     @property

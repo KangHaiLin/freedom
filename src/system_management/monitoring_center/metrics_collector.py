@@ -2,9 +2,11 @@
 监控中心 - 指标收集器
 滑动窗口保留最近数据，支持聚合计算，可导出Prometheus格式
 """
+
 import time
 from collections import deque
 from typing import Any, Dict, List, Optional, Tuple
+
 from .base_monitor import BaseMonitor
 
 
@@ -82,13 +84,13 @@ class MetricsCollector:
         history = self.get_history(name)
         if not history:
             return {
-                'avg': None,
-                'min': None,
-                'max': None,
-                'p50': None,
-                'p95': None,
-                'p99': None,
-                'count': 0,
+                "avg": None,
+                "min": None,
+                "max": None,
+                "p50": None,
+                "p95": None,
+                "p99": None,
+                "count": 0,
             }
 
         values = [v for _, v in history]
@@ -102,13 +104,13 @@ class MetricsCollector:
             return sorted_values[index]
 
         return {
-            'avg': sum(values) / n,
-            'min': min(values),
-            'max': max(values),
-            'p50': percentile(50),
-            'p95': percentile(95),
-            'p99': percentile(99),
-            'count': n,
+            "avg": sum(values) / n,
+            "min": min(values),
+            "max": max(values),
+            "p50": percentile(50),
+            "p95": percentile(95),
+            "p99": percentile(99),
+            "count": n,
         }
 
     def get_snapshot(self) -> Dict[str, float]:
@@ -131,7 +133,7 @@ class MetricsCollector:
 
         for name, value in snapshot.items():
             # 转换名称为 Prometheus 格式
-            prom_name = name.replace('.', '_').replace('-', '_')
+            prom_name = name.replace(".", "_").replace("-", "_")
             lines.append(f"# TYPE {prom_name} gauge")
             lines.append(f"{prom_name} {value}")
 

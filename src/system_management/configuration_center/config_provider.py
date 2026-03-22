@@ -2,11 +2,13 @@
 配置中心 - 配置提供者
 多源配置合并，类型转换，默认值支持，配置验证
 """
-from typing import Any, Callable, Dict, Generic, Optional, Type, TypeVar, Union, get_type_hints
+
 import re
+from typing import Any, Callable, Dict, Generic, Optional, Type, TypeVar, Union, get_type_hints
+
 from .base_config import ConfigSource
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ConfigProvider:
@@ -21,7 +23,7 @@ class ConfigProvider:
         self._sources: list[ConfigSource] = []
         self._validators: dict[str, list[Callable[[Any], bool]]] = {}
 
-    def add_source(self, source: ConfigSource, priority: int = 0) -> 'ConfigProvider':
+    def add_source(self, source: ConfigSource, priority: int = 0) -> "ConfigProvider":
         """
         添加配置源
 
@@ -157,7 +159,7 @@ class ConfigProvider:
             return None
 
         # 泛型处理 - Union 包含 None
-        if hasattr(expected_type, '__origin__') and expected_type.__origin__ is Union:
+        if hasattr(expected_type, "__origin__") and expected_type.__origin__ is Union:
             for t in expected_type.__args__:
                 if t is type(None):
                     continue
@@ -170,7 +172,7 @@ class ConfigProvider:
         # 布尔转换
         if expected_type is bool:
             if isinstance(value, str):
-                return expected_type(value.lower() in ('true', 'yes', '1', 'on'))
+                return expected_type(value.lower() in ("true", "yes", "1", "on"))
             return expected_type(bool(value))
 
         # 基本类型转换
@@ -178,7 +180,7 @@ class ConfigProvider:
             return expected_type(value)
         except (ValueError, TypeError):
             # 如果转换失败，返回默认值形式
-            if value == '':
+            if value == "":
                 return expected_type()
             raise
 

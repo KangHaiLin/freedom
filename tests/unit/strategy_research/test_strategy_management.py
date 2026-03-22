@@ -1,12 +1,10 @@
 """
 Unit tests for strategy management
 """
+
 import tempfile
-from src.strategy_research.strategy_management import (
-    StrategyManager,
-    StrategyMetadata,
-    StrategyVersion,
-)
+
+from src.strategy_research.strategy_management import StrategyManager, StrategyMetadata, StrategyVersion
 
 
 def test_create_strategy():
@@ -19,8 +17,8 @@ def test_create_strategy():
             strategy_class_path="strategies.momentum.MomentumStrategy",
             description="Simple momentum strategy",
             author="test",
-            params={'lookback': 20, 'top_n': 10},
-            tags=['momentum', 'trend'],
+            params={"lookback": 20, "top_n": 10},
+            tags=["momentum", "trend"],
         )
 
         assert success is True
@@ -41,13 +39,13 @@ def test_add_version():
             strategy_class_path="strategies.momentum.MomentumStrategy",
             description="Simple momentum strategy",
             author="test",
-            params={'lookback': 20, 'top_n': 10},
+            params={"lookback": 20, "top_n": 10},
         )
 
         success, msg, version = manager.create_new_version(
             "test-momentum",
             "1.1.0",
-            {'lookback': 30, 'top_n': 10},
+            {"lookback": 30, "top_n": 10},
             change_note="Adjust lookback period",
         )
 
@@ -63,10 +61,20 @@ def test_list_strategies():
     with tempfile.TemporaryDirectory() as tmpdir:
         manager = StrategyManager(storage_dir=f"{tmpdir}/strategies")
         manager.create_strategy(
-            strategy_id="t1", strategy_name="T1", strategy_class_path="a.A", description="", author="test", params={},
+            strategy_id="t1",
+            strategy_name="T1",
+            strategy_class_path="a.A",
+            description="",
+            author="test",
+            params={},
         )
         manager.create_strategy(
-            strategy_id="t2", strategy_name="T2", strategy_class_path="b.B", description="", author="test", params={},
+            strategy_id="t2",
+            strategy_name="T2",
+            strategy_class_path="b.B",
+            description="",
+            author="test",
+            params={},
         )
 
         strategies = manager.list_strategies()
@@ -78,6 +86,11 @@ def test_count():
     with tempfile.TemporaryDirectory() as tmpdir:
         manager = StrategyManager(storage_dir=f"{tmpdir}/strategies")
         manager.create_strategy(
-            strategy_id="t1", strategy_name="T1", strategy_class_path="a.A", description="", author="test", params={},
+            strategy_id="t1",
+            strategy_name="T1",
+            strategy_class_path="a.A",
+            description="",
+            author="test",
+            params={},
         )
         assert manager.count() == 1

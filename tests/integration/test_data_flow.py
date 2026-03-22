@@ -2,16 +2,18 @@
 数据流程集成测试
 测试完整数据流：数据采集 → 数据清洗 → 数据存储 → 数据查询 → API接口
 """
-import pytest
-import pandas as pd
+
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-from data_management.data_ingestion.tushare_collector import TushareCollector
-from data_management.data_ingestion.data_cleaner import DataCleaner
-from data_management.data_storage.storage_manager import StorageManager
-from data_management.data_query.query_manager import QueryManager
+import pandas as pd
+import pytest
 from fastapi.testclient import TestClient
+
+from data_management.data_ingestion.data_cleaner import DataCleaner
+from data_management.data_ingestion.tushare_collector import TushareCollector
+from data_management.data_query.query_manager import QueryManager
+from data_management.data_storage.storage_manager import StorageManager
 
 
 class TestFullDataFlow:
@@ -20,12 +22,8 @@ class TestFullDataFlow:
     def test_full_realtime_data_flow(self, sample_realtime_data):
         """测试实时行情完整数据流"""
         # 1. 数据采集阶段
-        with patch('tushare.pro_api') as mock_tushare_api:
-            collector = TushareCollector({
-                "api_key": "test_key",
-                "priority": 1,
-                "weight": 1.0
-            })
+        with patch("tushare.pro_api") as mock_tushare_api:
+            collector = TushareCollector({"api_key": "test_key", "priority": 1, "weight": 1.0})
 
             # 模拟采集返回数据
             mock_pro = Mock()
@@ -45,7 +43,7 @@ class TestFullDataFlow:
         assert "price" in cleaned_data.columns
 
         # 3. 数据存储阶段
-        with patch('psycopg2.connect'), patch('sqlalchemy.create_engine'):
+        with patch("psycopg2.connect"), patch("sqlalchemy.create_engine"):
             storage_manager = StorageManager()
             mock_storage = Mock()
             mock_storage.write.return_value = len(cleaned_data)
@@ -63,10 +61,9 @@ class TestFullDataFlow:
         query_manager.execute_query.return_value = mock_result
 
         from data_management.data_query.base_query import QueryCondition
+
         condition = QueryCondition(
-            table_name="realtime_quotes",
-            filters={"stock_code": ["000001.SZ", "600000.SH"]},
-            limit=100
+            table_name="realtime_quotes", filters={"stock_code": ["000001.SZ", "600000.SH"]}, limit=100
         )
         query_result = query_manager.execute_query(condition)
         assert query_result.success
@@ -75,20 +72,18 @@ class TestFullDataFlow:
 
         # 5. API接口阶段
         from user_interface.backend.main import app
+
         client = TestClient(app)
 
         # 模拟API返回
-        with patch('user_interface.backend.routers.market.query_manager') as mock_query:
+        with patch("user_interface.backend.routers.market.query_manager") as mock_query:
             mock_result = Mock()
             mock_result.success = True
-            mock_result.data.to_dict.return_value = cleaned_data.to_dict('records')
+            mock_result.data.to_dict.return_value = cleaned_data.to_dict("records")
             mock_query.execute_query.return_value = mock_result
 
             headers = {"X-API-Key": "test_key"}
-            response = client.get(
-                "/api/v1/market/realtime?stock_codes=000001.SZ,600000.SH",
-                headers=headers
-            )
+            response = client.get("/api/v1/market/realtime?stock_codes=000001.SZ,600000.SH", headers=headers)
             assert response.status_code == 200
             data = response.json()
             assert data["code"] == 0
@@ -98,7 +93,7 @@ class TestFullDataFlow:
     def test_daily_data_analysis_flow(self, sample_daily_data):
         """测试日线数据分析流程"""
         # 1. 存储日线数据
-        with patch('psycopg2.connect'), patch('sqlalchemy.create_engine'):
+        with patch("psycopg2.connect"), patch("sqlalchemy.create_engine"):
             storage_manager = StorageManager()
             mock_storage = Mock()
             mock_storage.write.return_value = len(sample_daily_data)
@@ -116,6 +111,7 @@ class TestFullDataFlow:
 
         # 模拟均线计算
         from data_management.data_query.market_data_query import MarketDataQuery
+
         market_query = MarketDataQuery(None)
         data_with_ma = market_query.calculate_ma(sample_daily_data, period=5)
         assert "ma5" in data_with_ma.columns
@@ -135,14 +131,15 @@ class TestFullDataFlow:
 
         # 2. 数据质量检查
         from data_management.data_monitoring.data_quality_monitor import DataQualityMonitor
+
         monitor = DataQualityMonitor(
             "test_quality",
             storage_manager=None,
             config={
                 "table_name": "realtime_quotes",
                 "metrics": ["completeness", "accuracy", "timeliness"],
-                "thresholds": {"overall_score": 0.8}
-            }
+                "thresholds": {"overall_score": 0.8},
+            },
         )
 
         completeness = monitor._check_completeness(bad_data)
@@ -153,18 +150,20 @@ class TestFullDataFlow:
         assert completeness + accuracy < 1.9
 
         # 3. 监控结果告警
-        from data_management.data_monitoring.base_monitor import MonitorResult, AlertLevel
+        from data_management.data_monitoring.base_monitor import AlertLevel, MonitorResult
+
         result = MonitorResult.failure(
             "realtime_quality",
             AlertLevel.WARNING,
             metrics={"completeness": completeness, "accuracy": accuracy},
-            message="数据质量不达标"
+            message="数据质量不达标",
         )
 
         from data_management.data_monitoring.alert_service import AlertService
+
         alert_service = AlertService(config={"channels": ["log"]})
 
-        with patch('logging.warning') as mock_log:
+        with patch("logging.warning") as mock_log:
             alert_service.send_alert(result, channels=["log"])
             mock_log.assert_called_once()
             assert "数据质量不达标" in str(mock_log.call_args)

@@ -2,21 +2,25 @@
 Wind数据源适配器
 实现Wind数据接口的对接
 """
-import pandas as pd
-from typing import List, Dict
+
+import logging
 import time
 from datetime import datetime
+from typing import Dict, List
+
+import pandas as pd
+
+from common.exceptions import DataSourceException
+from common.utils import DateTimeUtils, StockCodeUtils
 
 from .market_collector import MarketDataCollector
-from common.utils import StockCodeUtils, DateTimeUtils
-from common.exceptions import DataSourceException
-import logging
 
 logger = logging.getLogger(__name__)
 
 # 模拟Wind API导入，实际项目中需要安装WindPy
 try:
     from WindPy import w
+
     WIND_AVAILABLE = True
 except ImportError:
     WIND_AVAILABLE = False
@@ -35,7 +39,7 @@ class WindCollector(MarketDataCollector):
         self._init_wind()
         self.request_count = 0
         self.last_request_time = 0
-        self.rate_limit = config.get('rate_limit', 200)  # 每分钟请求次数限制
+        self.rate_limit = config.get("rate_limit", 200)  # 每分钟请求次数限制
 
     def _init_wind(self):
         """初始化Wind连接"""
@@ -92,7 +96,7 @@ class WindCollector(MarketDataCollector):
 
             # 调用Wind实时行情接口
             fields = "rt_open,rt_high,rt_low,rt_last,rt_vol,rt_amt,rt_bid1,rt_bsize1,rt_ask1,rt_asize1,rt_time"
-            ret = w.wsq(','.join(wind_codes), fields)
+            ret = w.wsq(",".join(wind_codes), fields)
 
             if ret.ErrorCode != 0:
                 raise DataSourceException(f"Wind实时行情查询失败，错误码：{ret.ErrorCode}")
@@ -101,23 +105,23 @@ class WindCollector(MarketDataCollector):
             data = []
             for i, code in enumerate(ret.Codes):
                 row = {
-                    'stock_code': StockCodeUtils.normalize_code(code),
-                    'time': DateTimeUtils.now().replace(
-                        hour=int(ret.Data[-1][i]//10000),
-                        minute=int((ret.Data[-1][i]%10000)//100),
-                        second=int(ret.Data[-1][i]%100)
+                    "stock_code": StockCodeUtils.normalize_code(code),
+                    "time": DateTimeUtils.now().replace(
+                        hour=int(ret.Data[-1][i] // 10000),
+                        minute=int((ret.Data[-1][i] % 10000) // 100),
+                        second=int(ret.Data[-1][i] % 100),
                     ),
-                    'open': ret.Data[0][i],
-                    'high': ret.Data[1][i],
-                    'low': ret.Data[2][i],
-                    'price': ret.Data[3][i],
-                    'volume': ret.Data[4][i],
-                    'amount': ret.Data[5][i],
-                    'bid_price1': ret.Data[6][i],
-                    'bid_volume1': ret.Data[7][i],
-                    'ask_price1': ret.Data[8][i],
-                    'ask_volume1': ret.Data[9][i],
-                    'source': self.source
+                    "open": ret.Data[0][i],
+                    "high": ret.Data[1][i],
+                    "low": ret.Data[2][i],
+                    "price": ret.Data[3][i],
+                    "volume": ret.Data[4][i],
+                    "amount": ret.Data[5][i],
+                    "bid_price1": ret.Data[6][i],
+                    "bid_volume1": ret.Data[7][i],
+                    "ask_price1": ret.Data[8][i],
+                    "ask_volume1": ret.Data[9][i],
+                    "source": self.source,
                 }
                 data.append(row)
 
@@ -125,9 +129,19 @@ class WindCollector(MarketDataCollector):
 
             # 数据校验
             required_columns = [
-                'stock_code', 'time', 'price', 'open', 'high', 'low',
-                'volume', 'amount', 'bid_price1', 'bid_volume1',
-                'ask_price1', 'ask_volume1', 'source'
+                "stock_code",
+                "time",
+                "price",
+                "open",
+                "high",
+                "low",
+                "volume",
+                "amount",
+                "bid_price1",
+                "bid_volume1",
+                "ask_price1",
+                "ask_volume1",
+                "source",
             ]
 
             for col in required_columns:
@@ -165,15 +179,15 @@ class WindCollector(MarketDataCollector):
                     # 转换为DataFrame
                     for i, trade_date in enumerate(ret.Times):
                         row = {
-                            'stock_code': code,
-                            'trade_date': trade_date.date(),
-                            'open': ret.Data[0][i],
-                            'high': ret.Data[1][i],
-                            'low': ret.Data[2][i],
-                            'close': ret.Data[3][i],
-                            'volume': ret.Data[4][i],
-                            'amount': ret.Data[5][i],
-                            'adjust_factor': ret.Data[6][i] if len(ret.Data) > 6 else 1.0
+                            "stock_code": code,
+                            "trade_date": trade_date.date(),
+                            "open": ret.Data[0][i],
+                            "high": ret.Data[1][i],
+                            "low": ret.Data[2][i],
+                            "close": ret.Data[3][i],
+                            "volume": ret.Data[4][i],
+                            "amount": ret.Data[5][i],
+                            "adjust_factor": ret.Data[6][i] if len(ret.Data) > 6 else 1.0,
                         }
                         all_data.append(row)
 
@@ -188,15 +202,22 @@ class WindCollector(MarketDataCollector):
 
             # 数据校验
             required_columns = [
-                'stock_code', 'trade_date', 'open', 'high', 'low', 'close',
-                'volume', 'amount', 'adjust_factor'
+                "stock_code",
+                "trade_date",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "amount",
+                "adjust_factor",
             ]
 
             for col in required_columns:
                 if col not in result_df.columns:
                     result_df[col] = None
 
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_date', 'close', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_date", "close", "volume"]):
                 return result_df
             return pd.DataFrame()
 
@@ -218,7 +239,9 @@ class WindCollector(MarketDataCollector):
 
                     # 调用Wind分钟线接口
                     fields = "open,high,low,close,volume,amount"
-                    ret = w.wsi(wind_code, fields, start_date + " 09:30:00", end_date + " 15:00:00", f"BarSize={period}")
+                    ret = w.wsi(
+                        wind_code, fields, start_date + " 09:30:00", end_date + " 15:00:00", f"BarSize={period}"
+                    )
 
                     if ret.ErrorCode != 0:
                         logger.warning(f"获取{code}分钟线行情失败，错误码：{ret.ErrorCode}")
@@ -227,14 +250,14 @@ class WindCollector(MarketDataCollector):
                     # 转换为DataFrame
                     for i, trade_time in enumerate(ret.Times):
                         row = {
-                            'stock_code': code,
-                            'trade_time': trade_time,
-                            'open': ret.Data[0][i],
-                            'high': ret.Data[1][i],
-                            'low': ret.Data[2][i],
-                            'close': ret.Data[3][i],
-                            'volume': ret.Data[4][i],
-                            'amount': ret.Data[5][i]
+                            "stock_code": code,
+                            "trade_time": trade_time,
+                            "open": ret.Data[0][i],
+                            "high": ret.Data[1][i],
+                            "low": ret.Data[2][i],
+                            "close": ret.Data[3][i],
+                            "volume": ret.Data[4][i],
+                            "amount": ret.Data[5][i],
                         }
                         all_data.append(row)
 
@@ -248,16 +271,13 @@ class WindCollector(MarketDataCollector):
             result_df = pd.DataFrame(all_data)
 
             # 数据校验
-            required_columns = [
-                'stock_code', 'trade_time', 'open', 'high', 'low', 'close',
-                'volume', 'amount'
-            ]
+            required_columns = ["stock_code", "trade_time", "open", "high", "low", "close", "volume", "amount"]
 
             for col in required_columns:
                 if col not in result_df.columns:
                     result_df[col] = None
 
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_time', 'close', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_time", "close", "volume"]):
                 return result_df
             return pd.DataFrame()
 
@@ -288,15 +308,15 @@ class WindCollector(MarketDataCollector):
                     # 转换为DataFrame
                     for i, trade_time in enumerate(ret.Times):
                         row = {
-                            'stock_code': code,
-                            'trade_time': trade_time,
-                            'price': ret.Data[0][i],
-                            'volume': ret.Data[1][i],
-                            'amount': ret.Data[2][i],
-                            'bid_price1': ret.Data[3][i],
-                            'bid_volume1': ret.Data[4][i],
-                            'ask_price1': ret.Data[5][i],
-                            'ask_volume1': ret.Data[6][i]
+                            "stock_code": code,
+                            "trade_time": trade_time,
+                            "price": ret.Data[0][i],
+                            "volume": ret.Data[1][i],
+                            "amount": ret.Data[2][i],
+                            "bid_price1": ret.Data[3][i],
+                            "bid_volume1": ret.Data[4][i],
+                            "ask_price1": ret.Data[5][i],
+                            "ask_volume1": ret.Data[6][i],
                         }
                         all_data.append(row)
 
@@ -311,15 +331,22 @@ class WindCollector(MarketDataCollector):
 
             # 数据校验
             required_columns = [
-                'stock_code', 'trade_time', 'price', 'volume', 'amount',
-                'bid_price1', 'bid_volume1', 'ask_price1', 'ask_volume1'
+                "stock_code",
+                "trade_time",
+                "price",
+                "volume",
+                "amount",
+                "bid_price1",
+                "bid_volume1",
+                "ask_price1",
+                "ask_volume1",
             ]
 
             for col in required_columns:
                 if col not in result_df.columns:
                     result_df[col] = None
 
-            if self.validate_data(result_df, required_columns=['stock_code', 'trade_time', 'price', 'volume']):
+            if self.validate_data(result_df, required_columns=["stock_code", "trade_time", "price", "volume"]):
                 return result_df
             return pd.DataFrame()
 

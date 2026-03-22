@@ -2,15 +2,18 @@
 策略元数据
 存储策略的基本信息、参数、版本信息
 """
-from dataclasses import dataclass, asdict
+
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from src.strategy_research.base import StrategyStatus
 
 
 @dataclass
 class StrategyVersion:
     """策略版本"""
+
     version_id: int
     strategy_id: str
     version_code: str  # 语义化版本 e.g. "1.0.0"
@@ -22,13 +25,14 @@ class StrategyVersion:
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
-        data['created_at'] = self.created_at.isoformat()
+        data["created_at"] = self.created_at.isoformat()
         return data
 
 
 @dataclass
 class StrategyMetadata:
     """策略元数据"""
+
     strategy_id: str
     strategy_name: str
     strategy_class_path: str  # 策略类完整路径 e.g. "strategies.momentum.MomentumStrategy"
@@ -44,10 +48,10 @@ class StrategyMetadata:
 
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
-        data['status'] = self.status.value
-        data['created_at'] = self.created_at.isoformat()
-        data['updated_at'] = self.updated_at.isoformat()
-        data['versions'] = [v.to_dict() for v in self.versions]
+        data["status"] = self.status.value
+        data["created_at"] = self.created_at.isoformat()
+        data["updated_at"] = self.updated_at.isoformat()
+        data["versions"] = [v.to_dict() for v in self.versions]
         return data
 
     @property

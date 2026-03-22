@@ -1,11 +1,13 @@
 """
 Unit tests for fundamentals_collector.py
 """
-import pytest
-import pandas as pd
+
 import time
 from datetime import datetime
 from unittest.mock import Mock, patch
+
+import pandas as pd
+import pytest
 
 from src.data_management.data_ingestion.fundamentals_collector import FundamentalsCollector
 
@@ -13,7 +15,7 @@ from src.data_management.data_ingestion.fundamentals_collector import Fundamenta
 class MockFundamentalsCollector(FundamentalsCollector):
     """Mock implementation for testing abstract base class"""
 
-    def get_stock_basic(self, list_status: str = 'L') -> pd.DataFrame:
+    def get_stock_basic(self, list_status: str = "L") -> pd.DataFrame:
         return pd.DataFrame()
 
     def get_daily_basic(self, stock_codes: list, start_date: str, end_date: str) -> pd.DataFrame:
@@ -34,7 +36,7 @@ class MockFundamentalsCollector(FundamentalsCollector):
 
 def test_initialization():
     """测试基类初始化"""
-    config = {'priority': 10, 'weight': 2.0, 'max_retry_times': 5, 'retry_interval': 2}
+    config = {"priority": 10, "weight": 2.0, "max_retry_times": 5, "retry_interval": 2}
     collector = MockFundamentalsCollector("test_source", config)
 
     assert collector.source == "test_source"
@@ -61,16 +63,16 @@ def test_validate_data_missing_column():
     """测试缺少必要字段"""
     collector = MockFundamentalsCollector("test", {})
 
-    df = pd.DataFrame({'wrong_column': [1, 2, 3]})
-    assert collector.validate_data(df, required_columns=['stock_code']) is False
+    df = pd.DataFrame({"wrong_column": [1, 2, 3]})
+    assert collector.validate_data(df, required_columns=["stock_code"]) is False
 
 
 def test_validate_data_valid():
     """测试有效数据校验通过"""
     collector = MockFundamentalsCollector("test", {})
 
-    df = pd.DataFrame({'stock_code': ['000001.SZ', '600000.SH'], 'name': ['平安银行', '浦发银行']})
-    assert collector.validate_data(df, required_columns=['stock_code', 'name']) is True
+    df = pd.DataFrame({"stock_code": ["000001.SZ", "600000.SH"], "name": ["平安银行", "浦发银行"]})
+    assert collector.validate_data(df, required_columns=["stock_code", "name"]) is True
 
 
 def test_record_success():
@@ -139,21 +141,21 @@ def test_is_available_after_cooldown():
 
 def test_get_source_info():
     """测试获取数据源信息"""
-    collector = MockFundamentalsCollector("test_source", {'priority': 5})
+    collector = MockFundamentalsCollector("test_source", {"priority": 5})
     info = collector.get_source_info()
 
-    assert info['source'] == "test_source"
-    assert info['priority'] == 5
-    assert 'availability' in info
-    assert 'avg_response_time' in info
-    assert 'error_count' in info
-    assert 'is_available' in info
+    assert info["source"] == "test_source"
+    assert info["priority"] == 5
+    assert "availability" in info
+    assert "avg_response_time" in info
+    assert "error_count" in info
+    assert "is_available" in info
 
 
 def test_execute_with_retry_success():
     """测试带重试执行成功"""
-    collector = MockFundamentalsCollector("test", {'max_retry_times': 3})
-    mock_func = Mock(return_value=pd.DataFrame({'test': [1, 2, 3]}))
+    collector = MockFundamentalsCollector("test", {"max_retry_times": 3})
+    mock_func = Mock(return_value=pd.DataFrame({"test": [1, 2, 3]}))
 
     result = collector.execute_with_retry(mock_func)
 
@@ -163,7 +165,7 @@ def test_execute_with_retry_success():
 
 def test_execute_with_retry_failure():
     """测试重试全部失败应该抛出异常"""
-    collector = MockFundamentalsCollector("test", {'max_retry_times': 3})
+    collector = MockFundamentalsCollector("test", {"max_retry_times": 3})
     mock_func = Mock(side_effect=Exception("test error"))
 
     with pytest.raises(Exception):

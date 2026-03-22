@@ -1,10 +1,13 @@
 """
 Unit tests for twap_algo.py
 """
-import pytest
+
 from datetime import datetime, timedelta
-from src.trading_engine.execution_engine.twap_algo import TWAPAlgo
+
+import pytest
+
 from src.trading_engine.base.base_order import OrderSide
+from src.trading_engine.execution_engine.twap_algo import TWAPAlgo
 
 
 def test_init():

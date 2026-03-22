@@ -1,7 +1,9 @@
 """
 Unit tests for position_calculator.py
 """
+
 import pytest
+
 from src.trading_engine.position_management.position import Position
 from src.trading_engine.position_management.position_calculator import PositionCalculator
 
@@ -10,15 +12,15 @@ def create_test_positions():
     """创建测试持仓"""
     positions = {}
     # 持仓1: 1000股，成本10，价格12
-    pos1 = Position('000001.SZ', 1000, 10.0)
+    pos1 = Position("000001.SZ", 1000, 10.0)
     pos1.update_price(12.0)
-    positions['000001.SZ'] = pos1
+    positions["000001.SZ"] = pos1
     # 持仓2: 500股，成本20，价格18
-    pos2 = Position('000002.SZ', 500, 20.0)
+    pos2 = Position("000002.SZ", 500, 20.0)
     pos2.update_price(18.0)
-    positions['000002.SZ'] = pos2
+    positions["000002.SZ"] = pos2
     # 空持仓
-    positions['000003.SZ'] = Position('000003.SZ', 0, 0.0)
+    positions["000003.SZ"] = Position("000003.SZ", 0, 0.0)
     return positions
 
 
@@ -58,9 +60,9 @@ def test_calculate_weights():
     weights = PositionCalculator.calculate_weights(positions)
     # 000001: 12000/21000 ≈ 0.5714
     # 000002: 9000/21000 ≈ 0.4286
-    assert abs(weights['000001.SZ'] - 0.5714) < 0.001
-    assert abs(weights['000002.SZ'] - 0.4286) < 0.001
-    assert weights['000003.SZ'] == 0.0
+    assert abs(weights["000001.SZ"] - 0.5714) < 0.001
+    assert abs(weights["000002.SZ"] - 0.4286) < 0.001
+    assert weights["000003.SZ"] == 0.0
 
 
 def test_get_non_empty_positions():
@@ -90,11 +92,11 @@ def test_calculate_portfolio_summary():
     """测试计算投资组合汇总"""
     positions = create_test_positions()
     summary = PositionCalculator.calculate_portfolio_summary(positions, 5000.0)
-    assert summary['position_count'] == 2
-    assert abs(summary['total_market_value'] - 21000) < 0.01
-    assert abs(summary['total_cost'] - 20000) < 0.01
-    assert summary['cash'] == 5000
-    assert abs(summary['total_asset'] - 26000) < 0.01
-    assert abs(summary['total_unrealized_pnl'] - 1000) < 0.01
+    assert summary["position_count"] == 2
+    assert abs(summary["total_market_value"] - 21000) < 0.01
+    assert abs(summary["total_cost"] - 20000) < 0.01
+    assert summary["cash"] == 5000
+    assert abs(summary["total_asset"] - 26000) < 0.01
+    assert abs(summary["total_unrealized_pnl"] - 1000) < 0.01
     # 收益率 1000 / (20000 + 5000) = 0.04 = 4%
-    assert abs(summary['pnl_percentage'] - 4.0) < 0.01
+    assert abs(summary["pnl_percentage"] - 4.0) < 0.01

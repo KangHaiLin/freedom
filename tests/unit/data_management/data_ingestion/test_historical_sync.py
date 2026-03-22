@@ -2,16 +2,14 @@
 测试历史数据自动同步功能
 测试增量检测逻辑、日期范围计算、全量/增量流程
 """
-import pytest
-from datetime import datetime, timedelta
-import pandas as pd
-from unittest.mock import Mock, patch, MagicMock
 
-from data_management.data_ingestion.historical_sync_task import (
-    HistoricalSyncTask,
-    DataFrequency,
-    SyncResult,
-)
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, Mock, patch
+
+import pandas as pd
+import pytest
+
+from data_management.data_ingestion.historical_sync_task import DataFrequency, HistoricalSyncTask, SyncResult
 
 
 class TestHistoricalSyncTaskIncrementalDetection:
@@ -20,7 +18,7 @@ class TestHistoricalSyncTaskIncrementalDetection:
     @pytest.fixture
     def mock_task(self):
         """创建一个mock任务，不连接真实数据库"""
-        with patch('data_management.data_ingestion.historical_sync_task.storage_manager') as mock_storage:
+        with patch("data_management.data_ingestion.historical_sync_task.storage_manager") as mock_storage:
             mock_clickhouse = Mock()
             mock_clickhouse.table_exists.return_value = True
             mock_storage.get_storage_by_type.return_value = mock_clickhouse
@@ -50,8 +48,11 @@ class TestHistoricalSyncTaskIncrementalDetection:
 
     def test_latest_date_is_today_should_no_sync(self, mock_task):
         """最新日期是今天应该不需要同步"""
+        import pandas as pd
+
         today = datetime.now()
-        mock_task.clickhouse_storage.execute_sql.return_value = [[today]]
+        df = pd.DataFrame([[today]])
+        mock_task.clickhouse_storage.execute_sql.return_value = df
 
         result = mock_task.get_latest_trade_date()
         assert result is not None
@@ -63,8 +64,11 @@ class TestHistoricalSyncTaskIncrementalDetection:
 
     def test_latest_date_is_yesterday_needs_incremental_sync(self, mock_task):
         """最新日期是昨天需要增量同步"""
+        import pandas as pd
+
         yesterday = datetime.now() - timedelta(days=1)
-        mock_task.clickhouse_storage.execute_sql.return_value = [[yesterday]]
+        df = pd.DataFrame([[yesterday]])
+        mock_task.clickhouse_storage.execute_sql.return_value = df
 
         result = mock_task.get_latest_trade_date()
         assert result is not None
@@ -103,7 +107,7 @@ class TestHistoricalSyncTaskIncrementalDetection:
 
     def test_calculate_start_date_from_none_latest(self, mock_task):
         """当最新日期为空应该返回全量范围"""
-        with patch.object(mock_task, 'get_latest_trade_date', return_value=None):
+        with patch.object(mock_task, "get_latest_trade_date", return_value=None):
             sync_range = mock_task.calculate_sync_range()
             assert sync_range is not None
             start, end = sync_range
@@ -112,8 +116,11 @@ class TestHistoricalSyncTaskIncrementalDetection:
 
     def test_no_future_trading_day_returns_none(self, mock_task):
         """如果没有未来交易日返回None不需要同步"""
+        import pandas as pd
+
         tomorrow = datetime.now() + timedelta(days=1)
-        mock_task.clickhouse_storage.execute_sql.return_value = [[tomorrow]]
+        df = pd.DataFrame([[tomorrow]])
+        mock_task.clickhouse_storage.execute_sql.return_value = df
 
         sync_range = mock_task.calculate_sync_range()
         assert sync_range is None
@@ -124,7 +131,7 @@ class TestFindNextTradingDay:
 
     @pytest.fixture
     def task(self):
-        with patch('data_management.data_ingestion.historical_sync_task.storage_manager'):
+        with patch("data_management.data_ingestion.historical_sync_task.storage_manager"):
             task = HistoricalSyncTask(
                 frequency=DataFrequency.DAILY,
                 default_start_date="2020-01-01",
@@ -158,7 +165,7 @@ class TestStockFiltering:
 
     @pytest.fixture
     def task(self):
-        with patch('data_management.data_ingestion.historical_sync_task.storage_manager'):
+        with patch("data_management.data_ingestion.historical_sync_task.storage_manager"):
             task = HistoricalSyncTask(
                 frequency=DataFrequency.DAILY,
                 default_start_date="2020-01-01",
@@ -166,7 +173,7 @@ class TestStockFiltering:
             )
             yield task
 
-    @patch('akshare.stock_zh_a_spot')
+    @patch("akshare.stock_zh_a_spot")
     def test_exclude_st_stocks(self, mock_ak, task):
         """测试应该排除ST股票"""
         # 构造模拟数据，包含一个ST股票和一个正常股票
@@ -214,7 +221,7 @@ class TestSyncResult:
 class TestConfigurationDefaults:
     """测试默认配置读取"""
 
-    @patch('data_management.data_ingestion.historical_sync_task.settings')
+    @patch("data_management.data_ingestion.historical_sync_task.settings")
     def test_read_defaults_from_settings(self, mock_settings):
         """测试应该从settings读取配置"""
         mock_settings.SYNC_BATCH_SIZE = 20
@@ -222,7 +229,7 @@ class TestConfigurationDefaults:
         mock_settings.SYNC_DEFAULT_START_DATE = "2018-01-01"
         mock_settings.FILTER_EXCLUDE_ST = False
 
-        with patch('data_management.data_ingestion.historical_sync_task.storage_manager'):
+        with patch("data_management.data_ingestion.historical_sync_task.storage_manager"):
             task = HistoricalSyncTask(frequency=DataFrequency.DAILY)
 
             assert task.batch_size == 20
@@ -232,7 +239,7 @@ class TestConfigurationDefaults:
 
     def test_override_configuration(self):
         """测试参数覆盖配置"""
-        with patch('data_management.data_ingestion.historical_sync_task.storage_manager'):
+        with patch("data_management.data_ingestion.historical_sync_task.storage_manager"):
             task = HistoricalSyncTask(
                 frequency=DataFrequency.DAILY,
                 batch_size=50,
@@ -247,5 +254,5 @@ class TestConfigurationDefaults:
             assert task.filter_exclude_st is False
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

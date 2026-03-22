@@ -1,16 +1,18 @@
 """
 回测结果和交易记录数据类
 """
-from dataclasses import dataclass, asdict
-from datetime import datetime
-from typing import Optional, Dict, Any
 
-from .enums import TradeDirection, PositionSide
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from .enums import PositionSide, TradeDirection
 
 
 @dataclass
 class TradeRecord:
     """单笔交易记录"""
+
     trade_id: int
     ts_code: str
     direction: TradeDirection
@@ -27,13 +29,14 @@ class TradeRecord:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         data = asdict(self)
-        data['direction'] = self.direction.value
+        data["direction"] = self.direction.value
         return data
 
 
 @dataclass
 class PositionSnapshot:
     """持仓快照"""
+
     ts_code: str
     quantity: int
     avg_cost: float
@@ -50,6 +53,7 @@ class PositionSnapshot:
 @dataclass
 class DailyStats:
     """每日统计"""
+
     date: Any
     total_assets: float
     cash: float
@@ -66,6 +70,7 @@ class DailyStats:
 @dataclass
 class BacktestResult:
     """回测结果"""
+
     strategy_name: str
     initial_capital: float
     final_capital: float
@@ -90,20 +95,20 @@ class BacktestResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'strategy_name': self.strategy_name,
-            'initial_capital': self.initial_capital,
-            'final_capital': self.final_capital,
-            'total_pnl': self.total_pnl,
-            'total_pnl_pct': self.total_pnl_pct,
-            'annualized_return': self.annualized_return,
-            'sharpe_ratio': self.sharpe_ratio,
-            'max_drawdown': self.max_drawdown,
-            'win_rate': self.win_rate,
-            'profit_loss_ratio': self.profit_loss_ratio,
-            'total_trades': self.total_trades,
-            'winning_trades': self.winning_trades,
-            'losing_trades': self.losing_trades,
-            'avg_holding_days': self.avg_holding_days,
-            'turnover_rate': self.turnover_rate,
-            'extra_info': self.extra_info,
+            "strategy_name": self.strategy_name,
+            "initial_capital": self.initial_capital,
+            "final_capital": self.final_capital,
+            "total_pnl": self.total_pnl,
+            "total_pnl_pct": self.total_pnl_pct,
+            "annualized_return": self.annualized_return,
+            "sharpe_ratio": self.sharpe_ratio,
+            "max_drawdown": self.max_drawdown,
+            "win_rate": self.win_rate,
+            "profit_loss_ratio": self.profit_loss_ratio,
+            "total_trades": self.total_trades,
+            "winning_trades": self.winning_trades,
+            "losing_trades": self.losing_trades,
+            "avg_holding_days": self.avg_holding_days,
+            "turnover_rate": self.turnover_rate,
+            "extra_info": self.extra_info,
         }

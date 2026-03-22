@@ -2,12 +2,14 @@
 规则管理器
 管理规则的加载、存储、动态更新、版本管理
 """
-from typing import Dict, List, Optional, Any
-from collections import defaultdict
+
 import uuid
+from collections import defaultdict
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from src.risk_management.base.base_rule import BaseRule, RuleLevel
+
 from .rule import Rule, RuleVersion
 
 
@@ -157,16 +159,16 @@ class RuleManager:
         enabled = sum(1 for r in self._rules.values() if r.is_enabled())
         by_group = {g: len(ids) for g, ids in self._rules_by_group.items()}
         return {
-            'total': total,
-            'enabled': enabled,
-            'disabled': total - enabled,
-            'by_group': by_group,
+            "total": total,
+            "enabled": enabled,
+            "disabled": total - enabled,
+            "by_group": by_group,
         }
 
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         stats = self.count_rules()
         return {
-            'status': 'ok',
-            'stats': stats,
+            "status": "ok",
+            "stats": stats,
         }

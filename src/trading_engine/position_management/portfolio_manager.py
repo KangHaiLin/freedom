@@ -2,13 +2,14 @@
 投资组合管理器
 管理多个股票持仓，提供整体统计查询
 """
-from typing import Dict, List, Optional, Tuple, Any
-import logging
 
+import logging
+from typing import Any, Dict, List, Optional, Tuple
+
+from src.trading_engine.base.base_order import OrderSide
+from src.trading_engine.order_management.order import Order
 from src.trading_engine.position_management.position import Position
 from src.trading_engine.position_management.position_calculator import PositionCalculator
-from src.trading_engine.order_management.order import Order
-from src.trading_engine.base.base_order import OrderSide
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +73,9 @@ class PortfolioManager:
         )
         return new_avg_cost, total_cost
 
-    def reduce_position(self, ts_code: str, quantity: int, price: float, commission: float = 0.0) -> Tuple[float, float]:
+    def reduce_position(
+        self, ts_code: str, quantity: int, price: float, commission: float = 0.0
+    ) -> Tuple[float, float]:
         """
         减少持仓（卖出成交后调用）
         Args:
@@ -96,8 +99,7 @@ class PortfolioManager:
         total_amount = quantity * price - commission
         self._cash += total_amount
         logger.debug(
-            f"减少持仓: {ts_code}, 数量: {quantity}, 价格: {price:.4f}, "
-            f"佣金: {commission:.4f}, 实现盈亏: {pnl:.4f}"
+            f"减少持仓: {ts_code}, 数量: {quantity}, 价格: {price:.4f}, " f"佣金: {commission:.4f}, 实现盈亏: {pnl:.4f}"
         )
         return pnl, total_amount
 
@@ -121,12 +123,13 @@ class PortfolioManager:
         total_amount = quantity * price - commission
         self._cash += total_amount
         logger.debug(
-            f"平仓持仓: {ts_code}, 数量: {quantity}, 价格: {price:.4f}, "
-            f"佣金: {commission:.4f}, 总盈亏: {pnl:.4f}"
+            f"平仓持仓: {ts_code}, 数量: {quantity}, 价格: {price:.4f}, " f"佣金: {commission:.4f}, 总盈亏: {pnl:.4f}"
         )
         return pnl, total_amount
 
-    def process_order_fill(self, order: Order, filled_quantity: int, filled_price: float, commission: float = 0.0) -> float:
+    def process_order_fill(
+        self, order: Order, filled_quantity: int, filled_price: float, commission: float = 0.0
+    ) -> float:
         """
         处理订单成交，更新持仓和现金
         Args:
@@ -230,18 +233,14 @@ class PortfolioManager:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         summary = self.get_summary()
-        positions_dict = {
-            ts_code: pos.to_dict()
-            for ts_code, pos in self._positions.items()
-            if not pos.is_empty()
-        }
+        positions_dict = {ts_code: pos.to_dict() for ts_code, pos in self._positions.items() if not pos.is_empty()}
         return {
-            'initial_cash': self._initial_cash,
-            'current_cash': self._cash,
-            'total_asset': self.get_total_asset(),
-            'summary': summary,
-            'positions': positions_dict,
-            'position_count': self.get_position_count(),
+            "initial_cash": self._initial_cash,
+            "current_cash": self._cash,
+            "total_asset": self.get_total_asset(),
+            "summary": summary,
+            "positions": positions_dict,
+            "position_count": self.get_position_count(),
         }
 
     def clear_all(self) -> None:
@@ -252,8 +251,8 @@ class PortfolioManager:
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'cash': self._cash,
-            'initial_cash': self._initial_cash,
-            'position_count': len(self._positions),
+            "status": "ok",
+            "cash": self._cash,
+            "initial_cash": self._initial_cash,
+            "position_count": len(self._positions),
         }

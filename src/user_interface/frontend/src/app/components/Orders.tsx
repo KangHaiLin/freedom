@@ -154,20 +154,20 @@ export default function Orders() {
         <Tabs defaultValue="today" className="w-full">
           <div className="border-b border-gray-800 px-6 pt-6">
             <TabsList className="bg-transparent">
-              <TabsTrigger 
-                value="today" 
+              <TabsTrigger
+                value="today"
                 className="data-[state=active]:bg-[#1a1a20] data-[state=active]:text-blue-400 text-gray-300"
               >
                 今日订单
               </TabsTrigger>
-              <TabsTrigger 
-                value="pending" 
+              <TabsTrigger
+                value="pending"
                 className="data-[state=active]:bg-[#1a1a20] data-[state=active]:text-blue-400 text-gray-300"
               >
                 待成交
               </TabsTrigger>
-              <TabsTrigger 
-                value="history" 
+              <TabsTrigger
+                value="history"
                 className="data-[state=active]:bg-[#1a1a20] data-[state=active]:text-blue-400 text-gray-300"
               >
                 历史订单

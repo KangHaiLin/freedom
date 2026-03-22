@@ -5,12 +5,13 @@ A股合规规则检查
 - 退市股票禁止买入
 - 停牌股票禁止交易
 """
-from typing import Dict, Tuple, Optional, List
-from datetime import datetime, date
+
+from datetime import date, datetime
+from typing import Dict, List, Optional, Tuple
 
 from src.trading_engine.base.base_order import OrderSide
-from src.trading_engine.position_management.position import Position
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
+from src.trading_engine.position_management.position import Position
 
 
 class ComplianceCheckResult:
@@ -86,10 +87,7 @@ class AShareComplianceRules:
         # 检查T+1
         if self.enable_t1_check and side == OrderSide.SELL:
             if not self.check_t1_allowed(ts_code, quantity, portfolio, today_trades):
-                return ComplianceCheckResult(
-                    False,
-                    f"T+1限制: 当日买入不能当日卖出，{ts_code} 可用不足"
-                )
+                return ComplianceCheckResult(False, f"T+1限制: 当日买入不能当日卖出，{ts_code} 可用不足")
 
         # 检查涨跌停
         if self.enable_price_limit_check and price is not None:
@@ -128,8 +126,8 @@ class AShareComplianceRules:
         if today_trades:
             # 减去今日买入的
             for trade in today_trades:
-                if trade.get('ts_code') == ts_code and trade.get('side') == OrderSide.BUY:
-                    prev_available -= trade.get('filled_quantity', 0)
+                if trade.get("ts_code") == ts_code and trade.get("side") == OrderSide.BUY:
+                    prev_available -= trade.get("filled_quantity", 0)
 
         # 昨日之前的持仓足够卖出就允许
         return prev_available >= sell_quantity
@@ -184,7 +182,7 @@ class AShareComplianceRules:
             涨跌幅限制比例
         """
         # ST/*ST 5%
-        if ts_code.startswith('ST') or ts_code.startswith('*ST') or 'ST' in ts_code:
+        if ts_code.startswith("ST") or ts_code.startswith("*ST") or "ST" in ts_code:
             return 0.05
         # 科创板/创业板注册制新股上市前5日不设限，这里简化处理，默认还是10%
         # 实际应该根据具体板块判断

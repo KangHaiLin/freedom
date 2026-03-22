@@ -1,13 +1,16 @@
 """
 Unit tests for execution_engine.py
 """
-import pytest
+
 from datetime import datetime, timedelta
-from src.trading_engine.execution_engine.execution_engine import ExecutionEngine
+
+import pytest
+
+from src.trading_engine.base.base_order import OrderSide
 from src.trading_engine.broker_adapter.simulated_broker import SimulatedBrokerAdapter
+from src.trading_engine.execution_engine.execution_engine import ExecutionEngine
 from src.trading_engine.order_management.order_manager import OrderManager
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.base.base_order import OrderSide
 
 
 def test_init():
@@ -34,13 +37,18 @@ def test_submit_vwap():
     start = datetime.now() - timedelta(hours=4)
     end = datetime.now()
     exec_id = engine.submit_vwap(
-        '000001.SZ', OrderSide.BUY, 1000, start, end,
-        num_splits=10, min_chunk=100,
+        "000001.SZ",
+        OrderSide.BUY,
+        1000,
+        start,
+        end,
+        num_splits=10,
+        min_chunk=100,
     )
     assert exec_id is not None
     active = engine.get_active_executions()
     assert len(active) == 1
-    assert active[0]['total_quantity'] == 1000
+    assert active[0]["total_quantity"] == 1000
     engine.stop()
 
 
@@ -54,7 +62,11 @@ def test_submit_twap():
     start = datetime.now() - timedelta(hours=4)
     end = datetime.now()
     exec_id = engine.submit_twap(
-        '000001.SZ', OrderSide.BUY, 1000, start, end,
+        "000001.SZ",
+        OrderSide.BUY,
+        1000,
+        start,
+        end,
         interval_seconds=300,
     )
     assert exec_id is not None
@@ -72,7 +84,7 @@ def test_cancel_execution():
     engine = ExecutionEngine(broker, om, pm, auto_start=False)
     start = datetime.now()
     end = start + timedelta(hours=4)
-    exec_id = engine.submit_vwap('000001.SZ', OrderSide.BUY, 1000, start, end)
+    exec_id = engine.submit_vwap("000001.SZ", OrderSide.BUY, 1000, start, end)
     assert engine.cancel_execution(exec_id)
     assert len(engine.get_active_executions()) == 0
 
@@ -85,8 +97,8 @@ def test_get_statistics():
     broker.connect()
     engine = ExecutionEngine(broker, om, pm, auto_start=False)
     stats = engine.get_statistics()
-    assert 'active_executions' in stats
-    assert 'running' in stats
+    assert "active_executions" in stats
+    assert "running" in stats
 
 
 def test_health_check():
@@ -97,6 +109,6 @@ def test_health_check():
     broker.connect()
     engine = ExecutionEngine(broker, om, pm, auto_start=False)
     health = engine.health_check()
-    assert 'status' in health
-    assert 'active_count' in health
-    assert 'thread_alive' in health
+    assert "status" in health
+    assert "active_count" in health
+    assert "thread_alive" in health

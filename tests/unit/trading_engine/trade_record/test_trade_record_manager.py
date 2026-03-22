@@ -1,11 +1,14 @@
 """
 Unit tests for trade_record_manager.py
 """
-import pytest
+
 from datetime import datetime, timedelta
-from src.trading_engine.trade_record.trade_record_manager import TradeRecordManager
-from src.trading_engine.order_management.order import Order
+
+import pytest
+
 from src.trading_engine.base.base_order import OrderSide
+from src.trading_engine.order_management.order import Order
+from src.trading_engine.trade_record.trade_record_manager import TradeRecordManager
 
 
 def test_init():
@@ -17,7 +20,7 @@ def test_init():
 def test_add_record():
     """测试添加记录"""
     manager = TradeRecordManager()
-    order = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
+    order = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
     dt = datetime.now()
     record = manager.add_record(order, 1000, 10.0, dt, 5.0, 0.0)
     assert record is not None
@@ -28,7 +31,7 @@ def test_add_record():
 def test_get_record():
     """测试获取记录"""
     manager = TradeRecordManager()
-    order = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
+    order = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
     dt = datetime.now()
     record = manager.add_record(order, 1000, 10.0, dt)
     got = manager.get_record(record.trade_id)
@@ -38,7 +41,7 @@ def test_get_record():
 def test_get_trades_by_order():
     """测试获取订单的所有成交"""
     manager = TradeRecordManager()
-    order = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
+    order = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
     dt = datetime.now()
     # 分两次成交
     manager.add_record(order, 500, 10.0, dt)
@@ -50,34 +53,34 @@ def test_get_trades_by_order():
 def test_query_by_ts_code():
     """测试按股票代码查询"""
     manager = TradeRecordManager()
-    order1 = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
-    order2 = Order.create_market_order('000002.SZ', OrderSide.BUY, 500)
+    order1 = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
+    order2 = Order.create_market_order("000002.SZ", OrderSide.BUY, 500)
     dt = datetime.now()
     manager.add_record(order1, 1000, 10.0, dt)
     manager.add_record(order2, 500, 20.0, dt)
-    result = manager.query_records(ts_code='000001.SZ')
+    result = manager.query_records(ts_code="000001.SZ")
     assert len(result) == 1
-    assert result[0].ts_code == '000001.SZ'
+    assert result[0].ts_code == "000001.SZ"
 
 
 def test_query_by_strategy_id():
     """测试按策略ID查询"""
     manager = TradeRecordManager()
-    order1 = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000, strategy_id='strategy1')
-    order2 = Order.create_market_order('000002.SZ', OrderSide.BUY, 500, strategy_id='strategy2')
+    order1 = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000, strategy_id="strategy1")
+    order2 = Order.create_market_order("000002.SZ", OrderSide.BUY, 500, strategy_id="strategy2")
     dt = datetime.now()
     manager.add_record(order1, 1000, 10.0, dt)
     manager.add_record(order2, 500, 20.0, dt)
-    result = manager.query_records(strategy_id='strategy1')
+    result = manager.query_records(strategy_id="strategy1")
     assert len(result) == 1
-    assert result[0].strategy_id == 'strategy1'
+    assert result[0].strategy_id == "strategy1"
 
 
 def test_query_by_side():
     """测试按买卖方向查询"""
     manager = TradeRecordManager()
-    order1 = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
-    order2 = Order.create_market_order('000002.SZ', OrderSide.SELL, 500)
+    order1 = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
+    order2 = Order.create_market_order("000002.SZ", OrderSide.SELL, 500)
     dt = datetime.now()
     manager.add_record(order1, 1000, 10.0, dt)
     manager.add_record(order2, 500, 20.0, dt)
@@ -89,8 +92,8 @@ def test_query_by_side():
 def test_get_total_turnover():
     """测试计算总成交额"""
     manager = TradeRecordManager()
-    order1 = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
-    order2 = Order.create_market_order('000002.SZ', OrderSide.SELL, 500)
+    order1 = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
+    order2 = Order.create_market_order("000002.SZ", OrderSide.SELL, 500)
     dt = datetime.now()
     manager.add_record(order1, 1000, 10.0, dt, 5.0)
     manager.add_record(order2, 500, 20.0, dt, 5.0)
@@ -101,8 +104,8 @@ def test_get_total_turnover():
 def test_get_total_commission():
     """测试计算总佣金"""
     manager = TradeRecordManager()
-    order1 = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
-    order2 = Order.create_market_order('000002.SZ', OrderSide.SELL, 500)
+    order1 = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
+    order2 = Order.create_market_order("000002.SZ", OrderSide.SELL, 500)
     dt = datetime.now()
     manager.add_record(order1, 1000, 10.0, dt, 5.0)
     manager.add_record(order2, 500, 20.0, dt, 5.0)
@@ -112,8 +115,8 @@ def test_get_total_commission():
 def test_get_realized_pnl_total():
     """测试计算总实现盈亏"""
     manager = TradeRecordManager()
-    order1 = Order.create_market_order('000001.SZ', OrderSide.SELL, 1000)
-    order2 = Order.create_market_order('000002.SZ', OrderSide.SELL, 500)
+    order1 = Order.create_market_order("000001.SZ", OrderSide.SELL, 1000)
+    order2 = Order.create_market_order("000002.SZ", OrderSide.SELL, 500)
     dt = datetime.now()
     manager.add_record(order1, 1000, 12.0, dt, pnl=2000)
     manager.add_record(order2, 500, 18.0, dt, pnl=-500)
@@ -124,22 +127,22 @@ def test_get_realized_pnl_total():
 def test_get_statistics():
     """测试获取统计信息"""
     manager = TradeRecordManager()
-    order1 = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
-    order2 = Order.create_market_order('000002.SZ', OrderSide.SELL, 500)
+    order1 = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
+    order2 = Order.create_market_order("000002.SZ", OrderSide.SELL, 500)
     dt = datetime.now()
     manager.add_record(order1, 1000, 10.0, dt)
     manager.add_record(order2, 500, 20.0, dt)
     stats = manager.get_statistics()
-    assert stats['total_trades'] == 2
-    assert stats['buy_trades'] == 1
-    assert stats['sell_trades'] == 1
-    assert stats['total_turnover'] == 1000*10 + 500*20
+    assert stats["total_trades"] == 2
+    assert stats["buy_trades"] == 1
+    assert stats["sell_trades"] == 1
+    assert stats["total_turnover"] == 1000 * 10 + 500 * 20
 
 
 def test_clear_all():
     """测试清空"""
     manager = TradeRecordManager()
-    order = Order.create_market_order('000001.SZ', OrderSide.BUY, 1000)
+    order = Order.create_market_order("000001.SZ", OrderSide.BUY, 1000)
     dt = datetime.now()
     manager.add_record(order, 1000, 10.0, dt)
     assert manager.get_trade_count() == 1

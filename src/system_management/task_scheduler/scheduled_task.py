@@ -2,9 +2,12 @@
 任务调度 - 定时任务
 支持 Cron 表达式、固定间隔、一次性延迟执行
 """
+
 from datetime import datetime, timedelta
 from typing import Any, Callable, Optional
+
 from croniter import croniter
+
 from .base_task import BaseTask, TaskResult, TaskStatus
 
 
@@ -108,7 +111,7 @@ class ScheduledTask(BaseTask):
         cron_expr: str,
         callback: Callable[[], Any],
         task_name: Optional[str] = None,
-    ) -> 'ScheduledTask':
+    ) -> "ScheduledTask":
         """从 Cron 表达式创建定时任务"""
         return cls(
             task_name=task_name,
@@ -123,7 +126,7 @@ class ScheduledTask(BaseTask):
         callback: Callable[[], Any],
         task_name: Optional[str] = None,
         start_immediately: bool = True,
-    ) -> 'ScheduledTask':
+    ) -> "ScheduledTask":
         """创建固定间隔定时任务"""
         start_time = datetime.now() if start_immediately else None
         return cls(
@@ -139,7 +142,7 @@ class ScheduledTask(BaseTask):
         delay_seconds: float,
         callback: Callable[[], Any],
         task_name: Optional[str] = None,
-    ) -> 'ScheduledTask':
+    ) -> "ScheduledTask":
         """创建一次性延迟任务"""
         return cls(
             task_name=task_name,
@@ -155,14 +158,14 @@ class ScheduledTask(BaseTask):
     def to_dict(self) -> dict:
         """转换为字典"""
         return {
-            'task_id': self.task_id,
-            'task_name': self.task_name,
-            'status': self.status.value,
-            'cron_expr': self.cron_expr,
-            'interval_seconds': self.interval_seconds,
-            'delay_seconds': self.delay_seconds,
-            'last_run': self.last_run.isoformat() if self.last_run else None,
-            'next_run': self.next_run.isoformat() if self.next_run else None,
-            'run_count': self.run_count,
-            'duration': self.duration,
+            "task_id": self.task_id,
+            "task_name": self.task_name,
+            "status": self.status.value,
+            "cron_expr": self.cron_expr,
+            "interval_seconds": self.interval_seconds,
+            "delay_seconds": self.delay_seconds,
+            "last_run": self.last_run.isoformat() if self.last_run else None,
+            "next_run": self.next_run.isoformat() if self.next_run else None,
+            "run_count": self.run_count,
+            "duration": self.duration,
         }

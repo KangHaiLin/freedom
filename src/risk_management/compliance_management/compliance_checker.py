@@ -2,12 +2,14 @@
 合规检查器
 检查交易行为是否符合监管要求和A股规则
 """
-from typing import Dict, Any, Optional, List
+
 from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import pandas as pd
 
-from src.risk_management.rule_engine.rule_result import RuleResult
 from src.risk_management.rule_engine.rule_executor import RuleExecutor
+from src.risk_management.rule_engine.rule_result import RuleResult
 
 
 class ComplianceChecker:
@@ -43,14 +45,14 @@ class ComplianceChecker:
             规则检查结果
         """
         context = {
-            'user_id': user_id,
-            'ts_code': ts_code,
-            'side': side,
-            'price': price,
-            'quantity': quantity,
+            "user_id": user_id,
+            "ts_code": ts_code,
+            "side": side,
+            "price": price,
+            "quantity": quantity,
             **kwargs,
         }
-        return self._rule_executor.execute('pre_trade', context, user_id)
+        return self._rule_executor.execute("pre_trade", context, user_id)
 
     def check_t1_restriction(
         self,
@@ -73,17 +75,17 @@ class ComplianceChecker:
         actually_available = available_quantity - today_bought
         if actually_available >= sell_quantity:
             return {
-                'passed': True,
-                'available': actually_available,
-                'requested': sell_quantity,
-                'message': '',
+                "passed": True,
+                "available": actually_available,
+                "requested": sell_quantity,
+                "message": "",
             }
         else:
             return {
-                'passed': False,
-                'available': actually_available,
-                'requested': sell_quantity,
-                'message': f'T+1限制，今日买入{today_bought}股不可卖出，实际可用{actually_available}股',
+                "passed": False,
+                "available": actually_available,
+                "requested": sell_quantity,
+                "message": f"T+1限制，今日买入{today_bought}股不可卖出，实际可用{actually_available}股",
             }
 
     def check_price_limit(
@@ -105,26 +107,26 @@ class ComplianceChecker:
         """
         if price > limit_up:
             return {
-                'passed': False,
-                'message': f'委托价格{price}超过涨停价{limit_up}',
-                'price': price,
-                'limit_up': limit_up,
-                'limit_down': limit_down,
+                "passed": False,
+                "message": f"委托价格{price}超过涨停价{limit_up}",
+                "price": price,
+                "limit_up": limit_up,
+                "limit_down": limit_down,
             }
         if price < limit_down:
             return {
-                'passed': False,
-                'message': f'委托价格{price}低于跌停价{limit_down}',
-                'price': price,
-                'limit_up': limit_up,
-                'limit_down': limit_down,
+                "passed": False,
+                "message": f"委托价格{price}低于跌停价{limit_down}",
+                "price": price,
+                "limit_up": limit_up,
+                "limit_down": limit_down,
             }
         return {
-            'passed': True,
-            'message': '',
-            'price': price,
-            'limit_up': limit_up,
-            'limit_down': limit_down,
+            "passed": True,
+            "message": "",
+            "price": price,
+            "limit_up": limit_up,
+            "limit_down": limit_down,
         }
 
     def check_lot_size(
@@ -144,14 +146,14 @@ class ComplianceChecker:
         """
         if quantity % min_lot != 0:
             return {
-                'passed': False,
-                'message': f'买入数量{quantity}不是{min_lot}的整数倍',
-                'quantity': quantity,
-                'min_lot': min_lot,
+                "passed": False,
+                "message": f"买入数量{quantity}不是{min_lot}的整数倍",
+                "quantity": quantity,
+                "min_lot": min_lot,
             }
         return {
-            'passed': True,
-            'message': '',
+            "passed": True,
+            "message": "",
         }
 
     def check_trading_hours(
@@ -171,9 +173,9 @@ class ComplianceChecker:
         weekday = dt.weekday()
         if weekday >= 5:  # 周六日
             return {
-                'passed': False,
-                'message': '非交易日',
-                'is_trading_day': False,
+                "passed": False,
+                "message": "非交易日",
+                "is_trading_day": False,
             }
 
         hour = dt.hour
@@ -183,23 +185,20 @@ class ComplianceChecker:
         # 早盘集合竞价 9:15-9:25 允许
         # 连续竞价 9:30-11:30
         # 午盘 13:00-15:00
-        in_trading = (
-            (555 <= current_time <= 690) or  # 9:15-11:30
-            (780 <= current_time <= 900)     # 13:00-15:00
-        )
+        in_trading = (555 <= current_time <= 690) or (780 <= current_time <= 900)  # 9:15-11:30  # 13:00-15:00
 
         if not in_trading:
             return {
-                'passed': False,
-                'message': '非交易时段',
-                'is_trading_hours': False,
+                "passed": False,
+                "message": "非交易时段",
+                "is_trading_hours": False,
             }
 
         return {
-            'passed': True,
-            'message': '',
-            'is_trading_day': True,
-            'is_trading_hours': True,
+            "passed": True,
+            "message": "",
+            "is_trading_day": True,
+            "is_trading_hours": True,
         }
 
     def check_daily_position_limit(
@@ -219,16 +218,16 @@ class ComplianceChecker:
         """
         if current_net_buy > limit:
             return {
-                'passed': False,
-                'message': f'单日净买入{current_net_buy:.2f}超过限额{limit:.2f}',
-                'current': current_net_buy,
-                'limit': limit,
+                "passed": False,
+                "message": f"单日净买入{current_net_buy:.2f}超过限额{limit:.2f}",
+                "current": current_net_buy,
+                "limit": limit,
             }
         return {
-            'passed': True,
-            'message': '',
-            'current': current_net_buy,
-            'limit': limit,
+            "passed": True,
+            "message": "",
+            "current": current_net_buy,
+            "limit": limit,
         }
 
     def get_compliance_summary(
@@ -251,9 +250,9 @@ class ComplianceChecker:
         df = pd.DataFrame(trades)
         if df.empty:
             return {
-                'total_trades': 0,
-                'violations': 0,
-                'compliance_rate': 1.0,
+                "total_trades": 0,
+                "violations": 0,
+                "compliance_rate": 1.0,
             }
 
         # 统计违规情况
@@ -264,23 +263,25 @@ class ComplianceChecker:
 
         for _, trade in df.iterrows():
             context = trade.to_dict()
-            result = self._rule_executor.execute('compliance', context)
+            result = self._rule_executor.execute("compliance", context)
             if not result.passed():
                 violations += 1
-                violation_details.append({
-                    'trade_id': trade.get('trade_id'),
-                    'violations': [v.to_dict() for v in result.get_violations()],
-                })
+                violation_details.append(
+                    {
+                        "trade_id": trade.get("trade_id"),
+                        "violations": [v.to_dict() for v in result.get_violations()],
+                    }
+                )
 
         return {
-            'total_trades': total,
-            'violations': violations,
-            'compliance_rate': (total - violations) / total if total > 0 else 1.0,
-            'violation_details': violation_details,
+            "total_trades": total,
+            "violations": violations,
+            "compliance_rate": (total - violations) / total if total > 0 else 1.0,
+            "violation_details": violation_details,
         }
 
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
+            "status": "ok",
         }

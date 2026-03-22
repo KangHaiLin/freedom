@@ -1,44 +1,40 @@
 """
 公共常量定义
 """
+
 from enum import Enum
-from typing import Dict, Any
+from typing import Any, Dict
 
 # 数据质量校验规则
 DEFAULT_QUALITY_RULES: Dict[str, Any] = {
     # 完整性规则
-    'completeness_threshold': 0.95,  # 数据完整度阈值
-    'missing_value_fill_enabled': True,  # 是否启用缺失值填充
-
+    "completeness_threshold": 0.95,  # 数据完整度阈值
+    "missing_value_fill_enabled": True,  # 是否启用缺失值填充
     # 准确性规则
-    'accuracy_threshold': 0.99,  # 数据准确率阈值
-    'price_min': 0.01,  # 最小价格
-    'price_max': 10000.0,  # 最大价格
-    'volume_min': 0,  # 最小成交量
-    'volume_max': 10**10,  # 最大成交量
-    'price_change_threshold': 0.2,  # 价格涨跌幅阈值（20%）
-    'volume_change_threshold': 10,  # 成交量变化阈值（10倍均值）
-
+    "accuracy_threshold": 0.99,  # 数据准确率阈值
+    "price_min": 0.01,  # 最小价格
+    "price_max": 10000.0,  # 最大价格
+    "volume_min": 0,  # 最小成交量
+    "volume_max": 10**10,  # 最大成交量
+    "price_change_threshold": 0.2,  # 价格涨跌幅阈值（20%）
+    "volume_change_threshold": 10,  # 成交量变化阈值（10倍均值）
     # 时效性规则
-    'timeliness_threshold': 300,  # 数据时效性阈值（秒）
-    'realtime_data_delay_max': 300,  # 实时数据最大延迟（秒）
-    'daily_data_delay_max': 3600,  # 日线数据最大延迟（秒）
-
+    "timeliness_threshold": 300,  # 数据时效性阈值（秒）
+    "realtime_data_delay_max": 300,  # 实时数据最大延迟（秒）
+    "daily_data_delay_max": 3600,  # 日线数据最大延迟（秒）
     # 一致性规则
-    'consistency_threshold': 0.99,  # 数据一致性阈值
-    'price_tolerance': 0.01,  # 价格比较容忍度（1分）
-
+    "consistency_threshold": 0.99,  # 数据一致性阈值
+    "price_tolerance": 0.01,  # 价格比较容忍度（1分）
     # 整体质量阈值
-    'overall_score_threshold': 0.8,  # 整体质量得分阈值
-    'excellent_score_threshold': 0.95,  # 优秀质量得分阈值
-    'good_score_threshold': 0.8,  # 良好质量得分阈值
-    'poor_score_threshold': 0.6,  # 较差质量得分阈值
-
+    "overall_score_threshold": 0.8,  # 整体质量得分阈值
+    "excellent_score_threshold": 0.95,  # 优秀质量得分阈值
+    "good_score_threshold": 0.8,  # 良好质量得分阈值
+    "poor_score_threshold": 0.6,  # 较差质量得分阈值
     # 数据清洗规则
-    'duplicate_removal_enabled': True,  # 是否启用去重
-    'outlier_detection_enabled': True,  # 是否启用异常值检测
-    'standardization_enabled': True,  # 是否启用标准化
-    'price_limit_validation_enabled': True,  # 是否启用涨跌停校验
+    "duplicate_removal_enabled": True,  # 是否启用去重
+    "outlier_detection_enabled": True,  # 是否启用异常值检测
+    "standardization_enabled": True,  # 是否启用标准化
+    "price_limit_validation_enabled": True,  # 是否启用涨跌停校验
 }
 
 
@@ -46,13 +42,13 @@ class SystemConstants:
     """系统常量"""
 
     # 时区
-    TIME_ZONE = 'Asia/Shanghai'
+    TIME_ZONE = "Asia/Shanghai"
 
     # 日期格式
-    DATE_FORMAT = '%Y-%m-%d'
-    DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
-    DATETIME_MS_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
-    TIME_FORMAT = '%H:%M:%S'
+    DATE_FORMAT = "%Y-%m-%d"
+    DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+    DATETIME_MS_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+    TIME_FORMAT = "%H:%M:%S"
 
     # 分页默认值
     DEFAULT_PAGE_SIZE = 20
@@ -60,7 +56,7 @@ class SystemConstants:
     DEFAULT_PAGE = 1
 
     # JWT配置
-    JWT_ALGORITHM = 'HS256'
+    JWT_ALGORITHM = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 120  # 2小时
     JWT_REFRESH_TOKEN_EXPIRE_DAYS = 7  # 7天
 
@@ -68,7 +64,7 @@ class SystemConstants:
     PASSWORD_SALT_LENGTH = 16
 
     # API版本
-    API_VERSION = 'v1'
+    API_VERSION = "v1"
 
     # 接口签名有效期（秒）
     SIGNATURE_EXPIRE_SECONDS = 300  # 5分钟
@@ -78,10 +74,10 @@ class SystemConstants:
     DEFAULT_SYSTEM_USER_ID = 0
 
     # 链路追踪
-    TRACE_ID_HEADER = 'X-Trace-ID'
-    SPAN_ID_HEADER = 'X-Span-ID'
-    PARENT_SPAN_ID_HEADER = 'X-Parent-Span-ID'
-    REQUEST_ID_HEADER = 'X-Request-ID'
+    TRACE_ID_HEADER = "X-Trace-ID"
+    SPAN_ID_HEADER = "X-Span-ID"
+    PARENT_SPAN_ID_HEADER = "X-Parent-Span-ID"
+    REQUEST_ID_HEADER = "X-Request-ID"
 
 
 class BusinessConstants:
@@ -112,57 +108,57 @@ class BusinessConstants:
     ORDER_STATUS_EXPIRED = 6  # 已过期
 
     # 用户角色
-    ROLE_SUPER_ADMIN = 'super_admin'  # 超级管理员
-    ROLE_ADMIN = 'admin'  # 管理员
-    ROLE_QUANT_RESEARCHER = 'quant_researcher'  # 量化研究员
-    ROLE_TRADER = 'trader'  # 交易员
-    ROLE_RISK_MANAGER = 'risk_manager'  # 风控经理
-    ROLE_VIEWER = 'viewer'  # 查看者
+    ROLE_SUPER_ADMIN = "super_admin"  # 超级管理员
+    ROLE_ADMIN = "admin"  # 管理员
+    ROLE_QUANT_RESEARCHER = "quant_researcher"  # 量化研究员
+    ROLE_TRADER = "trader"  # 交易员
+    ROLE_RISK_MANAGER = "risk_manager"  # 风控经理
+    ROLE_VIEWER = "viewer"  # 查看者
 
     # 数据源
-    DATA_SOURCE_TUSHARE = 'tushare'
-    DATA_SOURCE_WIND = 'wind'
-    DATA_SOURCE_JOINQUANT = 'joinquant'
-    DATA_SOURCE_AKSHARE = 'akshare'
-    DATA_SOURCE_EXCHANGE = 'exchange'
+    DATA_SOURCE_TUSHARE = "tushare"
+    DATA_SOURCE_WIND = "wind"
+    DATA_SOURCE_JOINQUANT = "joinquant"
+    DATA_SOURCE_AKSHARE = "akshare"
+    DATA_SOURCE_EXCHANGE = "exchange"
 
     # 数据粒度
-    DATA_PERIOD_TICK = 'tick'
-    DATA_PERIOD_1MIN = '1min'
-    DATA_PERIOD_5MIN = '5min'
-    DATA_PERIOD_15MIN = '15min'
-    DATA_PERIOD_30MIN = '30min'
-    DATA_PERIOD_60MIN = '60min'
-    DATA_PERIOD_DAILY = 'daily'
-    DATA_PERIOD_WEEKLY = 'weekly'
-    DATA_PERIOD_MONTHLY = 'monthly'
+    DATA_PERIOD_TICK = "tick"
+    DATA_PERIOD_1MIN = "1min"
+    DATA_PERIOD_5MIN = "5min"
+    DATA_PERIOD_15MIN = "15min"
+    DATA_PERIOD_30MIN = "30min"
+    DATA_PERIOD_60MIN = "60min"
+    DATA_PERIOD_DAILY = "daily"
+    DATA_PERIOD_WEEKLY = "weekly"
+    DATA_PERIOD_MONTHLY = "monthly"
 
     # 交易所
-    EXCHANGE_SH = 'SH'
-    EXCHANGE_SZ = 'SZ'
-    EXCHANGE_BJ = 'BJ'
+    EXCHANGE_SH = "SH"
+    EXCHANGE_SZ = "SZ"
+    EXCHANGE_BJ = "BJ"
 
     # 板块
-    BOARD_MAIN = '主板'
-    BOARD_KCB = '科创板'
-    BOARD_CYB = '创业板'
-    BOARD_BJ = '北交所'
+    BOARD_MAIN = "主板"
+    BOARD_KCB = "科创板"
+    BOARD_CYB = "创业板"
+    BOARD_BJ = "北交所"
 
     # 行情推送频率
     MARKET_PUSH_INTERVAL_REALTIME = 1  # 实时行情推送间隔（秒）
     MARKET_PUSH_INTERVAL_MINUTE = 60  # 分钟行情推送间隔（秒）
 
     # 告警级别
-    ALERT_LEVEL_INFO = 'info'
-    ALERT_LEVEL_WARNING = 'warning'
-    ALERT_LEVEL_ERROR = 'error'
-    ALERT_LEVEL_CRITICAL = 'critical'
+    ALERT_LEVEL_INFO = "info"
+    ALERT_LEVEL_WARNING = "warning"
+    ALERT_LEVEL_ERROR = "error"
+    ALERT_LEVEL_CRITICAL = "critical"
 
     # 告警渠道
-    ALERT_CHANNEL_WECHAT = 'wechat'
-    ALERT_CHANNEL_EMAIL = 'email'
-    ALERT_CHANNEL_SMS = 'sms'
-    ALERT_CHANNEL_PHONE = 'phone'
+    ALERT_CHANNEL_WECHAT = "wechat"
+    ALERT_CHANNEL_EMAIL = "email"
+    ALERT_CHANNEL_SMS = "sms"
+    ALERT_CHANNEL_PHONE = "phone"
 
     # 回测状态
     BACKTEST_STATUS_PENDING = 0  # 排队中
@@ -183,9 +179,9 @@ class BusinessConstants:
     SIMULATION_STATUS_PAUSED = 2  # 已暂停
 
     # 风控规则级别
-    RULE_LEVEL_WARNING = 'warning'  # 警告
-    RULE_LEVEL_ERROR = 'error'  # 错误
-    RULE_LEVEL_BLOCK = 'block'  # 阻断
+    RULE_LEVEL_WARNING = "warning"  # 警告
+    RULE_LEVEL_ERROR = "error"  # 错误
+    RULE_LEVEL_BLOCK = "block"  # 阻断
 
     # 熔断级别
     CIRCUIT_BREAKER_LEVEL_NORMAL = 0  # 正常
@@ -212,6 +208,7 @@ class BusinessConstants:
 
 class ErrorCode(Enum):
     """错误码枚举"""
+
     SUCCESS = 200, "操作成功"
     BAD_REQUEST = 400, "请求参数错误"
     UNAUTHORIZED = 401, "未认证或认证已过期"
@@ -242,9 +239,4 @@ class ErrorCode(Enum):
         self.message = message
 
 
-__all__ = [
-    'SystemConstants',
-    'BusinessConstants',
-    'ErrorCode',
-    'DEFAULT_QUALITY_RULES'
-]
+__all__ = ["SystemConstants", "BusinessConstants", "ErrorCode", "DEFAULT_QUALITY_RULES"]

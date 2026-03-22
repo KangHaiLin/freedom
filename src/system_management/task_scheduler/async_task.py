@@ -2,11 +2,13 @@
 任务调度 - 异步任务队列
 支持任务优先级、结果回调
 """
+
 from datetime import datetime
 from queue import PriorityQueue
 from threading import Thread
 from typing import Any, Callable, List, Optional
 from uuid import uuid4
+
 from .base_task import BaseTask, TaskResult, TaskStatus
 
 
@@ -89,7 +91,7 @@ class AsyncTask:
 
             return task_result
 
-    def __lt__(self, other: 'AsyncTask') -> bool:
+    def __lt__(self, other: "AsyncTask") -> bool:
         """用于优先级队列比较，优先级高的排在前面"""
         # PriorityQueue 是小顶堆，所以反序比较
         return self.priority > other.priority

@@ -1,14 +1,16 @@
 """
 Unit tests for base_processor.py
 """
-import pytest
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from src.data_management.data_processing.base_processor import BaseProcessor
 
 
 class TestProcessor(BaseProcessor):
     """测试用具体处理器"""
+
     def process(self, data, **kwargs):
         return data
 
@@ -16,7 +18,7 @@ class TestProcessor(BaseProcessor):
 def test_base_processor_init():
     """测试基类初始化"""
     processor = TestProcessor()
-    assert processor.name == 'TestProcessor'
+    assert processor.name == "TestProcessor"
     assert processor.enabled is True
     assert processor.process_count == 0
     assert processor.enabled is True
@@ -24,8 +26,8 @@ def test_base_processor_init():
 
 def test_base_processor_custom_name():
     """测试自定义名称"""
-    processor = TestProcessor(name='CustomProcessor')
-    assert processor.name == 'CustomProcessor'
+    processor = TestProcessor(name="CustomProcessor")
+    assert processor.name == "CustomProcessor"
 
 
 def test_validate_input_valid_data():
@@ -33,7 +35,7 @@ def test_validate_input_valid_data():
     processor = TestProcessor()
 
     # 非空DataFrame
-    df = pd.DataFrame({'a': [1, 2, 3]})
+    df = pd.DataFrame({"a": [1, 2, 3]})
     assert processor.validate_input(df) is True
 
     # 非空数组
@@ -41,7 +43,7 @@ def test_validate_input_valid_data():
     assert processor.validate_input(arr) is True
 
     # 非None
-    data = {'a': 1}
+    data = {"a": 1}
     assert processor.validate_input(data) is True
 
 
@@ -63,15 +65,15 @@ def test_validate_input_invalid_data():
 
 def test_get_processor_info():
     """测试获取处理器信息"""
-    processor = TestProcessor(config={'param': 1})
+    processor = TestProcessor(config={"param": 1})
     info = processor.get_processor_info()
 
-    assert 'name' in info
-    assert 'type' in info
-    assert 'enabled' in info
-    assert 'process_count' in info
-    assert 'config' in info
-    assert info['config']['param'] == 1
+    assert "name" in info
+    assert "type" in info
+    assert "enabled" in info
+    assert "process_count" in info
+    assert "config" in info
+    assert info["config"]["param"] == 1
 
 
 def test_enable_disable():
@@ -91,7 +93,7 @@ def test_health_check():
     processor = TestProcessor()
     health = processor.health_check()
 
-    assert 'name' in health
-    assert 'status' in health
-    assert 'check_time' in health
-    assert health['status'] == 'healthy'
+    assert "name" in health
+    assert "status" in health
+    assert "check_time" in health
+    assert health["status"] == "healthy"

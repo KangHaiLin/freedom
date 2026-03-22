@@ -2,8 +2,9 @@
 持仓实现类
 存储单个股票的持仓信息，支持增减仓、盈亏计算
 """
+
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from src.trading_engine.base.base_position import BasePosition
 
@@ -11,12 +12,7 @@ from src.trading_engine.base.base_position import BasePosition
 class Position(BasePosition):
     """具体持仓实现类"""
 
-    def __init__(
-        self,
-        ts_code: str,
-        quantity: int = 0,
-        avg_cost: float = 0.0
-    ):
+    def __init__(self, ts_code: str, quantity: int = 0, avg_cost: float = 0.0):
         """
         初始化持仓
         Args:
@@ -133,22 +129,22 @@ class Position(BasePosition):
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'ts_code': self.ts_code,
-            'quantity': self.quantity,
-            'avg_cost': self.avg_cost,
-            'last_price': self.last_price,
-            'market_value': self.get_market_value(),
-            'cost': self.get_cost(),
-            'unrealized_pnl': self.unrealized_pnl,
-            'unrealized_pnl_pct': self.get_unrealized_pnl_pct(),
-            'realized_pnl': self.realized_pnl,
-            'total_bought': self.total_bought,
-            'total_sold': self.total_sold,
-            'total_bought_amount': self.total_bought_amount,
-            'total_sold_amount': self.total_sold_amount,
-            'last_update_time': self.last_update_time.isoformat() if self.last_update_time else None,
-            'created_at': self.created_at.isoformat(),
-            'extra_info': self.extra_info,
+            "ts_code": self.ts_code,
+            "quantity": self.quantity,
+            "avg_cost": self.avg_cost,
+            "last_price": self.last_price,
+            "market_value": self.get_market_value(),
+            "cost": self.get_cost(),
+            "unrealized_pnl": self.unrealized_pnl,
+            "unrealized_pnl_pct": self.get_unrealized_pnl_pct(),
+            "realized_pnl": self.realized_pnl,
+            "total_bought": self.total_bought,
+            "total_sold": self.total_sold,
+            "total_bought_amount": self.total_bought_amount,
+            "total_sold_amount": self.total_sold_amount,
+            "last_update_time": self.last_update_time.isoformat() if self.last_update_time else None,
+            "created_at": self.created_at.isoformat(),
+            "extra_info": self.extra_info,
         }
 
     def __repr__(self) -> str:

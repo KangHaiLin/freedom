@@ -2,11 +2,12 @@
 风险事件存储
 存储所有风险事件和违规记录，支持审计追溯
 """
-from typing import Dict, Any, List, Optional
-from datetime import datetime, date
-from dataclasses import dataclass, asdict
+
 import json
+from dataclasses import asdict, dataclass
+from datetime import date, datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from src.risk_management.rule_engine.rule_result import RuleViolation
 
@@ -14,6 +15,7 @@ from src.risk_management.rule_engine.rule_result import RuleViolation
 @dataclass
 class RiskEvent:
     """风险事件"""
+
     event_id: int
     event_type: str
     event_level: str
@@ -34,18 +36,18 @@ class RiskEvent:
         result = asdict(self)
         # 转换datetime为字符串
         if self.handled_at:
-            result['handled_at'] = self.handled_at.isoformat()
-        result['occurred_at'] = self.occurred_at.isoformat()
-        result['created_at'] = self.created_at.isoformat()
+            result["handled_at"] = self.handled_at.isoformat()
+        result["occurred_at"] = self.occurred_at.isoformat()
+        result["created_at"] = self.created_at.isoformat()
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'RiskEvent':
+    def from_dict(cls, data: Dict[str, Any]) -> "RiskEvent":
         """从字典创建"""
-        if data.get('handled_at'):
-            data['handled_at'] = datetime.fromisoformat(data['handled_at'])
-        data['occurred_at'] = datetime.fromisoformat(data['occurred_at'])
-        data['created_at'] = datetime.fromisoformat(data['created_at'])
+        if data.get("handled_at"):
+            data["handled_at"] = datetime.fromisoformat(data["handled_at"])
+        data["occurred_at"] = datetime.fromisoformat(data["occurred_at"])
+        data["created_at"] = datetime.fromisoformat(data["created_at"])
         return cls(**data)
 
 
@@ -63,7 +65,7 @@ class RiskEventStore:
             storage_path: 存储文件路径
         """
         if storage_path is None:
-            storage_path = 'data/risk_events.jsonl'
+            storage_path = "data/risk_events.jsonl"
         self._storage_path = Path(storage_path)
         self._storage_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -205,10 +207,10 @@ class RiskEventStore:
         events = self.query_events(start_date, end_date)
         if not events:
             return {
-                'total_events': 0,
-                'by_level': {},
-                'by_type': {},
-                'unhandled': 0,
+                "total_events": 0,
+                "by_level": {},
+                "by_type": {},
+                "unhandled": 0,
             }
 
         by_level: Dict[str, int] = {}
@@ -224,10 +226,10 @@ class RiskEventStore:
                 unhandled += 1
 
         return {
-            'total_events': len(events),
-            'by_level': by_level,
-            'by_type': by_type,
-            'unhandled': unhandled,
+            "total_events": len(events),
+            "by_level": by_level,
+            "by_type": by_type,
+            "unhandled": unhandled,
         }
 
     def count_events(self) -> int:
@@ -240,7 +242,7 @@ class RiskEventStore:
             return
 
         count = 0
-        with open(self._storage_path, 'r', encoding='utf-8') as f:
+        with open(self._storage_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -254,26 +256,27 @@ class RiskEventStore:
                     count += 1
                 except Exception as e:
                     import logging
+
                     logging.warning(f"Failed to load risk event: {e}, line: {line[:100]}")
                     continue
 
     def _append_to_file(self, event: RiskEvent) -> None:
         """追加到文件"""
-        with open(self._storage_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(event.to_dict(), ensure_ascii=False) + '\n')
+        with open(self._storage_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
 
     def _save_to_file(self) -> None:
         """全量保存到文件（修改后）"""
-        with open(self._storage_path, 'w', encoding='utf-8') as f:
+        with open(self._storage_path, "w", encoding="utf-8") as f:
             for event in self._events:
-                f.write(json.dumps(event.to_dict(), ensure_ascii=False) + '\n')
+                f.write(json.dumps(event.to_dict(), ensure_ascii=False) + "\n")
 
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'total_events': self.count_events(),
-            'storage_path': str(self._storage_path),
-            'file_exists': self._storage_path.exists(),
-            'file_size_bytes': self._storage_path.stat().st_size if self._storage_path.exists() else 0,
+            "status": "ok",
+            "total_events": self.count_events(),
+            "storage_path": str(self._storage_path),
+            "file_exists": self._storage_path.exists(),
+            "file_size_bytes": self._storage_path.stat().st_size if self._storage_path.exists() else 0,
         }

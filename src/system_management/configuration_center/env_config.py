@@ -2,8 +2,10 @@
 配置中心 - 环境变量配置源
 从系统环境变量读取配置，支持类型转换和前缀过滤
 """
+
 import os
 from typing import Any, Dict, Optional, Type
+
 from .base_config import ConfigSource
 
 
@@ -39,7 +41,7 @@ class EnvConfigSource(ConfigSource):
 
             # 移除前缀
             if self.prefix:
-                key = env_key[len(self.prefix):]
+                key = env_key[len(self.prefix) :]
             else:
                 key = env_key
 

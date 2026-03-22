@@ -2,17 +2,19 @@
 PostgreSQL存储适配器
 实现PostgreSQL数据库的存储操作
 """
-from typing import List, Dict, Optional, Any, Union
+
+import logging
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
 from sqlalchemy import create_engine
-import logging
-from datetime import datetime
 
-from .base_storage import BaseStorage
 from common.exceptions import StorageException
 from common.utils import DateTimeUtils
+
+from .base_storage import BaseStorage
 
 logger = logging.getLogger(__name__)
 
@@ -22,13 +24,13 @@ class PostgreSQLStorage(BaseStorage):
 
     def __init__(self, config: Dict):
         super().__init__(config)
-        self.host = config.get('host', 'localhost')
-        self.port = config.get('port', 5432)
-        self.database = config.get('database')
-        self.user = config.get('user')
-        self.password = config.get('password')
-        self.schema = config.get('schema', 'public')
-        self.chunk_size = config.get('chunk_size', 1000)
+        self.host = config.get("host", "localhost")
+        self.port = config.get("port", 5432)
+        self.database = config.get("database")
+        self.user = config.get("user")
+        self.password = config.get("password")
+        self.schema = config.get("schema", "public")
+        self.chunk_size = config.get("chunk_size", 1000)
 
         # 构建连接字符串
         self.conn_str = f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
@@ -39,11 +41,7 @@ class PostgreSQLStorage(BaseStorage):
         try:
             # 首先使用psycopg2测试连接
             self.connection = psycopg2.connect(
-                host=self.host,
-                port=self.port,
-                database=self.database,
-                user=self.user,
-                password=self.password
+                host=self.host, port=self.port, database=self.database, user=self.user, password=self.password
             )
             self.connection.autocommit = True
 
@@ -89,15 +87,15 @@ class PostgreSQLStorage(BaseStorage):
 
             # 写入数据
             rows_written = 0
-            if kwargs.get('if_exists') == 'append' or len(df) < 1000:
+            if kwargs.get("if_exists") == "append" or len(df) < 1000:
                 # 小数据量使用to_sql
                 df.to_sql(
                     name=table_name,
                     con=self.engine,
                     schema=self.schema,
-                    if_exists=kwargs.get('if_exists', 'append'),
+                    if_exists=kwargs.get("if_exists", "append"),
                     index=False,
-                    chunksize=self.chunk_size
+                    chunksize=self.chunk_size,
                 )
                 rows_written = len(df)
             else:
@@ -134,14 +132,14 @@ class PostgreSQLStorage(BaseStorage):
                 params = []
                 for key, value in query.items():
                     if isinstance(value, list):
-                        placeholders = ', '.join(['%s'] * len(value))
+                        placeholders = ", ".join(["%s"] * len(value))
                         conditions.append(f"{key} IN ({placeholders})")
                         params.extend(value)
                     elif isinstance(value, tuple) and len(value) == 2:
                         # 范围查询 (start, end)
                         conditions.append(f"{key} >= %s AND {key} <= %s")
                         params.extend(value)
-                    elif isinstance(value, str) and ('%' in value or '_' in value):
+                    elif isinstance(value, str) and ("%" in value or "_" in value):
                         conditions.append(f"{key} LIKE %s")
                         params.append(value)
                     else:
@@ -152,23 +150,24 @@ class PostgreSQLStorage(BaseStorage):
                     sql += " WHERE " + " AND ".join(conditions)
 
             # 添加排序和限制
-            if 'order_by' in kwargs:
-                order_by = kwargs['order_by']
-                if isinstance(order_by, list):
-                    # 处理列表形式的排序，支持-前缀表示降序
-                    order_parts = []
-                    for col in order_by:
-                        if col.startswith('-'):
-                            order_parts.append(f"{col[1:]} DESC")
-                        else:
-                            order_parts.append(f"{col} ASC")
-                    order_by_str = ', '.join(order_parts)
-                else:
-                    order_by_str = str(order_by)
-                sql += f" ORDER BY {order_by_str}"
-            if 'limit' in kwargs and kwargs['limit'] is not None:
+            if "order_by" in kwargs:
+                order_by = kwargs["order_by"]
+                if order_by is not None:
+                    if isinstance(order_by, list):
+                        # 处理列表形式的排序，支持-前缀表示降序
+                        order_parts = []
+                        for col in order_by:
+                            if col.startswith("-"):
+                                order_parts.append(f"{col[1:]} DESC")
+                            else:
+                                order_parts.append(f"{col} ASC")
+                        order_by_str = ", ".join(order_parts)
+                    else:
+                        order_by_str = str(order_by)
+                    sql += f" ORDER BY {order_by_str}"
+            if "limit" in kwargs and kwargs["limit"] is not None:
                 sql += f" LIMIT {kwargs['limit']}"
-            if 'offset' in kwargs and kwargs['offset'] is not None:
+            if "offset" in kwargs and kwargs["offset"] is not None:
                 sql += f" OFFSET {kwargs['offset']}"
 
             logger.debug(f"PostgreSQL查询SQL：{sql}")
@@ -190,7 +189,7 @@ class PostgreSQLStorage(BaseStorage):
             params = []
             for key, value in query.items():
                 if isinstance(value, list):
-                    placeholders = ', '.join(['%s'] * len(value))
+                    placeholders = ", ".join(["%s"] * len(value))
                     conditions.append(f"{key} IN ({placeholders})")
                     params.extend(value)
                 elif isinstance(value, tuple) and len(value) == 2:
@@ -240,7 +239,7 @@ class PostgreSQLStorage(BaseStorage):
         self.ensure_connection()
 
         try:
-            sql = f"""
+            sql = """
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables
                     WHERE table_schema = %s
@@ -266,8 +265,8 @@ class PostgreSQLStorage(BaseStorage):
                 columns.append(f"{col_name} {col_def}")
 
             # 添加主键
-            if 'primary_key' in kwargs:
-                pk_columns = kwargs['primary_key']
+            if "primary_key" in kwargs:
+                pk_columns = kwargs["primary_key"]
                 if isinstance(pk_columns, list):
                     columns.append(f"PRIMARY KEY ({', '.join(pk_columns)})")
                 else:
@@ -297,7 +296,7 @@ class PostgreSQLStorage(BaseStorage):
 
             with self.connection.cursor() as cur:
                 cur.execute("SELECT 1")
-                result = cur.fetchone()
+                cur.fetchone()
 
             return {
                 "status": "healthy",
@@ -305,7 +304,7 @@ class PostgreSQLStorage(BaseStorage):
                 "port": self.port,
                 "database": self.database,
                 "response_time": DateTimeUtils.now().timestamp(),
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }
 
         except Exception as e:
@@ -315,5 +314,5 @@ class PostgreSQLStorage(BaseStorage):
                 "port": self.port,
                 "database": self.database,
                 "error": str(e),
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }

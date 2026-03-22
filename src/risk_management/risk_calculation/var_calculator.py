@@ -2,7 +2,9 @@
 VaR风险价值计算
 提供多种VaR计算方法：参数法、历史模拟法、蒙特卡洛模拟法
 """
-from typing import Dict, Any, List, Optional
+
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 import pandas as pd
 
@@ -45,6 +47,7 @@ class VaRCalculator:
 
         # 正态分布分位数
         from scipy.stats import norm
+
         z_score = norm.ppf(1 - self._confidence_level)
 
         # VaR = -V * (mu*dt + z*sigma*sqrt(dt))
@@ -58,15 +61,15 @@ class VaRCalculator:
         es = self._calculate_es_parametric(portfolio_value, mu, sigma, z_score, dt)
 
         return {
-            'method': 'parametric',
-            'confidence_level': self._confidence_level,
-            'holding_days': self._holding_days,
-            'portfolio_value': portfolio_value,
-            'var': max(var, 0),
-            'expected_shortfall': es,
-            'mu': mu,
-            'sigma': sigma,
-            'z_score': z_score,
+            "method": "parametric",
+            "confidence_level": self._confidence_level,
+            "holding_days": self._holding_days,
+            "portfolio_value": portfolio_value,
+            "var": max(var, 0),
+            "expected_shortfall": es,
+            "mu": mu,
+            "sigma": sigma,
+            "z_score": z_score,
         }
 
     def historical_simulation(
@@ -85,7 +88,7 @@ class VaRCalculator:
             VaR计算结果
         """
         sorted_returns = returns.sort_values(ascending=True)
-        percentile = (1 - self._confidence_level)
+        percentile = 1 - self._confidence_level
         index = int(len(sorted_returns) * percentile)
         if index >= len(sorted_returns):
             index = len(sorted_returns) - 1
@@ -99,14 +102,14 @@ class VaRCalculator:
         es = -portfolio_value * tail_returns.mean() * self._holding_days if len(tail_returns) > 0 else var
 
         return {
-            'method': 'historical',
-            'confidence_level': self._confidence_level,
-            'holding_days': self._holding_days,
-            'portfolio_value': portfolio_value,
-            'var': max(var, 0),
-            'expected_shortfall': es,
-            'percentile_index': index,
-            'sample_size': len(returns),
+            "method": "historical",
+            "confidence_level": self._confidence_level,
+            "holding_days": self._holding_days,
+            "portfolio_value": portfolio_value,
+            "var": max(var, 0),
+            "expected_shortfall": es,
+            "percentile_index": index,
+            "sample_size": len(returns),
         }
 
     def monte_carlo_simulation(
@@ -138,11 +141,7 @@ class VaRCalculator:
         dt = self._holding_days
 
         # 生成模拟收益率
-        simulated_returns = np.random.normal(
-            loc=mu * dt,
-            scale=sigma * np.sqrt(dt),
-            size=simulations
-        )
+        simulated_returns = np.random.normal(loc=mu * dt, scale=sigma * np.sqrt(dt), size=simulations)
 
         # 排序找分位数
         simulated_returns.sort()
@@ -155,15 +154,15 @@ class VaRCalculator:
         es = -portfolio_value * tail_returns.mean() if len(tail_returns) > 0 else var
 
         return {
-            'method': 'monte_carlo',
-            'confidence_level': self._confidence_level,
-            'holding_days': self._holding_days,
-            'portfolio_value': portfolio_value,
-            'simulations': simulations,
-            'var': max(var, 0),
-            'expected_shortfall': es,
-            'mu': mu,
-            'sigma': sigma,
+            "method": "monte_carlo",
+            "confidence_level": self._confidence_level,
+            "holding_days": self._holding_days,
+            "portfolio_value": portfolio_value,
+            "simulations": simulations,
+            "var": max(var, 0),
+            "expected_shortfall": es,
+            "mu": mu,
+            "sigma": sigma,
         }
 
     def calculate_portfolio_var(
@@ -171,7 +170,7 @@ class VaRCalculator:
         returns_df: pd.DataFrame,
         weights: List[float],
         portfolio_value: float,
-        method: str = 'parametric',
+        method: str = "parametric",
     ) -> Dict[str, Any]:
         """
         计算投资组合VaR
@@ -189,11 +188,11 @@ class VaRCalculator:
         weights_arr = np.array(weights)
         portfolio_returns = returns_df.dot(weights_arr)
 
-        if method == 'parametric':
+        if method == "parametric":
             result = self.parametric_var(portfolio_returns, portfolio_value)
-        elif method == 'historical':
+        elif method == "historical":
             result = self.historical_simulation(portfolio_returns, portfolio_value)
-        elif method == 'monte_carlo':
+        elif method == "monte_carlo":
             result = self.monte_carlo_simulation(portfolio_returns, portfolio_value)
         else:
             raise ValueError(f"Unknown method: {method}")
@@ -210,11 +209,10 @@ class VaRCalculator:
     ) -> float:
         """计算参数法期望损失（Expected Shortfall）"""
         from scipy.stats import norm
+
         pdf_z = norm.pdf(z_score)
         cdf_z = 1 - self._confidence_level
-        es = portfolio_value * (
-            -mu * dt + sigma * np.sqrt(dt) * pdf_z / cdf_z
-        )
+        es = portfolio_value * (-mu * dt + sigma * np.sqrt(dt) * pdf_z / cdf_z)
         return max(es, 0)
 
     def set_parameters(self, confidence_level: Optional[float] = None, holding_days: Optional[int] = None) -> None:

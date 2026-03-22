@@ -1,8 +1,11 @@
 """
 Unit tests for base_position.py
 """
-import pytest
+
 from datetime import datetime
+
+import pytest
+
 from src.trading_engine.base.base_position import BasePosition
 
 
@@ -70,19 +73,19 @@ class ConcretePosition(BasePosition):
 
     def to_dict(self) -> dict:
         return {
-            'ts_code': self.ts_code,
-            'quantity': self.quantity,
-            'avg_cost': self.avg_cost,
-            'last_price': self.last_price,
-            'unrealized_pnl': self.unrealized_pnl,
-            'realized_pnl': self.realized_pnl,
+            "ts_code": self.ts_code,
+            "quantity": self.quantity,
+            "avg_cost": self.avg_cost,
+            "last_price": self.last_price,
+            "unrealized_pnl": self.unrealized_pnl,
+            "realized_pnl": self.realized_pnl,
         }
 
 
 def test_position_init():
     """测试持仓初始化"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
-    assert pos.ts_code == '000001.SZ'
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
+    assert pos.ts_code == "000001.SZ"
     assert pos.quantity == 1000
     assert pos.avg_cost == 10.0
     assert pos.is_empty() is False
@@ -90,13 +93,13 @@ def test_position_init():
 
 def test_empty_position():
     """测试空持仓"""
-    pos = ConcretePosition('000001.SZ', 0, 0.0)
+    pos = ConcretePosition("000001.SZ", 0, 0.0)
     assert pos.is_empty() is True
 
 
 def test_update_price():
     """测试更新价格"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     pos.update_price(12.0)
     assert pos.last_price == 12.0
     assert pos.last_update_time is not None
@@ -104,7 +107,7 @@ def test_update_price():
 
 def test_get_market_value():
     """测试市值计算"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     assert pos.get_market_value() == 0.0
     pos.update_price(12.0)
     assert pos.get_market_value() == 12000.0
@@ -112,7 +115,7 @@ def test_get_market_value():
 
 def test_get_unrealized_pnl():
     """测试未实现盈亏计算"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     pos.update_price(12.0)
     # (12 - 10) * 1000 = 2000
     assert pos.get_unrealized_pnl() == 2000.0
@@ -121,7 +124,7 @@ def test_get_unrealized_pnl():
 
 def test_get_unrealized_pnl_pct():
     """测试未实现盈亏百分比计算"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     pos.update_price(12.0)
     # (12 - 10) / 10 = 0.2 = 20%
     assert pos.get_unrealized_pnl_pct() == 0.2
@@ -129,7 +132,7 @@ def test_get_unrealized_pnl_pct():
 
 def test_add_position():
     """测试增加持仓"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     # 加仓500，价格11.0
     new_avg = pos.add_position(500, 11.0)
     # (1000*10 + 500*11) / 1500 = 15500 / 1500 = 10.333...
@@ -140,17 +143,17 @@ def test_add_position():
 
 def test_add_position_with_commission():
     """测试增加持仓带佣金"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     # 佣金5元
     new_avg = pos.add_position(500, 11.0, commission=5.0)
-    total_cost = 1000*10 + 500*11 + 5
+    total_cost = 1000 * 10 + 500 * 11 + 5
     expected_avg = total_cost / 1500
     assert abs(new_avg - expected_avg) < 0.001
 
 
 def test_reduce_position():
     """测试减少持仓"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     # 卖出500，价格12.0，佣金5元
     pnl = pos.reduce_position(500, 12.0, commission=5.0)
     # (12 - 10)*500 - 5 = 1000 - 5 = 995
@@ -162,7 +165,7 @@ def test_reduce_position():
 
 def test_close_position():
     """测试平仓"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     # 全部卖出，价格12.0
     total_pnl = pos.close_position(12.0)
     # (12 - 10)*1000 = 2000
@@ -174,15 +177,15 @@ def test_close_position():
 
 def test_close_empty_position():
     """测试空持仓平仓"""
-    pos = ConcretePosition('000001.SZ', 0, 0.0)
+    pos = ConcretePosition("000001.SZ", 0, 0.0)
     pnl = pos.close_position(10.0)
     assert pnl == 0.0
 
 
 def test_to_dict():
     """测试转换为字典"""
-    pos = ConcretePosition('000001.SZ', 1000, 10.0)
+    pos = ConcretePosition("000001.SZ", 1000, 10.0)
     d = pos.to_dict()
-    assert d['ts_code'] == '000001.SZ'
-    assert d['quantity'] == 1000
-    assert d['avg_cost'] == 10.0
+    assert d["ts_code"] == "000001.SZ"
+    assert d["quantity"] == 1000
+    assert d["avg_cost"] == 10.0

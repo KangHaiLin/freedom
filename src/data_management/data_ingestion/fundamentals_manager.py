@@ -2,14 +2,17 @@
 基本面数据源管理器
 动态选择最优数据源，支持多数据源自动切换、负载均衡、降级重试
 """
-from typing import List, Dict, Optional
-import random
+
 import logging
+import random
+from typing import Dict, List, Optional
+
 import pandas as pd
 
-from .fundamentals_collector import FundamentalsCollector
 from common.exceptions import DataSourceException
 from common.utils import DateTimeUtils
+
+from .fundamentals_collector import FundamentalsCollector
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +70,9 @@ class FundamentalsManager:
             # 响应时间越短得分越高，最大10分
             response_time_score = max(0, 1000 - source.avg_response_time) / 100 * 0.3
             total_score = priority_score + availability_score + response_time_score
-            logger.debug(f"基本面数据源{source.source}得分：{total_score:.2f}，优先级={source.priority}，可用性={source.availability:.2f}，响应时间={source.avg_response_time:.2f}ms")
+            logger.debug(
+                f"基本面数据源{source.source}得分：{total_score:.2f}，优先级={source.priority}，可用性={source.availability:.2f}，响应时间={source.avg_response_time:.2f}ms"
+            )
             return total_score
 
         # 按分数排序，选择前3个加权随机
@@ -122,7 +127,7 @@ class FundamentalsManager:
         logger.error(f"所有基本面数据源均不可用，尝试了{len(tried_sources)}个数据源")
         raise DataSourceException("所有基本面数据源均不可用")
 
-    def get_stock_basic(self, list_status: str = 'L') -> pd.DataFrame:
+    def get_stock_basic(self, list_status: str = "L") -> pd.DataFrame:
         """
         获取股票列表基本信息
         Args:
@@ -130,7 +135,7 @@ class FundamentalsManager:
         Returns:
             股票基本信息DataFrame
         """
-        return self.execute_query('get_stock_basic', list_status)
+        return self.execute_query("get_stock_basic", list_status)
 
     def get_daily_basic(self, stock_codes: List[str], start_date: str, end_date: str) -> pd.DataFrame:
         """
@@ -142,7 +147,7 @@ class FundamentalsManager:
         Returns:
             每日基本面DataFrame
         """
-        return self.execute_query('get_daily_basic', stock_codes, start_date, end_date)
+        return self.execute_query("get_daily_basic", stock_codes, start_date, end_date)
 
     def get_financial_report(self, stock_codes: List[str], report_type: str) -> pd.DataFrame:
         """
@@ -153,7 +158,7 @@ class FundamentalsManager:
         Returns:
             财务报告DataFrame
         """
-        return self.execute_query('get_financial_report', stock_codes, report_type)
+        return self.execute_query("get_financial_report", stock_codes, report_type)
 
     def get_financial_indicator(self, stock_codes: List[str], start_date: str, end_date: str) -> pd.DataFrame:
         """
@@ -165,7 +170,7 @@ class FundamentalsManager:
         Returns:
             财务指标DataFrame
         """
-        return self.execute_query('get_financial_indicator', stock_codes, start_date, end_date)
+        return self.execute_query("get_financial_indicator", stock_codes, start_date, end_date)
 
     def get_dividend(self, stock_codes: List[str]) -> pd.DataFrame:
         """
@@ -175,7 +180,7 @@ class FundamentalsManager:
         Returns:
             分红数据DataFrame
         """
-        return self.execute_query('get_dividend', stock_codes)
+        return self.execute_query("get_dividend", stock_codes)
 
     def get_margin_trading(self, stock_codes: List[str], start_date: str, end_date: str) -> pd.DataFrame:
         """
@@ -187,7 +192,7 @@ class FundamentalsManager:
         Returns:
             融资融券数据DataFrame
         """
-        return self.execute_query('get_margin_trading', stock_codes, start_date, end_date)
+        return self.execute_query("get_margin_trading", stock_codes, start_date, end_date)
 
     def get_source_status(self) -> List[Dict]:
         """
@@ -228,9 +233,11 @@ class FundamentalsManager:
             "available_sources": available_count,
             "health_score": available_count / total_count if total_count > 0 else 0,
             "sources": self.get_source_status(),
-            "check_time": DateTimeUtils.now_str()
+            "check_time": DateTimeUtils.now_str(),
         }
-        logger.info(f"基本面数据源健康检查：可用{available_count}/{total_count}个，健康得分：{health_status['health_score']:.2f}")
+        logger.info(
+            f"基本面数据源健康检查：可用{available_count}/{total_count}个，健康得分：{health_status['health_score']:.2f}"
+        )
         return health_status
 
 

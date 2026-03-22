@@ -2,13 +2,14 @@
 风险控制器
 整合事前风控和合规检查，统一接口
 """
-from typing import Dict, Tuple, Optional, List, Any
+
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.trading_engine.base.base_order import OrderSide
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.risk_control.pre_trade_check import PreTradeChecker, PreTradeCheckResult
 from src.trading_engine.risk_control.compliance_rules import AShareComplianceRules, ComplianceCheckResult
+from src.trading_engine.risk_control.pre_trade_check import PreTradeChecker, PreTradeCheckResult
 
 
 class RiskCheckResult:
@@ -143,18 +144,18 @@ class RiskController:
             检查结果
         """
         summary = portfolio.get_summary()
-        total_asset = summary.get('total_asset', 0.0)
+        total_asset = summary.get("total_asset", 0.0)
         initial_cash = portfolio.get_initial_cash()
 
         # 计算累计收益
         if initial_cash <= 0:
             return {
-                'alert': False,
-                'message': '初始资金为零',
-                'current_drawdown': 0.0,
+                "alert": False,
+                "message": "初始资金为零",
+                "current_drawdown": 0.0,
             }
 
-        total_pnl = summary.get('total_pnl', 0.0)
+        total_pnl = summary.get("total_pnl", 0.0)
         current_assets = total_asset
         if current_assets < initial_cash:
             current_drawdown = (initial_cash - current_assets) / initial_cash
@@ -164,13 +165,16 @@ class RiskController:
         alert = current_drawdown > max_drawdown
 
         return {
-            'alert': alert,
-            'current_drawdown': current_drawdown,
-            'max_drawdown_limit': max_drawdown,
-            'total_asset': total_asset,
-            'total_pnl': total_pnl,
-            'message': f"当前回撤 {current_drawdown*100:.1f}%，限制 {max_drawdown*100:.1f}%"
-            if not alert else f"回撤超出限制: {current_drawdown*100:.1f}% > {max_drawdown*100:.1f}%",
+            "alert": alert,
+            "current_drawdown": current_drawdown,
+            "max_drawdown_limit": max_drawdown,
+            "total_asset": total_asset,
+            "total_pnl": total_pnl,
+            "message": (
+                f"当前回撤 {current_drawdown*100:.1f}%，限制 {max_drawdown*100:.1f}%"
+                if not alert
+                else f"回撤超出限制: {current_drawdown*100:.1f}% > {max_drawdown*100:.1f}%"
+            ),
         }
 
     def get_pre_trade_checker(self) -> PreTradeChecker:
@@ -184,7 +188,7 @@ class RiskController:
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'pre_trade_enabled': True,
-            'compliance_enabled': True,
+            "status": "ok",
+            "pre_trade_enabled": True,
+            "compliance_enabled": True,
         }

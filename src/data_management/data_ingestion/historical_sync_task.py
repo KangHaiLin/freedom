@@ -5,24 +5,27 @@
 - 后续运行：自动检测增量，只获取新增数据
 - 股票过滤：只同步当前未退市且非ST的股票
 """
+
+import logging
+from abc import ABC
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
 import akshare as ak
 import pandas as pd
-from datetime import datetime, timedelta, date
-from typing import Any, List, Dict, Optional, Tuple
-from abc import ABC
-import logging
 
-from system_management.task_scheduler.base_task import BaseTask, TaskResult
-from data_management.data_ingestion import AKShareCollector, AKShareFundamentalsCollector
-from data_management.data_storage import storage_manager, ClickHouseStorage
 from common.config import settings
 from common.utils import DateTimeUtils
+from data_management.data_ingestion import AKShareCollector, AKShareFundamentalsCollector
+from data_management.data_storage import ClickHouseStorage, storage_manager
+from system_management.task_scheduler.base_task import BaseTask, TaskResult
 
 logger = logging.getLogger(__name__)
 
 
 class DataFrequency:
     """数据频率枚举"""
+
     DAILY = "daily"
     MINUTE_1 = "1min"
     MINUTE_5 = "5min"
@@ -34,6 +37,7 @@ class DataFrequency:
 
 class SyncResult:
     """同步结果"""
+
     def __init__(
         self,
         success: bool,
@@ -119,18 +123,12 @@ class HistoricalSyncTask(BaseTask, ABC):
         # 从配置读取默认值，允许覆盖
         self.batch_size = batch_size or getattr(settings, "SYNC_BATCH_SIZE", 10)
         self.max_retries = max_retries or getattr(settings, "SYNC_MAX_RETRIES", 3)
-        self.default_start_date = default_start_date or getattr(
-            settings, "SYNC_DEFAULT_START_DATE", "2020-01-01"
-        )
+        self.default_start_date = default_start_date or getattr(settings, "SYNC_DEFAULT_START_DATE", "2020-01-01")
         self.filter_only_listed = (
-            filter_only_listed
-            if filter_only_listed is not None
-            else getattr(settings, "FILTER_ONLY_LISTED", True)
+            filter_only_listed if filter_only_listed is not None else getattr(settings, "FILTER_ONLY_LISTED", True)
         )
         self.filter_exclude_st = (
-            filter_exclude_st
-            if filter_exclude_st is not None
-            else getattr(settings, "FILTER_EXCLUDE_ST", True)
+            filter_exclude_st if filter_exclude_st is not None else getattr(settings, "FILTER_EXCLUDE_ST", True)
         )
 
         # 表名
@@ -318,9 +316,10 @@ class HistoricalSyncTask(BaseTask, ABC):
 
             # 只保留股票，过滤掉指数、基金、债券等
             from common.utils import StockCodeUtils
-            stock_info = stock_info[stock_info["stock_code"].apply(
-                lambda code: StockCodeUtils.get_stock_type(code) == '股票'
-            )]
+
+            stock_info = stock_info[
+                stock_info["stock_code"].apply(lambda code: StockCodeUtils.get_stock_type(code) == "股票")
+            ]
 
             stock_list = stock_info["stock_code"].tolist()
 
@@ -332,11 +331,12 @@ class HistoricalSyncTask(BaseTask, ABC):
             # 降级：使用基础列表
             try:
                 from common.utils import StockCodeUtils
+
                 basic_df = self.fundamentals_collector.get_stock_basic(list_status="L")
                 # 只保留股票，过滤掉指数、基金、债券等
-                basic_df = basic_df[basic_df["stock_code"].apply(
-                    lambda code: StockCodeUtils.get_stock_type(code) == '股票'
-                )]
+                basic_df = basic_df[
+                    basic_df["stock_code"].apply(lambda code: StockCodeUtils.get_stock_type(code) == "股票")
+                ]
                 stock_list = basic_df["stock_code"].tolist()
                 logger.warning(f"降级使用基础股票列表，共{len(stock_list)}只股票")
                 return stock_list
@@ -344,9 +344,7 @@ class HistoricalSyncTask(BaseTask, ABC):
                 logger.error(f"降级获取股票列表也失败：{e2}")
                 return []
 
-    def fetch_data_batch(
-        self, stock_codes: List[str], start_date: str, end_date: str
-    ) -> pd.DataFrame:
+    def fetch_data_batch(self, stock_codes: List[str], start_date: str, end_date: str) -> pd.DataFrame:
         """
         批量获取一批股票的数据
 
@@ -376,9 +374,7 @@ class HistoricalSyncTask(BaseTask, ABC):
                 DataFrequency.MINUTE_60: 60,
             }
             period = period_map.get(self.frequency, 1)
-            return self.collector.get_minute_quote(
-                stock_codes, start_date, end_date, period
-            )
+            return self.collector.get_minute_quote(stock_codes, start_date, end_date, period)
         elif self.frequency == DataFrequency.TICK:
             # Tick数据按日期获取，这里只获取最后一天的数据
             # Tick数据量很大，不建议全量同步
@@ -409,17 +405,18 @@ class HistoricalSyncTask(BaseTask, ABC):
 
         # 添加created_at时间戳列（表结构要求）
         from datetime import datetime
-        df['created_at'] = datetime.now()
+
+        df["created_at"] = datetime.now()
 
         # 确保整数类型字段转换为整数（ClickHouse要求）
-        integer_fields = ['volume']
+        integer_fields = ["volume"]
         for field in integer_fields:
             if field in df.columns:
-                df[field] = pd.to_numeric(df[field], errors='coerce').fillna(0).astype('Int64')
+                df[field] = pd.to_numeric(df[field], errors="coerce").fillna(0).astype("Int64")
 
         # 确保trade_date是datetime类型
-        if 'trade_date' in df.columns and not pd.api.types.is_datetime64_any_dtype(df['trade_date']):
-            df['trade_date'] = pd.to_datetime(df['trade_date'])
+        if "trade_date" in df.columns and not pd.api.types.is_datetime64_any_dtype(df["trade_date"]):
+            df["trade_date"] = pd.to_datetime(df["trade_date"])
 
         return storage_manager.write(self.table_name, df, storage_name="clickhouse")
 
@@ -469,9 +466,7 @@ class HistoricalSyncTask(BaseTask, ABC):
             batch_num = i // self.batch_size + 1
             total_batches = (len(stock_list) + self.batch_size - 1) // self.batch_size
 
-            logger.info(
-                f"处理第{batch_num}/{total_batches}批，共{len(batch)}只股票"
-            )
+            logger.info(f"处理第{batch_num}/{total_batches}批，共{len(batch)}只股票")
 
             try:
                 # 获取这一批数据
@@ -482,13 +477,9 @@ class HistoricalSyncTask(BaseTask, ABC):
                     records_written = self.write_to_database(df)
                     total_records += records_written
                     success_stocks += len(batch)
-                    logger.info(
-                        f"第{batch_num}批处理完成，写入{records_written}条记录"
-                    )
+                    logger.info(f"第{batch_num}批处理完成，写入{records_written}条记录")
                 else:
-                    logger.warning(
-                        f"第{batch_num}批未获取到数据，可能该批次没有新增数据"
-                    )
+                    logger.warning(f"第{batch_num}批未获取到数据，可能该批次没有新增数据")
                     # 空数据也算成功，因为可能确实没有新增
                     success_stocks += len(batch)
 
@@ -527,23 +518,27 @@ class HistoricalSyncTask(BaseTask, ABC):
 
 class DailyHistoricalSyncTask(HistoricalSyncTask):
     """日线历史数据同步任务"""
+
     def __init__(self, **kwargs):
         super().__init__(frequency=DataFrequency.DAILY, **kwargs)
 
 
 class Minute1HistoricalSyncTask(HistoricalSyncTask):
     """1分钟线历史数据同步任务"""
+
     def __init__(self, **kwargs):
         super().__init__(frequency=DataFrequency.MINUTE_1, **kwargs)
 
 
 class Minute5HistoricalSyncTask(HistoricalSyncTask):
     """5分钟线历史数据同步任务"""
+
     def __init__(self, **kwargs):
         super().__init__(frequency=DataFrequency.MINUTE_5, **kwargs)
 
 
 class TickHistoricalSyncTask(HistoricalSyncTask):
     """Tick数据同步任务"""
+
     def __init__(self, **kwargs):
         super().__init__(frequency=DataFrequency.TICK, **kwargs)

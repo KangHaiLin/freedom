@@ -2,9 +2,10 @@
 券商适配器抽象基类
 定义券商接口的通用协议
 """
+
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from src.trading_engine.base.base_order import BaseOrder, OrderStatus
 
@@ -126,7 +127,7 @@ class BaseBrokerAdapter(ABC):
         self,
         status: Optional[List[OrderStatus]] = None,
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+        end_time: Optional[datetime] = None,
     ) -> List[BaseOrder]:
         """
         查询订单列表
@@ -184,7 +185,4 @@ class BaseBrokerAdapter(ABC):
         pass
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}(account_id={self.account_id}, "
-            f"connected={self.connected})"
-        )
+        return f"{self.__class__.__name__}(account_id={self.account_id}, " f"connected={self.connected})"

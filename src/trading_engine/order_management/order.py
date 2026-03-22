@@ -2,11 +2,12 @@
 具体订单实现类
 支持多种订单类型：市价单、限价单、止损单、止损限价单
 """
-from datetime import datetime
-from typing import Optional, Dict, Any
-import uuid
 
-from src.trading_engine.base.base_order import BaseOrder, OrderSide, OrderType, OrderStatus
+import uuid
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from src.trading_engine.base.base_order import BaseOrder, OrderSide, OrderStatus, OrderType
 
 
 class Order(BaseOrder):
@@ -74,10 +75,7 @@ class Order(BaseOrder):
         if self.filled_avg_price is None:
             self.filled_avg_price = filled_price
         else:
-            total_value = (
-                self.filled_avg_price * self.filled_quantity
-                + filled_price * filled_quantity
-            )
+            total_value = self.filled_avg_price * self.filled_quantity + filled_price * filled_quantity
             self.filled_avg_price = total_value / (self.filled_quantity + filled_quantity)
 
         self.filled_quantity += filled_quantity
@@ -139,30 +137,30 @@ class Order(BaseOrder):
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            'order_id': self.order_id,
-            'ts_code': self.ts_code,
-            'side': self.side.name,
-            'side_code': self.side.value,
-            'quantity': self.quantity,
-            'filled_quantity': self.filled_quantity,
-            'remaining_quantity': self.get_remaining_quantity(),
-            'order_type': self.order_type.name,
-            'order_type_code': self.order_type.value,
-            'price': self.price,
-            'stop_price': self.stop_price,
-            'filled_avg_price': self.filled_avg_price,
-            'status': self.status.name,
-            'status_code': self.status.value,
-            'strategy_id': self.strategy_id,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'submitted_at': self.submitted_at.isoformat() if self.submitted_at else None,
-            'filled_at': self.filled_at.isoformat() if self.filled_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'commission': self.commission,
-            'slippage': self.slippage,
-            'notional': self.get_notional(),
-            'filled_notional': self.get_filled_notional(),
-            'extra_info': self.extra_info,
+            "order_id": self.order_id,
+            "ts_code": self.ts_code,
+            "side": self.side.name,
+            "side_code": self.side.value,
+            "quantity": self.quantity,
+            "filled_quantity": self.filled_quantity,
+            "remaining_quantity": self.get_remaining_quantity(),
+            "order_type": self.order_type.name,
+            "order_type_code": self.order_type.value,
+            "price": self.price,
+            "stop_price": self.stop_price,
+            "filled_avg_price": self.filled_avg_price,
+            "status": self.status.name,
+            "status_code": self.status.value,
+            "strategy_id": self.strategy_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "submitted_at": self.submitted_at.isoformat() if self.submitted_at else None,
+            "filled_at": self.filled_at.isoformat() if self.filled_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "commission": self.commission,
+            "slippage": self.slippage,
+            "notional": self.get_notional(),
+            "filled_notional": self.get_filled_notional(),
+            "extra_info": self.extra_info,
         }
 
     @classmethod
@@ -172,7 +170,7 @@ class Order(BaseOrder):
         side: OrderSide,
         quantity: int,
         strategy_id: Optional[str] = None,
-    ) -> 'Order':
+    ) -> "Order":
         """创建市价单"""
         return cls(ts_code, side, quantity, OrderType.MARKET, strategy_id=strategy_id)
 
@@ -184,7 +182,7 @@ class Order(BaseOrder):
         quantity: int,
         price: float,
         strategy_id: Optional[str] = None,
-    ) -> 'Order':
+    ) -> "Order":
         """创建限价单"""
         return cls(
             ts_code=ts_code,
@@ -203,7 +201,7 @@ class Order(BaseOrder):
         quantity: int,
         stop_price: float,
         strategy_id: Optional[str] = None,
-    ) -> 'Order':
+    ) -> "Order":
         """创建止损单"""
         return cls(
             ts_code=ts_code,
@@ -223,7 +221,7 @@ class Order(BaseOrder):
         stop_price: float,
         limit_price: float,
         strategy_id: Optional[str] = None,
-    ) -> 'Order':
+    ) -> "Order":
         """创建止损限价单"""
         return cls(
             ts_code=ts_code,

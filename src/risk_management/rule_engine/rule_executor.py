@@ -2,10 +2,13 @@
 规则执行器
 执行规则匹配和检查，返回检查结果
 """
-from typing import Dict, Any, List, Optional
+
 import logging
+from typing import Any, Dict, List, Optional
+
 from src.risk_management.base.base_rule import BaseRule, RuleLevel
 from src.risk_management.base.base_violation import ViolationLevel
+
 from .rule_manager import RuleManager
 from .rule_result import RuleResult, RuleViolation
 
@@ -64,9 +67,7 @@ class RuleExecutor:
 
                     # 如果遇到阻断级别的违规，可以提前退出不检查后续规则
                     if violation.is_blocking():
-                        logger.debug(
-                            f"Blocked by rule {rule.rule_id}: {violation.message}"
-                        )
+                        logger.debug(f"Blocked by rule {rule.rule_id}: {violation.message}")
                         break
 
             except Exception as e:

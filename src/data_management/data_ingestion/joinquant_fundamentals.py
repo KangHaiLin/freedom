@@ -2,21 +2,25 @@
 JoinQuant数据源基本面数据适配器
 实现聚宽基本面数据接口的对接
 """
-import pandas as pd
-from typing import List, Dict
-import time
+
 import logging
+import time
 from datetime import datetime
+from typing import Dict, List
+
+import pandas as pd
+
+from common.exceptions import DataSourceException
+from common.utils import DateTimeUtils, StockCodeUtils
 
 from .fundamentals_collector import FundamentalsCollector
-from common.utils import StockCodeUtils, DateTimeUtils
-from common.exceptions import DataSourceException
 
 logger = logging.getLogger(__name__)
 
 # 模拟JoinQuant API导入，实际项目中需要安装jqdatasdk
 try:
     import jqdatasdk as jq
+
     JOINQUANT_AVAILABLE = True
 except ImportError:
     JOINQUANT_AVAILABLE = False
@@ -31,8 +35,8 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         if not JOINQUANT_AVAILABLE:
             raise DataSourceException("jqdatasdk未安装，无法使用JoinQuant基本面数据源")
 
-        self.username = config.get('username')
-        self.password = config.get('password')
+        self.username = config.get("username")
+        self.password = config.get("password")
         if not self.username or not self.password:
             raise DataSourceException("JoinQuant用户名或密码未配置")
 
@@ -43,7 +47,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
 
         self.request_count = 0
         self.last_request_time = 0
-        self.rate_limit = config.get('rate_limit', 100)  # 每分钟请求次数限制
+        self.rate_limit = config.get("rate_limit", 100)  # 每分钟请求次数限制
 
     def _rate_limit_check(self):
         """请求频率限制检查"""
@@ -62,7 +66,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
 
         self.request_count += 1
 
-    def get_stock_basic(self, list_status: str = 'L') -> pd.DataFrame:
+    def get_stock_basic(self, list_status: str = "L") -> pd.DataFrame:
         """获取股票列表基本信息"""
         return self.execute_with_retry(self._get_stock_basic, list_status)
 
@@ -70,7 +74,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         self._rate_limit_check()
 
         # JoinQuant获取所有股票列表
-        stocks = jq.get_all_securities(['stock'])
+        stocks = jq.get_all_securities(["stock"])
 
         if stocks.empty:
             logger.warning("JoinQuant返回股票列表为空")
@@ -78,27 +82,24 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
 
         # 转换格式
         stocks = stocks.reset_index()
-        stocks['stock_code'] = stocks['code'].apply(lambda x: StockCodeUtils.normalize_code(x))
+        stocks["stock_code"] = stocks["code"].apply(lambda x: StockCodeUtils.normalize_code(x))
 
         # 筛选上市状态
-        if list_status == 'L':
-            stocks = stocks[stocks['end_date'].isnull() | (stocks['end_date'] > datetime.now())]
-        elif list_status == 'D':
-            stocks = stocks[stocks['end_date'] <= datetime.now()]
+        if list_status == "L":
+            stocks = stocks[stocks["end_date"].isnull() | (stocks["end_date"] > datetime.now())]
+        elif list_status == "D":
+            stocks = stocks[stocks["end_date"] <= datetime.now()]
 
         # 重命名和选择字段
-        stocks = stocks.rename(columns={
-            'display_name': 'name',
-            'name': 'fullname',
-            'start_date': 'list_date',
-            'end_date': 'delist_date'
-        })
+        stocks = stocks.rename(
+            columns={"display_name": "name", "name": "fullname", "start_date": "list_date", "end_date": "delist_date"}
+        )
 
-        required_columns = ['stock_code', 'code', 'name', 'fullname', 'list_date', 'delist_date']
+        required_columns = ["stock_code", "code", "name", "fullname", "list_date", "delist_date"]
         result_df = stocks[required_columns].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code', 'name']):
+        if self.validate_data(result_df, required_columns=["stock_code", "name"]):
             return result_df
         return pd.DataFrame()
 
@@ -117,11 +118,12 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         for code in jq_codes:
             try:
                 # JoinQuant获取每日估值数据
-                df = jq.get_price(code, start_date=start_dt, end_date=end_dt,
-                                 fields=['capital', 'turnover', 'pe', 'pb'])
+                df = jq.get_price(
+                    code, start_date=start_dt, end_date=end_dt, fields=["capital", "turnover", "pe", "pb"]
+                )
                 if not df.empty:
-                    df['stock_code'] = code
-                    df = df.reset_index().rename(columns={'index': 'trade_date'})
+                    df["stock_code"] = code
+                    df = df.reset_index().rename(columns={"index": "trade_date"})
                     all_data.append(df)
             except Exception as e:
                 logger.warning(f"获取{code}每日基本面失败：{e}")
@@ -133,14 +135,14 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         result_df = pd.concat(all_data, ignore_index=True)
 
         # 重命名字段
-        result_df = result_df.rename(columns={
-            'capital': 'total_share',
-            'turnover': 'turnover_rate',
-        })
+        result_df = result_df.rename(
+            columns={
+                "capital": "total_share",
+                "turnover": "turnover_rate",
+            }
+        )
 
-        required_columns = [
-            'stock_code', 'trade_date', 'total_share', 'pe', 'pb', 'turnover_rate'
-        ]
+        required_columns = ["stock_code", "trade_date", "total_share", "pe", "pb", "turnover_rate"]
 
         for col in required_columns:
             if col not in result_df.columns:
@@ -149,7 +151,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         result_df = result_df[required_columns].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code', 'trade_date']):
+        if self.validate_data(result_df, required_columns=["stock_code", "trade_date"]):
             return result_df
         return pd.DataFrame()
 
@@ -165,11 +167,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
 
         # JoinQuant提供财务报表数据接口
         # 根据report_type选择不同的表
-        report_func_map = {
-            'income': jq.get_income,
-            'balance': jq.get_balance,
-            'cashflow': jq.get_cash_flow
-        }
+        report_func_map = {"income": jq.get_income, "balance": jq.get_balance, "cashflow": jq.get_cash_flow}
 
         if report_type not in report_func_map:
             logger.error(f"不支持的财务报告类型：{report_type}")
@@ -181,7 +179,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
             try:
                 df = func(code)
                 if not df.empty:
-                    df['stock_code'] = code
+                    df["stock_code"] = code
                     df = df.reset_index()
                     all_data.append(df)
             except Exception as e:
@@ -193,13 +191,13 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
 
         result_df = pd.concat(all_data, ignore_index=True)
 
-        if 'end_date' in result_df.columns:
-            result_df['end_date'] = pd.to_datetime(result_df['end_date'])
+        if "end_date" in result_df.columns:
+            result_df["end_date"] = pd.to_datetime(result_df["end_date"])
 
-        result_df['report_type'] = report_type
+        result_df["report_type"] = report_type
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code']):
+        if self.validate_data(result_df, required_columns=["stock_code"]):
             return result_df
         return pd.DataFrame()
 
@@ -218,21 +216,24 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         for code in jq_codes:
             try:
                 # JoinQuant获取财务指标
-                df = jq.get_fundamentals(jq.query(
-                    jq.indicator.roe,
-                    jq.indicator.roa,
-                    jq.indicator.gross_profit_margin,
-                    jq.indicator.net_profit_margin,
-                    jq.indicator.debt_to_assets,
-                    jq.indicator.current_ratio,
-                    jq.indicator.quick_ratio,
-                    jq.indicator.eps,
-                    jq.indicator.bps,
-                ).filter(jq.indicator.code == code), date=end_dt)
+                df = jq.get_fundamentals(
+                    jq.query(
+                        jq.indicator.roe,
+                        jq.indicator.roa,
+                        jq.indicator.gross_profit_margin,
+                        jq.indicator.net_profit_margin,
+                        jq.indicator.debt_to_assets,
+                        jq.indicator.current_ratio,
+                        jq.indicator.quick_ratio,
+                        jq.indicator.eps,
+                        jq.indicator.bps,
+                    ).filter(jq.indicator.code == code),
+                    date=end_dt,
+                )
 
                 if not df.empty:
-                    df['stock_code'] = code
-                    df['end_date'] = end_dt
+                    df["stock_code"] = code
+                    df["end_date"] = end_dt
                     all_data.append(df)
             except Exception as e:
                 logger.warning(f"获取{code}财务指标失败：{e}")
@@ -244,21 +245,32 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         result_df = pd.concat(all_data, ignore_index=True)
 
         # 重命名字段
-        result_df = result_df.rename(columns={
-            'roe': 'roe',
-            'roa': 'roa',
-            'gross_profit_margin': 'gross_margin',
-            'net_profit_margin': 'net_margin',
-            'debt_to_assets': 'debt_ratio',
-            'current_ratio': 'current_ratio',
-            'quick_ratio': 'quick_ratio',
-            'eps': 'eps',
-            'bps': 'bvps'
-        })
+        result_df = result_df.rename(
+            columns={
+                "roe": "roe",
+                "roa": "roa",
+                "gross_profit_margin": "gross_margin",
+                "net_profit_margin": "net_margin",
+                "debt_to_assets": "debt_ratio",
+                "current_ratio": "current_ratio",
+                "quick_ratio": "quick_ratio",
+                "eps": "eps",
+                "bps": "bvps",
+            }
+        )
 
         required_columns = [
-            'stock_code', 'end_date', 'roe', 'roa', 'gross_margin',
-            'net_margin', 'debt_ratio', 'current_ratio', 'quick_ratio', 'eps', 'bvps'
+            "stock_code",
+            "end_date",
+            "roe",
+            "roa",
+            "gross_margin",
+            "net_margin",
+            "debt_ratio",
+            "current_ratio",
+            "quick_ratio",
+            "eps",
+            "bvps",
         ]
 
         for col in required_columns:
@@ -268,7 +280,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         result_df = result_df[required_columns].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code', 'end_date']):
+        if self.validate_data(result_df, required_columns=["stock_code", "end_date"]):
             return result_df
         return pd.DataFrame()
 
@@ -287,7 +299,7 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
                 # JoinQuant获取分红拆分数据
                 df = jq.get_dividend(code)
                 if not df.empty:
-                    df['stock_code'] = code
+                    df["stock_code"] = code
                     all_data.append(df)
             except Exception as e:
                 logger.warning(f"获取{code}分红数据失败：{e}")
@@ -299,31 +311,27 @@ class JoinQuantFundamentalsCollector(FundamentalsCollector):
         result_df = pd.concat(all_data, ignore_index=True)
 
         # 转换日期格式
-        if 'ex_dividend_date' in result_df.columns:
-            result_df['ex_date'] = pd.to_datetime(result_df['ex_dividend_date'])
-        if 'record_date' in result_df.columns:
-            result_df['record_date'] = pd.to_datetime(result_df['record_date'])
-        if 'payable_date' in result_df.columns:
-            result_df['pay_date'] = pd.to_datetime(result_df['payable_date'])
+        if "ex_dividend_date" in result_df.columns:
+            result_df["ex_date"] = pd.to_datetime(result_df["ex_dividend_date"])
+        if "record_date" in result_df.columns:
+            result_df["record_date"] = pd.to_datetime(result_df["record_date"])
+        if "payable_date" in result_df.columns:
+            result_df["pay_date"] = pd.to_datetime(result_df["payable_date"])
 
-        required_columns = [
-            'stock_code', 'ex_date', 'record_date', 'pay_date',
-            'cash', 'bonus'
-        ]
+        required_columns = ["stock_code", "ex_date", "record_date", "pay_date", "cash", "bonus"]
 
         for col in required_columns:
             if col not in result_df.columns:
                 result_df[col] = None
 
-        result_df = result_df.rename(columns={
-            'cash': 'dividend_per_share',
-            'bonus': 'bonus_ratio'
-        })
+        result_df = result_df.rename(columns={"cash": "dividend_per_share", "bonus": "bonus_ratio"})
 
-        result_df = result_df[['stock_code', 'ex_date', 'record_date', 'pay_date', 'dividend_per_share', 'bonus_ratio']].copy()
+        result_df = result_df[
+            ["stock_code", "ex_date", "record_date", "pay_date", "dividend_per_share", "bonus_ratio"]
+        ].copy()
 
         # 数据校验
-        if self.validate_data(result_df, required_columns=['stock_code']):
+        if self.validate_data(result_df, required_columns=["stock_code"]):
             return result_df
         return pd.DataFrame()
 

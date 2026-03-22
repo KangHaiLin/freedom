@@ -2,10 +2,12 @@
 异常交易检测
 识别异常交易模式，满足反洗钱和监管要求
 """
-from typing import Dict, Any, List, Optional, Tuple
+
 from datetime import datetime, timedelta
-import pandas as pd
+from typing import Any, Dict, List, Optional, Tuple
+
 import numpy as np
+import pandas as pd
 
 
 class AbnormalTradeDetector:
@@ -49,15 +51,17 @@ class AbnormalTradeDetector:
         """
         anomalies = []
         for trade in trades:
-            amount = trade.get('price', 0.0) * trade.get('quantity', 0)
+            amount = trade.get("price", 0.0) * trade.get("quantity", 0)
             if amount >= self._large_order_threshold:
-                anomalies.append({
-                    'type': 'large_order',
-                    'trade_id': trade.get('trade_id'),
-                    'amount': amount,
-                    'threshold': self._large_order_threshold,
-                    'trade_data': trade,
-                })
+                anomalies.append(
+                    {
+                        "type": "large_order",
+                        "trade_id": trade.get("trade_id"),
+                        "amount": amount,
+                        "threshold": self._large_order_threshold,
+                        "trade_data": trade,
+                    }
+                )
         return anomalies
 
     def detect_frequent_trading(self, trades: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -75,20 +79,22 @@ class AbnormalTradeDetector:
 
         # 按日期分组
         df = pd.DataFrame(trades)
-        df['date'] = pd.to_datetime(df.get('filled_time', datetime.now())).dt.date
-        daily_counts = df.groupby('date').size()
+        df["date"] = pd.to_datetime(df.get("filled_time", datetime.now())).dt.date
+        daily_counts = df.groupby("date").size()
 
         anomalies = []
         for date, count in daily_counts.items():
             if count >= self._frequent_daily_threshold:
-                daily_trades = df[df['date'] == date].to_dict('records')
-                anomalies.append({
-                    'type': 'frequent_daily',
-                    'date': date.isoformat(),
-                    'count': count,
-                    'threshold': self._frequent_daily_threshold,
-                    'trades': daily_trades,
-                })
+                daily_trades = df[df["date"] == date].to_dict("records")
+                anomalies.append(
+                    {
+                        "type": "frequent_daily",
+                        "date": date.isoformat(),
+                        "count": count,
+                        "threshold": self._frequent_daily_threshold,
+                        "trades": daily_trades,
+                    }
+                )
         return anomalies
 
     def detect_fast_in_out(self, trades: List[Dict[str, Any]], positions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -105,26 +111,28 @@ class AbnormalTradeDetector:
         anomalies = []
 
         # 对每只股票计算买入卖出间隔
-        for ts_code in set(t.get('ts_code') for t in trades):
-            code_trades = [t for t in trades if t.get('ts_code') == ts_code]
-            code_trades.sort(key=lambda x: x.get('filled_time', datetime.min))
+        for ts_code in set(t.get("ts_code") for t in trades):
+            code_trades = [t for t in trades if t.get("ts_code") == ts_code]
+            code_trades.sort(key=lambda x: x.get("filled_time", datetime.min))
 
             buy_time = None
             for trade in code_trades:
-                if trade.get('side') == 'BUY':
-                    buy_time = datetime.fromisoformat(str(trade.get('filled_time')))
-                elif trade.get('side') == 'SELL' and buy_time:
-                    sell_time = datetime.fromisoformat(str(trade.get('filled_time')))
+                if trade.get("side") == "BUY":
+                    buy_time = datetime.fromisoformat(str(trade.get("filled_time")))
+                elif trade.get("side") == "SELL" and buy_time:
+                    sell_time = datetime.fromisoformat(str(trade.get("filled_time")))
                     holding_days = (sell_time - buy_time).days
                     if holding_days <= self._holding_days_threshold:
-                        anomalies.append({
-                            'type': 'fast_in_out',
-                            'ts_code': ts_code,
-                            'holding_days': holding_days,
-                            'threshold': self._holding_days_threshold,
-                            'buy_time': buy_time.isoformat(),
-                            'sell_time': sell_time.isoformat(),
-                        })
+                        anomalies.append(
+                            {
+                                "type": "fast_in_out",
+                                "ts_code": ts_code,
+                                "holding_days": holding_days,
+                                "threshold": self._holding_days_threshold,
+                                "buy_time": buy_time.isoformat(),
+                                "sell_time": sell_time.isoformat(),
+                            }
+                        )
                     buy_time = None
         return anomalies
 
@@ -148,29 +156,33 @@ class AbnormalTradeDetector:
 
         # 获取最后15分钟
         last_15 = intraday_data.iloc[-15:]
-        price_change = (last_15.iloc[-1]['close'] - last_15.iloc[0]['open']) / last_15.iloc[0]['open']
+        price_change = (last_15.iloc[-1]["close"] - last_15.iloc[0]["open"]) / last_15.iloc[0]["open"]
 
         # 尾市涨幅超过2%且放量，可能拉抬
         if price_change > 0.02:
-            volume_ratio = last_15['volume'].mean() / intraday_data.iloc[:-15]['volume'].mean()
+            volume_ratio = last_15["volume"].mean() / intraday_data.iloc[:-15]["volume"].mean()
             if volume_ratio > 2:
-                anomalies.append({
-                    'type': 'end_of_day_ramp',
-                    'price_change': price_change * 100,
-                    'volume_ratio': volume_ratio,
-                    'description': '尾市大幅拉抬配合放量，疑似价格操纵',
-                })
+                anomalies.append(
+                    {
+                        "type": "end_of_day_ramp",
+                        "price_change": price_change * 100,
+                        "volume_ratio": volume_ratio,
+                        "description": "尾市大幅拉抬配合放量，疑似价格操纵",
+                    }
+                )
 
         # 尾市跌幅超过2%且放量，可能打压
         if price_change < -0.02:
-            volume_ratio = last_15['volume'].mean() / intraday_data.iloc[:-15]['volume'].mean()
+            volume_ratio = last_15["volume"].mean() / intraday_data.iloc[:-15]["volume"].mean()
             if volume_ratio > 2:
-                anomalies.append({
-                    'type': 'end_of_day_suppress',
-                    'price_change': price_change * 100,
-                    'volume_ratio': volume_ratio,
-                    'description': '尾市大幅打压配合放量，疑似价格操纵',
-                })
+                anomalies.append(
+                    {
+                        "type": "end_of_day_suppress",
+                        "price_change": price_change * 100,
+                        "volume_ratio": volume_ratio,
+                        "description": "尾市大幅打压配合放量，疑似价格操纵",
+                    }
+                )
 
         return anomalies
 
@@ -194,32 +206,34 @@ class AbnormalTradeDetector:
 
         anomalies = []
         df = pd.DataFrame(orders)
-        df['datetime'] = pd.to_datetime(df.get('created_at', datetime.now()))
+        df["datetime"] = pd.to_datetime(df.get("created_at", datetime.now()))
 
         # 按股票代码和方向分组
-        for (ts_code, side), group in df.groupby(['ts_code', 'side']):
+        for (ts_code, side), group in df.groupby(["ts_code", "side"]):
             if len(group) < 3:
                 continue
             # 按时间排序
-            group = group.sort_values('datetime')
+            group = group.sort_values("datetime")
             # 滑动窗口检查短时间内多笔同方向订单
             for i in range(len(group) - 2):
-                window = group.iloc[i:i+3]
-                time_diff = (window.iloc[-1]['datetime'] - window.iloc[0]['datetime']).total_seconds()
+                window = group.iloc[i : i + 3]
+                time_diff = (window.iloc[-1]["datetime"] - window.iloc[0]["datetime"]).total_seconds()
                 if time_diff <= window_minutes * 60:
                     # 短时间内多笔，检查总金额是否达到大额标准
-                    total_amount = (window['price'] * window['quantity']).sum()
+                    total_amount = (window["price"] * window["quantity"]).sum()
                     if total_amount >= self._large_order_threshold * 0.8:
                         # 大单拆分检测到
-                        anomalies.append({
-                            'type': 'splitting_orders',
-                            'ts_code': ts_code,
-                            'side': side,
-                            'order_count': 3,
-                            'total_amount': total_amount,
-                            'time_span_seconds': time_diff,
-                            'description': f'{time_diff:.0f}秒内分3笔申报，总金额接近大额阈值',
-                        })
+                        anomalies.append(
+                            {
+                                "type": "splitting_orders",
+                                "ts_code": ts_code,
+                                "side": side,
+                                "order_count": 3,
+                                "total_amount": total_amount,
+                                "time_span_seconds": time_diff,
+                                "description": f"{time_diff:.0f}秒内分3笔申报，总金额接近大额阈值",
+                            }
+                        )
         return anomalies
 
     def detect_all(
@@ -236,22 +250,22 @@ class AbnormalTradeDetector:
             检测结果汇总
         """
         results = {}
-        results['large_order'] = self.detect_large_order(trades)
-        results['frequent_trading'] = self.detect_frequent_trading(trades)
+        results["large_order"] = self.detect_large_order(trades)
+        results["frequent_trading"] = self.detect_frequent_trading(trades)
         if positions is not None:
-            results['fast_in_out'] = self.detect_fast_in_out(trades, positions)
+            results["fast_in_out"] = self.detect_fast_in_out(trades, positions)
         if intraday_data is not None:
-            results['price_manipulation'] = self.detect_price_manipulation(intraday_data)
+            results["price_manipulation"] = self.detect_price_manipulation(intraday_data)
         if orders is not None:
-            results['splitting_orders'] = self.detect_splitting_orders(orders)
+            results["splitting_orders"] = self.detect_splitting_orders(orders)
 
         # 统计
         total_anomalies = sum(len(v) for v in results.values())
 
         return {
-            'results': results,
-            'total_anomalies': total_anomalies,
-            'has_anomalies': total_anomalies > 0,
+            "results": results,
+            "total_anomalies": total_anomalies,
+            "has_anomalies": total_anomalies > 0,
         }
 
     def set_thresholds(

@@ -1,15 +1,17 @@
 """
 数据查询模块单元测试
 """
-import pytest
-import pandas as pd
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
 
-from data_management.data_query.market_data_query import MarketDataQuery
-from data_management.data_query.fundamental_data_query import FundamentalDataQuery
-from data_management.data_query.query_manager import QueryManager
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, Mock, patch
+
+import pandas as pd
+import pytest
+
 from data_management.data_query.base_query import QueryCondition, QueryResult
+from data_management.data_query.fundamental_data_query import FundamentalDataQuery
+from data_management.data_query.market_data_query import MarketDataQuery
+from data_management.data_query.query_manager import QueryManager
 
 
 class TestQueryCondition:
@@ -65,11 +67,9 @@ class TestMarketDataQuery:
 
     def test_get_realtime_quote(self):
         """测试获取实时行情"""
-        mock_df = pd.DataFrame({
-            "stock_code": ["000001.SZ", "600000.SH"],
-            "price": [10.0, 15.0],
-            "time": [datetime.now(), datetime.now()]
-        })
+        mock_df = pd.DataFrame(
+            {"stock_code": ["000001.SZ", "600000.SH"], "price": [10.0, 15.0], "time": [datetime.now(), datetime.now()]}
+        )
 
         # 模拟postgresql存储（实时行情存在postgresql）
         mock_postgresql = Mock()
@@ -83,9 +83,9 @@ class TestMarketDataQuery:
         # 先设置mock，再创建MarketDataQuery（因为__init__会立即调用get_storage_by_type）
         storage_manager = Mock()
         storage_manager.get_storage_by_type.side_effect = lambda type_name: {
-            'clickhouse': mock_clickhouse,
-            'postgresql': mock_postgresql,
-            'redis': mock_redis
+            "clickhouse": mock_clickhouse,
+            "postgresql": mock_postgresql,
+            "redis": mock_redis,
         }[type_name]
 
         market_query = MarketDataQuery(storage_manager)
@@ -97,10 +97,9 @@ class TestMarketDataQuery:
 
     def test_get_daily_quote_with_date_range(self):
         """测试获取指定日期范围的日线行情"""
-        mock_df = pd.DataFrame({
-            "trade_date": pd.date_range("2023-01-01", "2023-01-10"),
-            "close": [10.0 + i * 0.1 for i in range(10)]
-        })
+        mock_df = pd.DataFrame(
+            {"trade_date": pd.date_range("2023-01-01", "2023-01-10"), "close": [10.0 + i * 0.1 for i in range(10)]}
+        )
 
         mock_redis = Mock()
         mock_redis.read.return_value = None  # 缓存未命中
@@ -111,19 +110,15 @@ class TestMarketDataQuery:
         # 先设置mock，再创建MarketDataQuery
         storage_manager = Mock()
         storage_manager.get_storage_by_type.side_effect = lambda type_name: {
-            'clickhouse': mock_storage,
-            'postgresql': mock_postgresql,
-            'redis': mock_redis
+            "clickhouse": mock_storage,
+            "postgresql": mock_postgresql,
+            "redis": mock_redis,
         }[type_name]
 
         start_date = datetime(2023, 1, 1)
         end_date = datetime(2023, 1, 10)
         market_query = MarketDataQuery(storage_manager)
-        result = market_query.get_daily_quote(
-            ["000001.SZ"],
-            start_date=start_date,
-            end_date=end_date
-        )
+        result = market_query.get_daily_quote(["000001.SZ"], start_date=start_date, end_date=end_date)
         assert result.success
         df = result.to_df()
         assert not df.empty
@@ -131,10 +126,7 @@ class TestMarketDataQuery:
 
     def test_calculate_ma(self):
         """测试计算均线"""
-        mock_df = pd.DataFrame({
-            "trade_date": pd.date_range("2023-01-01", "2023-01-10"),
-            "close": [10.0] * 10
-        })
+        mock_df = pd.DataFrame({"trade_date": pd.date_range("2023-01-01", "2023-01-10"), "close": [10.0] * 10})
 
         mock_redis = Mock()
         mock_redis.read.return_value = None  # 缓存未命中
@@ -145,9 +137,9 @@ class TestMarketDataQuery:
         # 先设置mock，再创建MarketDataQuery
         storage_manager = Mock()
         storage_manager.get_storage_by_type.side_effect = lambda type_name: {
-            'clickhouse': mock_storage,
-            'postgresql': mock_postgresql,
-            'redis': mock_redis
+            "clickhouse": mock_storage,
+            "postgresql": mock_postgresql,
+            "redis": mock_redis,
         }[type_name]
 
         market_query = MarketDataQuery(storage_manager)
@@ -167,14 +159,15 @@ class TestMarketDataQuery:
         # 先设置mock，再创建MarketDataQuery
         storage_manager = Mock()
         storage_manager.get_storage_by_type.side_effect = lambda type_name: {
-            'clickhouse': mock_clickhouse,
-            'postgresql': mock_postgresql,
-            'redis': mock_redis_storage
+            "clickhouse": mock_clickhouse,
+            "postgresql": mock_postgresql,
+            "redis": mock_redis_storage,
         }[type_name]
 
         from unittest.mock import patch
+
         market_query = MarketDataQuery(storage_manager)
-        with patch.object(market_query, '_build_cache_key') as mock_cache_key:
+        with patch.object(market_query, "_build_cache_key") as mock_cache_key:
             mock_cache_key.return_value = "cache:realtime:000001.SZ"
 
             # 第一次查询，缓存未命中
@@ -182,8 +175,9 @@ class TestMarketDataQuery:
 
             # 模拟缓存命中 - Redis返回的是JSON字符串，MarketDataQuery会用pd.DataFrame(cache_result)构造
             import json
+
             mock_df = pd.DataFrame({"stock_code": ["000001.SZ"], "price": [10.0]})
-            mock_redis_storage.read.return_value = mock_df.to_dict('records')
+            mock_redis_storage.read.return_value = mock_df.to_dict("records")
 
             # 第二次查询，缓存命中
             result2 = market_query.get_realtime_quote(["000001.SZ"])
@@ -197,11 +191,13 @@ class TestFundamentalDataQuery:
 
     def test_get_income_statement(self):
         """测试获取利润表"""
-        mock_df = pd.DataFrame({
-            "report_date": ["2023-03-31", "2023-06-30"],
-            "revenue": [100000000, 150000000],
-            "net_profit": [50000000, 75000000]
-        })
+        mock_df = pd.DataFrame(
+            {
+                "report_date": ["2023-03-31", "2023-06-30"],
+                "revenue": [100000000, 150000000],
+                "net_profit": [50000000, 75000000],
+            }
+        )
 
         mock_clickhouse = Mock()
         mock_clickhouse.read.return_value = mock_df
@@ -212,16 +208,13 @@ class TestFundamentalDataQuery:
         # 先设置mock，再创建FundamentalDataQuery
         storage_manager = Mock()
         storage_manager.get_storage_by_type.side_effect = lambda type_name: {
-            'clickhouse': mock_clickhouse,
-            'postgresql': mock_postgresql,
-            'redis': mock_redis
+            "clickhouse": mock_clickhouse,
+            "postgresql": mock_postgresql,
+            "redis": mock_redis,
         }[type_name]
 
         fundamental_query = FundamentalDataQuery(storage_manager)
-        result = fundamental_query.get_income_statement(
-            ["000001.SZ"],
-            report_type="quarterly"
-        )
+        result = fundamental_query.get_income_statement(["000001.SZ"], report_type="quarterly")
         assert result.success
         df = result.to_df()
         assert not df.empty
@@ -232,12 +225,7 @@ class TestFundamentalDataQuery:
 
     def test_get_financial_indicator(self):
         """测试获取财务指标"""
-        mock_df = pd.DataFrame({
-            "stock_code": ["000001.SZ"],
-            "pe": [10.5],
-            "pb": [1.2],
-            "roe": [15.3]
-        })
+        mock_df = pd.DataFrame({"stock_code": ["000001.SZ"], "pe": [10.5], "pb": [1.2], "roe": [15.3]})
 
         mock_clickhouse = Mock()
         mock_clickhouse.read.return_value = mock_df
@@ -248,9 +236,9 @@ class TestFundamentalDataQuery:
         # 先设置mock，再创建FundamentalDataQuery
         storage_manager = Mock()
         storage_manager.get_storage_by_type.side_effect = lambda type_name: {
-            'clickhouse': mock_clickhouse,
-            'postgresql': mock_postgresql,
-            'redis': mock_redis
+            "clickhouse": mock_clickhouse,
+            "postgresql": mock_postgresql,
+            "redis": mock_redis,
         }[type_name]
 
         fundamental_query = FundamentalDataQuery(storage_manager)
@@ -265,13 +253,16 @@ class TestFundamentalDataQuery:
 class TestQueryManager:
     """查询管理器测试"""
 
-    @patch.dict('common.config.settings.QUERY_CONFIG', {
-        "default_storage": "postgresql",
-        "cache_enabled": True,
-        "slow_query_threshold": 1.0,
-        "max_query_limit": 100000,
-        "query_timeout": 30
-    })
+    @patch.dict(
+        "common.config.settings.QUERY_CONFIG",
+        {
+            "default_storage": "postgresql",
+            "cache_enabled": True,
+            "slow_query_threshold": 1.0,
+            "max_query_limit": 100000,
+            "query_timeout": 30,
+        },
+    )
     def test_batch_query(self):
         """测试批量查询"""
         mock_storage = Mock()
@@ -280,6 +271,7 @@ class TestQueryManager:
 
         # patch 模块级别的全局 storage_manager
         from data_management.data_query import query_manager
+
         original_sm = query_manager.storage_manager
         query_manager.storage_manager = Mock()
         query_manager.storage_manager.get_storage_by_type = Mock(return_value=mock_storage)
@@ -289,16 +281,8 @@ class TestQueryManager:
 
         # 创建批量查询 - batch_query接收字典参数列表，不是QueryCondition列表
         queries = [
-            {
-                "service_type": "market",
-                "stock_codes": ["000001.SZ"],
-                "filters": {"data_type": "realtime"}
-            },
-            {
-                "service_type": "market",
-                "stock_codes": ["600000.SH"],
-                "filters": {"data_type": "daily"}
-            }
+            {"service_type": "market", "stock_codes": ["000001.SZ"], "filters": {"data_type": "realtime"}},
+            {"service_type": "market", "stock_codes": ["600000.SH"], "filters": {"data_type": "daily"}},
         ]
 
         results = manager.batch_query(queries)
@@ -308,13 +292,16 @@ class TestQueryManager:
         assert len(results) == 2
         assert all([isinstance(r, QueryResult) for r in results])
 
-    @patch.dict('common.config.settings.QUERY_CONFIG', {
-        "default_storage": "postgresql",
-        "cache_enabled": True,
-        "slow_query_threshold": 1.0,
-        "max_query_limit": 100000,
-        "query_timeout": 30
-    })
+    @patch.dict(
+        "common.config.settings.QUERY_CONFIG",
+        {
+            "default_storage": "postgresql",
+            "cache_enabled": True,
+            "slow_query_threshold": 1.0,
+            "max_query_limit": 100000,
+            "query_timeout": 30,
+        },
+    )
     def test_slow_query_monitoring(self):
         """测试慢查询监控"""
         # 这个测试验证慢查询会被记录日志，我们mock掉实际查询只模拟耗时
@@ -322,6 +309,7 @@ class TestQueryManager:
         # patch 模块级别的全局 storage_manager
         from data_management.data_query import query_manager
         from data_management.data_query.query_manager import QueryManager
+
         original_sm = query_manager.storage_manager
 
         # mock整个storage_manager避免实际连接数据库
@@ -332,32 +320,30 @@ class TestQueryManager:
         manager = QueryManager()
 
         # mock MarketDataQuery.query，模拟一个慢查询（让查询本身耗时 > 5秒会触发警告）
-        with patch.object(manager, 'get_query_service') as mock_get_service:
+        with patch.object(manager, "get_query_service") as mock_get_service:
             mock_service = Mock()
+
             def slow_query(*args, **kwargs):
                 import time
+
                 time.sleep(0.006)  # 让实际执行时间超过0.005秒？不，阈值是5秒...我们需要看代码
                 # QueryManager警告发生在 result.query_time > 5，我们直接mock time.time来让它认为超过5秒
-                return QueryResult(
-                    data=pd.DataFrame({"stock_code": ["000001.SZ"]}),
-                    total=1,
-                    success=True
-                )
+                return QueryResult(data=pd.DataFrame({"stock_code": ["000001.SZ"]}), total=1, success=True)
+
             mock_service.query = slow_query
             mock_get_service.return_value = mock_service
 
             import logging
             import time
-            query_logger = logging.getLogger('data_management.data_query.query_manager')
+
+            query_logger = logging.getLogger("data_management.data_query.query_manager")
             # mock time.time让它模拟一个超过5秒的查询
             start = time.time()
-            with patch('time.time') as mock_time:
+            with patch("time.time") as mock_time:
                 mock_time.side_effect = [start, start + 6]  # start 到 end相差6秒
-                with patch.object(query_logger, 'warning') as mock_warning:
+                with patch.object(query_logger, "warning") as mock_warning:
                     result = manager.query(
-                        service_type='market',
-                        stock_codes=["000001.SZ"],
-                        filters={"data_type": "realtime"}
+                        service_type="market", stock_codes=["000001.SZ"], filters={"data_type": "realtime"}
                     )
                     # 恢复原模块
                     query_manager.storage_manager = original_sm

@@ -2,15 +2,18 @@
 WebSocket接口
 提供实时行情推送服务
 """
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
-from typing import List, Dict, Optional
+
+import asyncio
 import json
 import logging
-import asyncio
 from datetime import datetime
+from typing import Dict, List, Optional
+
+from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+
+from data_management.data_query.query_manager import query_manager
 
 from .dependencies import verify_api_key
-from data_management.data_query.query_manager import query_manager
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +80,9 @@ class ConnectionManager:
                     if not self.active_connections[code]:
                         del self.active_connections[code]
 
-        logger.info(f"客户端{websocket.client.host}取消订阅股票：{stock_codes}，当前订阅：{self.subscriptions[websocket]}")
+        logger.info(
+            f"客户端{websocket.client.host}取消订阅股票：{stock_codes}，当前订阅：{self.subscriptions[websocket]}"
+        )
 
         # 如果没有订阅了，停止推送任务
         if not self.active_connections and self.push_task:
@@ -109,15 +114,15 @@ class ConnectionManager:
                 df = result.to_df()
                 # 按股票代码分组推送
                 for _, row in df.iterrows():
-                    stock_code = row['stock_code']
+                    stock_code = row["stock_code"]
                     if stock_code not in self.active_connections:
                         continue
 
-                    message = json.dumps({
-                        "type": "realtime_quote",
-                        "data": row.to_dict(),
-                        "timestamp": datetime.now().isoformat()
-                    }, ensure_ascii=False, default=str)
+                    message = json.dumps(
+                        {"type": "realtime_quote", "data": row.to_dict(), "timestamp": datetime.now().isoformat()},
+                        ensure_ascii=False,
+                        default=str,
+                    )
 
                     # 推送给所有订阅该股票的连接
                     for connection in self.active_connections[stock_code]:
@@ -141,10 +146,7 @@ manager = ConnectionManager()
 
 
 @ws_router.websocket("/ws/realtime")
-async def websocket_endpoint(
-    websocket: WebSocket,
-    api_key: Optional[str] = Query(None, description="API Key")
-):
+async def websocket_endpoint(websocket: WebSocket, api_key: Optional[str] = Query(None, description="API Key")):
     """
     实时行情WebSocket接口
     消息格式：
@@ -154,6 +156,7 @@ async def websocket_endpoint(
     # 验证API Key
     from common.config import settings
     from common.utils import CryptoUtils
+
     if settings.API_KEY_ENABLED:
         if not api_key or not CryptoUtils.verify_api_key(api_key):
             await websocket.close(code=1008, reason="无效的API Key")
@@ -170,27 +173,15 @@ async def websocket_endpoint(
 
                 if action == "subscribe" and stock_codes:
                     await manager.subscribe(websocket, stock_codes)
-                    await websocket.send_json({
-                        "type": "system",
-                        "message": f"成功订阅股票：{stock_codes}"
-                    })
+                    await websocket.send_json({"type": "system", "message": f"成功订阅股票：{stock_codes}"})
                 elif action == "unsubscribe" and stock_codes:
                     await manager.unsubscribe(websocket, stock_codes)
-                    await websocket.send_json({
-                        "type": "system",
-                        "message": f"成功取消订阅股票：{stock_codes}"
-                    })
+                    await websocket.send_json({"type": "system", "message": f"成功取消订阅股票：{stock_codes}"})
                 else:
-                    await websocket.send_json({
-                        "type": "error",
-                        "message": "无效的消息格式"
-                    })
+                    await websocket.send_json({"type": "error", "message": "无效的消息格式"})
 
             except json.JSONDecodeError:
-                await websocket.send_json({
-                    "type": "error",
-                    "message": "无效的JSON格式"
-                })
+                await websocket.send_json({"type": "error", "message": "无效的JSON格式"})
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)

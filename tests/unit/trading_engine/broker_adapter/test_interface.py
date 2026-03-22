@@ -1,8 +1,10 @@
 """
 Unit tests for interface.py
 """
+
 import pytest
-from src.trading_engine.broker_adapter.interface import CommissionConfig, CommissionCalculator
+
+from src.trading_engine.broker_adapter.interface import CommissionCalculator, CommissionConfig
 
 
 def test_commission_calculator_buy():

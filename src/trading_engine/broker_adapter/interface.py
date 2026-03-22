@@ -2,6 +2,7 @@
 券商接口定义
 定义通用的佣金计算规则和接口常量
 """
+
 from dataclasses import dataclass
 from typing import Optional
 
@@ -9,6 +10,7 @@ from typing import Optional
 @dataclass
 class CommissionConfig:
     """佣金配置"""
+
     # 佣金费率，一般万3
     commission_rate: float = 0.0003
     # 最低佣金

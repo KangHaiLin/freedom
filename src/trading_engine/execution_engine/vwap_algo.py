@@ -2,9 +2,11 @@
 VWAP (Volume Weighted Average Price) 执行算法
 将大单拆分成多个小订单，在一段时间内均匀成交，减少市场冲击
 """
-from typing import List, Tuple, Optional
-from datetime import datetime, timedelta
+
 import math
+from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
+
 import numpy as np
 
 from src.trading_engine.base.base_order import OrderSide

@@ -2,14 +2,16 @@
 操作日志记录器
 记录所有风控操作，满足合规审计要求
 """
-from typing import Dict, Any, List, Optional
-from datetime import datetime
+
 import json
+from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class OperationType:
     """操作类型常量"""
+
     RULE_CREATE = "rule_create"
     RULE_UPDATE = "rule_update"
     RULE_DELETE = "rule_delete"
@@ -43,26 +45,29 @@ class OperationLog:
 
     def to_json(self) -> str:
         """序列化为JSON"""
-        return json.dumps({
-            'log_id': self.log_id,
-            'operation_type': self.operation_type,
-            'operator_id': self.operator_id,
-            'operation_time': self.operation_time.isoformat(),
-            'details': self.details,
-            'ip_address': self.ip_address,
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "log_id": self.log_id,
+                "operation_type": self.operation_type,
+                "operator_id": self.operator_id,
+                "operation_time": self.operation_time.isoformat(),
+                "details": self.details,
+                "ip_address": self.ip_address,
+            },
+            ensure_ascii=False,
+        )
 
     @classmethod
-    def from_json(cls, json_str: str) -> 'OperationLog':
+    def from_json(cls, json_str: str) -> "OperationLog":
         """从JSON反序列化"""
         data = json.loads(json_str)
         return cls(
-            log_id=data['log_id'],
-            operation_type=data['operation_type'],
-            operator_id=data['operator_id'],
-            operation_time=datetime.fromisoformat(data['operation_time']),
-            details=data['details'],
-            ip_address=data.get('ip_address'),
+            log_id=data["log_id"],
+            operation_type=data["operation_type"],
+            operator_id=data["operator_id"],
+            operation_time=datetime.fromisoformat(data["operation_time"]),
+            details=data["details"],
+            ip_address=data.get("ip_address"),
         )
 
 
@@ -85,7 +90,7 @@ class OperationLogger:
             enable_console: 是否输出到控制台
         """
         if log_file_path is None:
-            log_file_path = 'logs/risk_operations.log'
+            log_file_path = "logs/risk_operations.log"
         self._log_path = Path(log_file_path)
         self._log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -129,8 +134,8 @@ class OperationLogger:
 
         self._logs.append(log)
         # 写入文件，JSON格式一行一条
-        with open(self._log_path, 'a', encoding='utf-8') as f:
-            f.write(log.to_json() + '\n')
+        with open(self._log_path, "a", encoding="utf-8") as f:
+            f.write(log.to_json() + "\n")
 
         if self._enable_console:
             print(f"[AUDIT] {log.operation_type} by {log.operator_id}: {details}")
@@ -175,7 +180,7 @@ class OperationLogger:
             return 0
 
         count = 0
-        with open(self._log_path, 'r', encoding='utf-8') as f:
+        with open(self._log_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if not line:
@@ -183,7 +188,7 @@ class OperationLogger:
                 # 提取JSON部分（logging会在开头加时间等）
                 # 如果直接用logging保存，这里需要解析
                 try:
-                    log = OperationLog.from_json(line.split(' - ')[-1])
+                    log = OperationLog.from_json(line.split(" - ")[-1])
                 except:
                     try:
                         log = OperationLog.from_json(line)
@@ -211,8 +216,8 @@ class OperationLogger:
     def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         return {
-            'status': 'ok',
-            'total_logs': self.count_logs(),
-            'log_file': str(self._log_path),
-            'log_file_exists': self._log_path.exists(),
+            "status": "ok",
+            "total_logs": self.count_logs(),
+            "log_file": str(self._log_path),
+            "log_file_exists": self._log_path.exists(),
         }

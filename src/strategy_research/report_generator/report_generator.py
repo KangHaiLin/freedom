@@ -2,9 +2,10 @@
 回测报告生成器
 生成HTML/CSV/PNG回测结果报告
 """
-from typing import Dict, Any, Optional
+
 import json
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 from src.strategy_research.base import BacktestResult
 
@@ -44,15 +45,17 @@ def generate_html_report(result: BacktestResult, include_charts: bool = True) ->
     # 准备数据
     daily_data = []
     for ds in result.daily_stats:
-        if hasattr(ds.date, 'isoformat'):
+        if hasattr(ds.date, "isoformat"):
             date_str = ds.date.isoformat()
         else:
             date_str = str(ds.date)
-        daily_data.append({
-            'date': date_str,
-            'total_assets': ds.total_assets,
-            'daily_pnl': ds.daily_pnl,
-        })
+        daily_data.append(
+            {
+                "date": date_str,
+                "total_assets": ds.total_assets,
+                "daily_pnl": ds.daily_pnl,
+            }
+        )
 
     daily_json = json.dumps(daily_data, ensure_ascii=False)
 
@@ -120,12 +123,15 @@ def generate_html_report(result: BacktestResult, include_charts: bool = True) ->
 """
 
     if include_charts:
-        html += """
+        html += (
+            """
     <h2>权益曲线</h2>
     <div id="equity-chart"></div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const data = """ + daily_json + """;
+        const data = """
+            + daily_json
+            + """;
         const ctx = document.getElementById('equity-chart').getContext('2d');
         const labels = data.map(d => d.date.slice(0, 10));
         const values = data.map(d => d.total_assets);
@@ -159,6 +165,7 @@ def generate_html_report(result: BacktestResult, include_charts: bool = True) ->
         });
     </script>
 """
+        )
 
     html += """
 </div>
@@ -172,7 +179,7 @@ def generate_html_report(result: BacktestResult, include_charts: bool = True) ->
 def save_report(
     result: BacktestResult,
     output_path: str,
-    format: str = 'html',
+    format: str = "html",
 ) -> Dict[str, Any]:
     """
     保存回测报告到文件
@@ -185,26 +192,26 @@ def save_report(
     Returns:
         保存结果
     """
-    if format == 'html':
+    if format == "html":
         content = generate_html_report(result)
-        content_type = 'text/html'
-    elif format == 'json':
+        content_type = "text/html"
+    elif format == "json":
         content = generate_json_report(result)
-        content_type = 'application/json'
-    elif format == 'text':
+        content_type = "application/json"
+    elif format == "text":
         content = generate_text_report(result)
-        content_type = 'text/plain'
+        content_type = "text/plain"
     else:
-        return {'success': False, 'error': f"Unknown format {format}"}
+        return {"success": False, "error": f"Unknown format {format}"}
 
     try:
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             f.write(content)
         return {
-            'success': True,
-            'path': output_path,
-            'format': format,
-            'content_type': content_type,
+            "success": True,
+            "path": output_path,
+            "format": format,
+            "content_type": content_type,
         }
     except Exception as e:
-        return {'success': False, 'error': str(e)}
+        return {"success": False, "error": str(e)}

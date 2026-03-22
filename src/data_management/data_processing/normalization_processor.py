@@ -3,11 +3,13 @@
 支持Min-Max归一化、Z-score标准化、Robust缩放、对数变换、Winsorize截断
 支持拟合并缓存缩放参数，用于训练集测试集分开处理
 """
-from typing import Any, Dict, List, Optional, Union
-import pandas as pd
-import numpy as np
+
 import logging
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from typing import Any, Dict, List, Optional, Union
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, RobustScaler, StandardScaler
 
 from .base_processor import BaseProcessor
 
@@ -23,8 +25,9 @@ class NormalizationProcessor(BaseProcessor):
         self.scalers: Dict[str, Any] = {}
         self.fitted = False
 
-    def process(self, data: Any, method: str = 'minmax', cols: Optional[List[str]] = None,
-                fit: bool = True, **kwargs) -> Union[pd.DataFrame, np.ndarray]:
+    def process(
+        self, data: Any, method: str = "minmax", cols: Optional[List[str]] = None, fit: bool = True, **kwargs
+    ) -> Union[pd.DataFrame, np.ndarray]:
         """
         归一化处理入口
         Args:
@@ -49,12 +52,7 @@ class NormalizationProcessor(BaseProcessor):
             return data
 
     def _process_dataframe(
-        self,
-        df: pd.DataFrame,
-        method: str,
-        cols: Optional[List[str]],
-        fit: bool,
-        **kwargs
+        self, df: pd.DataFrame, method: str, cols: Optional[List[str]], fit: bool, **kwargs
     ) -> pd.DataFrame:
         """处理DataFrame"""
         df = df.copy()
@@ -67,44 +65,38 @@ class NormalizationProcessor(BaseProcessor):
             logger.warning(f"{self.name}: 没有数值列需要归一化")
             return df
 
-        if method == 'minmax':
-            feature_range = kwargs.get('feature_range', (0, 1))
+        if method == "minmax":
+            feature_range = kwargs.get("feature_range", (0, 1))
             df = self._minmax_df(df, cols, feature_range, fit)
-        elif method == 'zscore':
+        elif method == "zscore":
             df = self._zscore_df(df, cols, fit)
-        elif method == 'robust':
+        elif method == "robust":
             df = self._robust_df(df, cols, fit)
-        elif method == 'log':
-            offset = kwargs.get('offset', 1e-8)
+        elif method == "log":
+            offset = kwargs.get("offset", 1e-8)
             df = self._log_transform_df(df, cols, offset)
-        elif method == 'winsorize':
-            limits = kwargs.get('limits', (0.01, 0.01))
+        elif method == "winsorize":
+            limits = kwargs.get("limits", (0.01, 0.01))
             df = self._winsorize_df(df, cols, limits)
         else:
             logger.warning(f"{self.name}: 未知的归一化方法: {method}")
 
         return df
 
-    def _process_array(
-        self,
-        arr: np.ndarray,
-        method: str,
-        fit: bool,
-        **kwargs
-    ) -> np.ndarray:
+    def _process_array(self, arr: np.ndarray, method: str, fit: bool, **kwargs) -> np.ndarray:
         """处理numpy数组"""
-        if method == 'minmax':
-            feature_range = kwargs.get('feature_range', (0, 1))
+        if method == "minmax":
+            feature_range = kwargs.get("feature_range", (0, 1))
             return self._minmax_array(arr, feature_range, fit)
-        elif method == 'zscore':
+        elif method == "zscore":
             return self._zscore_array(arr, fit)
-        elif method == 'robust':
+        elif method == "robust":
             return self._robust_array(arr, fit)
-        elif method == 'log':
-            offset = kwargs.get('offset', 1e-8)
+        elif method == "log":
+            offset = kwargs.get("offset", 1e-8)
             return self._log_transform_array(arr, offset)
-        elif method == 'winsorize':
-            limits = kwargs.get('limits', (0.01, 0.01))
+        elif method == "winsorize":
+            limits = kwargs.get("limits", (0.01, 0.01))
             return self._winsorize_array(arr, limits)
         else:
             logger.warning(f"{self.name}: 未知的归一化方法: {method}")
@@ -112,7 +104,7 @@ class NormalizationProcessor(BaseProcessor):
 
     def _minmax_df(self, df: pd.DataFrame, cols: List[str], feature_range: tuple, fit: bool) -> pd.DataFrame:
         """Min-Max归一化到指定范围（默认0-1）"""
-        key = 'minmax_' + '_'.join(cols)
+        key = "minmax_" + "_".join(cols)
 
         if fit:
             scaler = MinMaxScaler(feature_range=feature_range)
@@ -129,7 +121,7 @@ class NormalizationProcessor(BaseProcessor):
 
     def _minmax_array(self, arr: np.ndarray, feature_range: tuple, fit: bool) -> np.ndarray:
         """Min-Max归一化numpy数组"""
-        key = 'minmax_array'
+        key = "minmax_array"
 
         if fit:
             scaler = MinMaxScaler(feature_range=feature_range)
@@ -146,7 +138,7 @@ class NormalizationProcessor(BaseProcessor):
 
     def _zscore_df(self, df: pd.DataFrame, cols: List[str], fit: bool) -> pd.DataFrame:
         """Z-score标准化，均值0标准差1"""
-        key = 'zscore_' + '_'.join(cols)
+        key = "zscore_" + "_".join(cols)
 
         if fit:
             scaler = StandardScaler()
@@ -163,7 +155,7 @@ class NormalizationProcessor(BaseProcessor):
 
     def _zscore_array(self, arr: np.ndarray, fit: bool) -> np.ndarray:
         """Z-score标准化numpy数组"""
-        key = 'zscore_array'
+        key = "zscore_array"
 
         if fit:
             scaler = StandardScaler()
@@ -180,7 +172,7 @@ class NormalizationProcessor(BaseProcessor):
 
     def _robust_df(self, df: pd.DataFrame, cols: List[str], fit: bool) -> pd.DataFrame:
         """Robust缩放，对异常值更鲁棒，使用中位数和四分位距"""
-        key = 'robust_' + '_'.join(cols)
+        key = "robust_" + "_".join(cols)
 
         if fit:
             scaler = RobustScaler()
@@ -197,7 +189,7 @@ class NormalizationProcessor(BaseProcessor):
 
     def _robust_array(self, arr: np.ndarray, fit: bool) -> np.ndarray:
         """Robust缩放numpy数组"""
-        key = 'robust_array'
+        key = "robust_array"
 
         if fit:
             scaler = RobustScaler()
@@ -242,7 +234,7 @@ class NormalizationProcessor(BaseProcessor):
         upper = np.quantile(arr, 1 - limits[1])
         return np.clip(arr, lower, upper)
 
-    def inverse_transform(self, data: Any, method: str = 'minmax', cols: Optional[List[str]] = None) -> Any:
+    def inverse_transform(self, data: Any, method: str = "minmax", cols: Optional[List[str]] = None) -> Any:
         """
         逆变换，恢复原始数据范围
         Args:
@@ -254,9 +246,9 @@ class NormalizationProcessor(BaseProcessor):
         """
         key_prefix = method
         if cols:
-            key = key_prefix + '_' + '_'.join(cols)
+            key = key_prefix + "_" + "_".join(cols)
         else:
-            key = key_prefix + '_array'
+            key = key_prefix + "_array"
 
         if key not in self.scalers:
             logger.warning(f"{self.name}: 找不到对应的scaler: {key}")

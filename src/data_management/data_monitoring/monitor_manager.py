@@ -2,20 +2,22 @@
 监控管理器
 统一管理所有监控任务，负责任务调度、执行、告警发送和结果存储
 """
-from typing import List, Dict, Optional, Any
+
+import json
+import logging
 import threading
 import time
 from datetime import datetime, timedelta
-import logging
-import json
+from typing import Any, Dict, List, Optional
 
-from .base_monitor import BaseMonitor, MonitorResult
-from .data_quality_monitor import DataQualityMonitor
-from .collection_monitor import CollectionMonitor
-from .alert_service import alert_service
-from ..data_storage.storage_manager import storage_manager
 from common.config import settings
 from common.utils import DateTimeUtils
+
+from ..data_storage.storage_manager import storage_manager
+from .alert_service import alert_service
+from .base_monitor import BaseMonitor, MonitorResult
+from .collection_monitor import CollectionMonitor
+from .data_quality_monitor import DataQualityMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +30,8 @@ class MonitorManager:
         self.running = False
         self.scheduler_thread: Optional[threading.Thread] = None
         self.alert_service = alert_service
-        self.storage = storage_manager.get_storage_by_type('clickhouse')
-        self.redis_storage = storage_manager.get_storage_by_type('redis')
+        self.storage = storage_manager.get_storage_by_type("clickhouse")
+        self.redis_storage = storage_manager.get_storage_by_type("redis")
         self.config = settings.MONITOR_CONFIG
         self._init_monitors()
 
@@ -37,13 +39,13 @@ class MonitorManager:
         """初始化所有监控实例"""
         try:
             # 数据质量监控
-            if self.config.get('enable_data_quality_monitor', True):
-                self.monitors.append(DataQualityMonitor(self.config.get('data_quality', {})))
+            if self.config.get("enable_data_quality_monitor", True):
+                self.monitors.append(DataQualityMonitor(self.config.get("data_quality", {})))
                 logger.info("数据质量监控已加载")
 
             # 采集监控
-            if self.config.get('enable_collection_monitor', True):
-                self.monitors.append(CollectionMonitor(self.config.get('collection', {})))
+            if self.config.get("enable_collection_monitor", True):
+                self.monitors.append(CollectionMonitor(self.config.get("collection", {})))
                 logger.info("采集监控已加载")
 
             logger.info(f"共加载{len(self.monitors)}个监控任务")
@@ -90,8 +92,10 @@ class MonitorManager:
                 current_time = time.time()
                 for monitor in self.monitors:
                     # 检查是否到了执行时间
-                    if not monitor.last_run_time or \
-                       (current_time - monitor.last_run_time.timestamp()) >= monitor.interval:
+                    if (
+                        not monitor.last_run_time
+                        or (current_time - monitor.last_run_time.timestamp()) >= monitor.interval
+                    ):
                         try:
                             result = monitor.run()
                             if result:
@@ -135,15 +139,17 @@ class MonitorManager:
             if not self.storage:
                 return
 
-            data = [{
-                "monitor_name": result.monitor_name,
-                "success": result.success,
-                "message": result.message,
-                "level": result.level.value,
-                "metrics": json.dumps(result.metrics, ensure_ascii=False),
-                "details": json.dumps(result.details, ensure_ascii=False),
-                "timestamp": result.timestamp
-            }]
+            data = [
+                {
+                    "monitor_name": result.monitor_name,
+                    "success": result.success,
+                    "message": result.message,
+                    "level": result.level.value,
+                    "metrics": json.dumps(result.metrics, ensure_ascii=False),
+                    "details": json.dumps(result.details, ensure_ascii=False),
+                    "timestamp": result.timestamp,
+                }
+            ]
 
             self.storage.write("monitor_results", data)
             logger.debug(f"监控结果已保存：{result.monitor_name}")
@@ -160,7 +166,7 @@ class MonitorManager:
         limit: int = 100,
         level: Optional[str] = None,
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+        end_time: Optional[datetime] = None,
     ) -> List[Dict]:
         """查询历史告警记录"""
         try:
@@ -189,7 +195,7 @@ class MonitorManager:
             """
 
             df = self.storage.execute_sql(sql, params=params)
-            return df.to_dict('records') if not df.empty else []
+            return df.to_dict("records") if not df.empty else []
 
         except Exception as e:
             logger.error(f"查询历史告警失败：{e}")
@@ -204,27 +210,29 @@ class MonitorManager:
             "recent_alerts": self.get_recent_alerts(limit=20),
             "24h_alert_count": 0,
             "error_count": 0,
-            "warning_count": 0
+            "warning_count": 0,
         }
 
         try:
             # 统计24小时告警
             if self.storage:
-                df = self.storage.execute_sql("""
+                df = self.storage.execute_sql(
+                    """
                     SELECT level, count(*) as cnt
                     FROM monitor_results
                     WHERE timestamp >= now() - INTERVAL 24 HOUR
                     GROUP BY level
-                """)
+                """
+                )
 
                 if not df.empty:
                     for _, row in df.iterrows():
-                        cnt = row['cnt']
-                        data['24h_alert_count'] += cnt
-                        if row['level'] == 'error':
-                            data['error_count'] = cnt
-                        elif row['level'] == 'warning':
-                            data['warning_count'] = cnt
+                        cnt = row["cnt"]
+                        data["24h_alert_count"] += cnt
+                        if row["level"] == "error":
+                            data["error_count"] = cnt
+                        elif row["level"] == "warning":
+                            data["warning_count"] = cnt
 
         except Exception as e:
             logger.error(f"获取监控面板数据失败：{e}")
@@ -238,7 +246,7 @@ class MonitorManager:
             "monitor_count": len(self.monitors),
             "running": self.running,
             "alert_service_healthy": True,
-            "check_time": DateTimeUtils.now_str()
+            "check_time": DateTimeUtils.now_str(),
         }
 
     def get_data_quality_history(self, days: int = 30) -> Dict:
@@ -248,12 +256,7 @@ class MonitorManager:
         Returns:
             按日期分组的数据质量趋势数据
         """
-        result = {
-            "dates": [],
-            "quality_scores": [],
-            "completeness": [],
-            "accuracy": []
-        }
+        result = {"dates": [], "quality_scores": [], "completeness": [], "accuracy": []}
 
         try:
             if not self.storage:
@@ -280,7 +283,9 @@ class MonitorManager:
                     result["dates"].append(str(row["check_date"]))
                     result["quality_scores"].append(float(row["avg_score"] if row["avg_score"] is not None else 0))
                     if "avg_completeness" in df.columns:
-                        result["completeness"].append(float(row["avg_completeness"] if row["avg_completeness"] is not None else 0))
+                        result["completeness"].append(
+                            float(row["avg_completeness"] if row["avg_completeness"] is not None else 0)
+                        )
                     if "avg_accuracy" in df.columns:
                         result["accuracy"].append(float(row["avg_accuracy"] if row["avg_accuracy"] is not None else 0))
 
@@ -309,10 +314,11 @@ class MonitorManager:
                 return None
 
             row = df.iloc[0].to_dict()
-            if 'metrics' in row and isinstance(row['metrics'], str):
+            if "metrics" in row and isinstance(row["metrics"], str):
                 import json
+
                 try:
-                    row['metrics'] = json.loads(row['metrics'])
+                    row["metrics"] = json.loads(row["metrics"])
                 except:
                     pass
             return row

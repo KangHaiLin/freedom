@@ -1,10 +1,13 @@
 """
 Integration tests for StrategyResearchManager
 """
+
 import tempfile
+
 import pandas as pd
-from src.strategy_research.strategy_manager import StrategyResearchManager
+
 from src.strategy_research.base import StrategyStatus
+from src.strategy_research.strategy_manager import StrategyResearchManager
 
 
 def test_create_and_backtest():
@@ -23,10 +26,10 @@ def test_create_and_backtest():
             description="Simple buy and hold",
             author="test",
             params={},
-            tags=['buy_hold'],
+            tags=["buy_hold"],
         )
 
-        assert result['success'] is True
+        assert result["success"] is True
 
         # List strategies
         strategies = manager.list_strategies()
@@ -34,8 +37,8 @@ def test_create_and_backtest():
 
         # Health check
         health = manager.health_check()
-        assert health['status'] == 'ok'
-        assert health['strategies'] == 1
+        assert health["status"] == "ok"
+        assert health["strategies"] == 1
 
 
 def test_backtest_custom():
@@ -47,13 +50,13 @@ def test_backtest_custom():
             signals = {}
             for _, row in bar_data.iterrows():
                 if len(portfolio.get_all_positions()) == 0:
-                    signals[row['ts_code']] = TradeDirection.BUY
+                    signals[row["ts_code"]] = TradeDirection.BUY
             return signals
 
     data = [
-        {'trade_date': 20240101, 'ts_code': '000001.SZ', 'close': 10},
-        {'trade_date': 20240102, 'ts_code': '000001.SZ', 'close': 10.2},
-        {'trade_date': 20240103, 'ts_code': '000001.SZ', 'close': 10.5},
+        {"trade_date": 20240101, "ts_code": "000001.SZ", "close": 10},
+        {"trade_date": 20240102, "ts_code": "000001.SZ", "close": 10.2},
+        {"trade_date": 20240103, "ts_code": "000001.SZ", "close": 10.5},
     ]
     df = pd.DataFrame(data)
 

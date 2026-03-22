@@ -3,17 +3,18 @@
 整合所有子模块，提供统一接口，全局单例
 遵循项目 *Manager 模式
 """
+
 import threading
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
 from pathlib import Path
+from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 from .configuration_center import ConfigManager, get_config_manager
-from .log_center import LogManager, get_log_manager, ModuleLogger, get_logger
+from .log_center import LogManager, ModuleLogger, get_log_manager, get_logger
 from .monitoring_center import MonitorManager, get_monitor_manager
-from .operation_tools import HealthCheckManager, SystemDiagnostic, Maintenance
+from .operation_tools import HealthCheckManager, Maintenance, SystemDiagnostic
 from .task_scheduler import SchedulerManager, get_scheduler_manager
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class SystemManager:
@@ -23,10 +24,10 @@ class SystemManager:
     全局单例模式
     """
 
-    _instance: Optional['SystemManager'] = None
+    _instance: Optional["SystemManager"] = None
     _lock: threading.Lock = threading.Lock()
 
-    def __new__(cls) -> 'SystemManager':
+    def __new__(cls) -> "SystemManager":
         """单例创建"""
         if cls._instance is None:
             with cls._lock:
@@ -37,7 +38,7 @@ class SystemManager:
 
     def __init__(self):
         """初始化，只执行一次"""
-        if getattr(self, '_initialized', False):
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
 
@@ -240,11 +241,8 @@ class SystemManager:
         # 添加健康检查管理器的结果
         if self._health_check:
             custom_checks = self._health_check.check_all()
-            result['custom_checks'] = custom_checks
-            result['overall_healthy'] = (
-                result['status'] in ('ok', 'warning') and
-                custom_checks['overall_healthy']
-            )
+            result["custom_checks"] = custom_checks
+            result["overall_healthy"] = result["status"] in ("ok", "warning") and custom_checks["overall_healthy"]
 
         return result
 
@@ -274,9 +272,7 @@ class SystemManager:
         start_immediately: bool = True,
     ) -> str:
         """添加固定间隔定时任务"""
-        return self.scheduler.add_interval(
-            interval_seconds, callback, task_name, start_immediately
-        )
+        return self.scheduler.add_interval(interval_seconds, callback, task_name, start_immediately)
 
     def submit_async(
         self,
@@ -286,9 +282,7 @@ class SystemManager:
         task_name: Optional[str] = None,
     ) -> str:
         """提交异步任务"""
-        return self.scheduler.submit_async(
-            func, priority, on_complete, task_name
-        )
+        return self.scheduler.submit_async(func, priority, on_complete, task_name)
 
     # ========== 运维工具访问 ==========
 
@@ -321,9 +315,9 @@ class SystemManager:
             return self.diagnostic.export_report_markdown(output_path)
         report = self.diagnostic.generate_report()
         # 添加系统状态信息
-        report['system_manager_running'] = self.is_running
-        report['scheduler_stats'] = self.scheduler.get_stats()
-        report['metrics'] = self.get_metrics()
+        report["system_manager_running"] = self.is_running
+        report["scheduler_stats"] = self.scheduler.get_stats()
+        report["metrics"] = self.get_metrics()
         return str(report)
 
     def shutdown(self) -> None:

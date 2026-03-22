@@ -2,13 +2,15 @@
 任务调度 - 调度器管理器
 统一入口，启动/停止调度，注册/取消定时任务，提交异步任务
 """
+
 import threading
 import time
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
+
+from .async_task import AsyncTask, AsyncTaskQueue
 from .base_task import TaskStatus
 from .scheduled_task import ScheduledTask
-from .async_task import AsyncTask, AsyncTaskQueue
 from .task_registry import TaskRegistry
 
 
@@ -20,10 +22,10 @@ class SchedulerManager:
     - 统一入口，单例模式
     """
 
-    _instance: Optional['SchedulerManager'] = None
+    _instance: Optional["SchedulerManager"] = None
     _lock: threading.Lock = threading.Lock()
 
-    def __new__(cls) -> 'SchedulerManager':
+    def __new__(cls) -> "SchedulerManager":
         """单例创建"""
         if cls._instance is None:
             with cls._lock:
@@ -34,7 +36,7 @@ class SchedulerManager:
 
     def __init__(self):
         """初始化，只执行一次"""
-        if getattr(self, '_initialized', False):
+        if getattr(self, "_initialized", False):
             return
         self._initialized = True
         self._registry = TaskRegistry()
@@ -184,13 +186,13 @@ class SchedulerManager:
             return task.to_dict()
         elif isinstance(task, AsyncTask):
             return {
-                'task_id': task.task_id,
-                'task_name': task.task_name,
-                'status': task.status.value,
-                'priority': task.priority,
-                'created_at': task.created_at.isoformat(),
-                'started_at': task.started_at.isoformat() if task.started_at else None,
-                'finished_at': task.finished_at.isoformat() if task.finished_at else None,
+                "task_id": task.task_id,
+                "task_name": task.task_name,
+                "status": task.status.value,
+                "priority": task.priority,
+                "created_at": task.created_at.isoformat(),
+                "started_at": task.started_at.isoformat() if task.started_at else None,
+                "finished_at": task.finished_at.isoformat() if task.finished_at else None,
             }
         return None
 
@@ -267,20 +269,20 @@ class SchedulerManager:
         """获取调度统计信息"""
         stats = self._registry.get_stats()
         if self._async_queue:
-            stats['pending_async'] = self._async_queue.pending_count
-        stats['running'] = self._running
+            stats["pending_async"] = self._async_queue.pending_count
+        stats["running"] = self._running
         return stats
 
     def list_all_tasks(self) -> Dict[str, Any]:
         """列出所有任务"""
         return {
-            'scheduled': [t.to_dict() for t in self._registry.list_scheduled()],
-            'async': [
+            "scheduled": [t.to_dict() for t in self._registry.list_scheduled()],
+            "async": [
                 {
-                    'task_id': t.task_id,
-                    'task_name': t.task_name,
-                    'status': t.status.value,
-                    'priority': t.priority,
+                    "task_id": t.task_id,
+                    "task_name": t.task_name,
+                    "status": t.status.value,
+                    "priority": t.priority,
                 }
                 for t in self._registry.list_async()
             ],

@@ -2,15 +2,18 @@
 ClickHouse存储适配器
 实现ClickHouse列式数据库的存储操作，适用于海量时序数据存储和分析
 """
-from typing import List, Dict, Optional, Any, Union
+
+import logging
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
 from clickhouse_driver import Client
-import logging
-from datetime import datetime, date
 
-from .base_storage import BaseStorage
 from common.exceptions import StorageException
 from common.utils import DateTimeUtils
+
+from .base_storage import BaseStorage
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +23,13 @@ class ClickHouseStorage(BaseStorage):
 
     def __init__(self, config: Dict):
         super().__init__(config)
-        self.host = config.get('host', 'localhost')
-        self.port = config.get('port', 9000)
-        self.database = config.get('database', 'default')
-        self.user = config.get('user', 'default')
-        self.password = config.get('password', '')
-        self.chunk_size = config.get('chunk_size', 10000)
-        self.settings = config.get('settings', {
-            'max_insert_block_size': 100000,
-            'use_numpy': False
-        })
+        self.host = config.get("host", "localhost")
+        self.port = config.get("port", 9000)
+        self.database = config.get("database", "default")
+        self.user = config.get("user", "default")
+        self.password = config.get("password", "")
+        self.chunk_size = config.get("chunk_size", 10000)
+        self.settings = config.get("settings", {"max_insert_block_size": 100000, "use_numpy": False})
 
     def connect(self) -> bool:
         """建立ClickHouse连接"""
@@ -40,7 +40,7 @@ class ClickHouseStorage(BaseStorage):
                 database=self.database,
                 user=self.user,
                 password=self.password,
-                settings=self.settings
+                settings=self.settings,
             )
 
             # 测试连接
@@ -86,12 +86,9 @@ class ClickHouseStorage(BaseStorage):
             # 批量插入 - 转为行式字典列表
             rows_written = 0
             for i in range(0, len(df), self.chunk_size):
-                chunk = df.iloc[i:i + self.chunk_size]
-                rows = chunk.to_dict('records')
-                self.connection.execute(
-                    f"INSERT INTO {table_name} VALUES",
-                    rows
-                )
+                chunk = df.iloc[i : i + self.chunk_size]
+                rows = chunk.to_dict("records")
+                self.connection.execute(f"INSERT INTO {table_name} VALUES", rows)
                 rows_written += len(chunk)
 
             logger.debug(f"ClickHouse写入成功，表：{table_name}，记录数：{rows_written}")
@@ -111,31 +108,30 @@ class ClickHouseStorage(BaseStorage):
 
             if query:
                 conditions = []
-                params = []
                 for key, value in query.items():
                     if isinstance(value, list):
                         # clickhouse-driver requires string formatting for IN clause
                         if len(value) == 1:
                             conditions.append(f"{key} = '{value[0]}'")
                         else:
-                            placeholders = ', '.join([f"'{v}'" for v in value])
+                            placeholders = ", ".join([f"'{v}'" for v in value])
                             conditions.append(f"{key} IN ({placeholders})")
                     elif isinstance(value, tuple) and len(value) == 2:
                         # 范围查询 (start, end)
                         start_val, end_val = value
                         if isinstance(start_val, datetime):
                             # 如果列是 Date 类型，只需要日期部分
-                            start_str = start_val.strftime('%Y-%m-%d')
-                            end_str = end_val.strftime('%Y-%m-%d')
+                            start_str = start_val.strftime("%Y-%m-%d")
+                            end_str = end_val.strftime("%Y-%m-%d")
                         elif isinstance(start_val, date):
-                            start_str = start_val.strftime('%Y-%m-%d')
-                            end_str = end_val.strftime('%Y-%m-%d')
+                            start_str = start_val.strftime("%Y-%m-%d")
+                            end_str = end_val.strftime("%Y-%m-%d")
                         else:
                             # 字符串，已经是正确格式了
-                            start_str = str(start_val)[:10] if ' ' in str(start_val) else str(start_val)
-                            end_str = str(end_val)[:10] if ' ' in str(end_val) else str(end_val)
+                            start_str = str(start_val)[:10] if " " in str(start_val) else str(start_val)
+                            end_str = str(end_val)[:10] if " " in str(end_val) else str(end_val)
                         conditions.append(f"{key} >= '{start_str}' AND {key} <= '{end_str}'")
-                    elif isinstance(value, str) and ('%' in value or '_' in value):
+                    elif isinstance(value, str) and ("%" in value or "_" in value):
                         conditions.append(f"{key} LIKE '{value}'")
                     else:
                         conditions.append(f"{key} = '{value}'")
@@ -144,23 +140,24 @@ class ClickHouseStorage(BaseStorage):
                     sql += " WHERE " + " AND ".join(conditions)
 
             # 添加排序和限制
-            if 'order_by' in kwargs:
-                order_by = kwargs['order_by']
-                if isinstance(order_by, list):
-                    # 处理列表形式的排序，支持-前缀表示降序
-                    order_parts = []
-                    for col in order_by:
-                        if col.startswith('-'):
-                            order_parts.append(f"{col[1:]} DESC")
-                        else:
-                            order_parts.append(f"{col} ASC")
-                    order_by_str = ', '.join(order_parts)
-                else:
-                    order_by_str = str(order_by)
-                sql += f" ORDER BY {order_by_str}"
-            if 'limit' in kwargs and kwargs['limit'] is not None:
+            if "order_by" in kwargs:
+                order_by = kwargs["order_by"]
+                if order_by is not None:
+                    if isinstance(order_by, list):
+                        # 处理列表形式的排序，支持-前缀表示降序
+                        order_parts = []
+                        for col in order_by:
+                            if col.startswith("-"):
+                                order_parts.append(f"{col[1:]} DESC")
+                            else:
+                                order_parts.append(f"{col} ASC")
+                        order_by_str = ", ".join(order_parts)
+                    else:
+                        order_by_str = str(order_by)
+                    sql += f" ORDER BY {order_by_str}"
+            if "limit" in kwargs and kwargs["limit"] is not None:
                 sql += f" LIMIT {kwargs['limit']}"
-            if 'offset' in kwargs and kwargs['offset'] is not None:
+            if "offset" in kwargs and kwargs["offset"] is not None:
                 sql += f" OFFSET {kwargs['offset']}"
 
             logger.debug(f"ClickHouse查询SQL：{sql}")
@@ -172,10 +169,10 @@ class ClickHouseStorage(BaseStorage):
 
             # 转换日期时间类型
             for col in df.columns:
-                if 'date' in col.lower() or 'time' in col.lower():
+                if "date" in col.lower() or "time" in col.lower():
                     try:
                         df[col] = pd.to_datetime(df[col])
-                    except:
+                    except Exception:
                         pass
 
             logger.debug(f"ClickHouse查询成功，返回{len(df)}条记录")
@@ -194,7 +191,7 @@ class ClickHouseStorage(BaseStorage):
             params = []
             for key, value in query.items():
                 if isinstance(value, list):
-                    placeholders = ', '.join(['%s'] * len(value))
+                    placeholders = ", ".join(["%s"] * len(value))
                     conditions.append(f"{key} IN ({placeholders})")
                     params.extend(value)
                 else:
@@ -256,10 +253,10 @@ class ClickHouseStorage(BaseStorage):
                 columns.append(f"{col_name} {col_def}")
 
             # 引擎设置
-            engine = kwargs.get('engine', 'MergeTree')
-            order_by = kwargs.get('order_by', 'tuple()')
-            partition_by = kwargs.get('partition_by')
-            primary_key = kwargs.get('primary_key')
+            engine = kwargs.get("engine", "MergeTree")
+            order_by = kwargs.get("order_by", "tuple()")
+            partition_by = kwargs.get("partition_by")
+            primary_key = kwargs.get("primary_key")
 
             create_sql = f"""
                 CREATE TABLE IF NOT EXISTS {table_name} (
@@ -299,7 +296,7 @@ class ClickHouseStorage(BaseStorage):
                 "port": self.port,
                 "database": self.database,
                 "response_time": response_time,
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }
 
         except Exception as e:
@@ -309,5 +306,5 @@ class ClickHouseStorage(BaseStorage):
                 "port": self.port,
                 "database": self.database,
                 "error": str(e),
-                "is_connected": self.is_connected
+                "is_connected": self.is_connected,
             }

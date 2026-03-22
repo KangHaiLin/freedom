@@ -2,20 +2,23 @@
 查询抽象基类
 所有查询服务都需要实现此接口，提供统一的查询操作规范
 """
+
+import logging
 from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Any, Union
+from datetime import date, datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
+
 import pandas as pd
-from datetime import datetime, date, timedelta
 
 from common.exceptions import QueryException
 from common.utils import DateTimeUtils, StockCodeUtils
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class QueryCondition:
     """查询条件封装"""
+
     def __init__(self):
         self.stock_codes: Optional[List[str]] = None
         self.start_date: Optional[Union[str, date, datetime]] = None
@@ -56,19 +59,20 @@ class QueryCondition:
             "limit": self.limit,
             "offset": self.offset,
             "aggregation": self.aggregation,
-            "group_by": self.group_by
+            "group_by": self.group_by,
         }
 
 
 class QueryResult:
     """查询结果封装"""
+
     def __init__(
         self,
         data: Union[pd.DataFrame, List[Dict]],
         total: int = 0,
         success: bool = True,
         message: str = "",
-        query_time: float = 0.0
+        query_time: float = 0.0,
     ):
         self.data = data
         self.total = total if total is not None else (len(data) if data is not None else 0)
@@ -81,7 +85,7 @@ class QueryResult:
         """转换为字典格式"""
         data_dict = []
         if isinstance(self.data, pd.DataFrame):
-            data_dict = self.data.to_dict('records')
+            data_dict = self.data.to_dict("records")
         elif isinstance(self.data, list):
             data_dict = self.data
 
@@ -91,7 +95,7 @@ class QueryResult:
             "success": self.success,
             "message": self.message,
             "query_time": round(self.query_time, 3),
-            "timestamp": DateTimeUtils.to_str(self.timestamp)
+            "timestamp": DateTimeUtils.to_str(self.timestamp),
         }
 
     def to_df(self) -> pd.DataFrame:
@@ -138,9 +142,7 @@ class BaseQuery(ABC):
         return [StockCodeUtils.normalize_code(code) for code in stock_codes]
 
     def _normalize_dates(
-        self,
-        start_date: Optional[Union[str, date, datetime]],
-        end_date: Optional[Union[str, date, datetime]]
+        self, start_date: Optional[Union[str, date, datetime]], end_date: Optional[Union[str, date, datetime]]
     ) -> tuple[Optional[datetime], Optional[datetime]]:
         """标准化日期时间"""
         normalized_start = DateTimeUtils.parse(start_date) if start_date else None
@@ -175,7 +177,7 @@ class BaseQuery(ABC):
         sort_columns = []
         ascending = []
         for col in order_by:
-            if col.startswith('-'):
+            if col.startswith("-"):
                 col_name = col[1:]
                 if col_name in df.columns:
                     sort_columns.append(col_name)
@@ -202,9 +204,9 @@ class BaseQuery(ABC):
 
             if isinstance(value, list):
                 df = df[df[key].isin(value)]
-            elif isinstance(value, str) and ('%' in value or '_' in value):
+            elif isinstance(value, str) and ("%" in value or "_" in value):
                 # 模糊匹配
-                pattern = value.replace('%', '.*').replace('_', '.')
+                pattern = value.replace("%", ".*").replace("_", ".")
                 df = df[df[key].astype(str).str.match(pattern)]
             else:
                 df = df[df[key] == value]
