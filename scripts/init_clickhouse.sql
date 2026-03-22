@@ -4,6 +4,7 @@ CREATE DATABASE IF NOT EXISTS stock_test;
 USE stock_test;
 
 -- 日线行情表
+-- 使用 ReplacingMergeTree 自动去重，相同(trade_date, stock_code)保留最新版本
 CREATE TABLE IF NOT EXISTS daily_market_data
 (
     trade_date Date,
@@ -17,12 +18,13 @@ CREATE TABLE IF NOT EXISTS daily_market_data
     adjust_factor Float64,
     created_at DateTime DEFAULT now()
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(created_at)
 PARTITION BY toYYYYMM(trade_date)
 ORDER BY (trade_date, stock_code)
 SETTINGS index_granularity = 8192;
 
 -- 1分钟线行情表
+-- 使用 ReplacingMergeTree 自动去重，相同(trade_time, stock_code)保留最新版本
 CREATE TABLE IF NOT EXISTS minute1_market_data
 (
     trade_time DateTime,
@@ -35,12 +37,13 @@ CREATE TABLE IF NOT EXISTS minute1_market_data
     amount Float64,
     created_at DateTime DEFAULT now()
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(created_at)
 PARTITION BY toYYYYMM(trade_time)
 ORDER BY (trade_time, stock_code)
 SETTINGS index_granularity = 8192;
 
 -- 5分钟线行情表
+-- 使用 ReplacingMergeTree 自动去重，相同(trade_time, stock_code)保留最新版本
 CREATE TABLE IF NOT EXISTS minute5_market_data
 (
     trade_time DateTime,
@@ -53,12 +56,13 @@ CREATE TABLE IF NOT EXISTS minute5_market_data
     amount Float64,
     created_at DateTime DEFAULT now()
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(created_at)
 PARTITION BY toYYYYMM(trade_time)
 ORDER BY (trade_time, stock_code)
 SETTINGS index_granularity = 8192;
 
 -- 15分钟线行情表
+-- 使用 ReplacingMergeTree 自动去重，相同(trade_time, stock_code)保留最新版本
 CREATE TABLE IF NOT EXISTS minute15_market_data
 (
     trade_time DateTime,
@@ -71,12 +75,13 @@ CREATE TABLE IF NOT EXISTS minute15_market_data
     amount Float64,
     created_at DateTime DEFAULT now()
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(created_at)
 PARTITION BY toYYYYMM(trade_time)
 ORDER BY (trade_time, stock_code)
 SETTINGS index_granularity = 8192;
 
 -- 30分钟线行情表
+-- 使用 ReplacingMergeTree 自动去重，相同(trade_time, stock_code)保留最新版本
 CREATE TABLE IF NOT EXISTS minute30_market_data
 (
     trade_time DateTime,
@@ -89,12 +94,13 @@ CREATE TABLE IF NOT EXISTS minute30_market_data
     amount Float64,
     created_at DateTime DEFAULT now()
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(created_at)
 PARTITION BY toYYYYMM(trade_time)
 ORDER BY (trade_time, stock_code)
 SETTINGS index_granularity = 8192;
 
 -- 60分钟线行情表
+-- 使用 ReplacingMergeTree 自动去重，相同(trade_time, stock_code)保留最新版本
 CREATE TABLE IF NOT EXISTS minute60_market_data
 (
     trade_time DateTime,
@@ -107,12 +113,13 @@ CREATE TABLE IF NOT EXISTS minute60_market_data
     amount Float64,
     created_at DateTime DEFAULT now()
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(created_at)
 PARTITION BY toYYYYMM(trade_time)
 ORDER BY (trade_time, stock_code)
 SETTINGS index_granularity = 8192;
 
 -- Tick行情表
+-- 使用 ReplacingMergeTree 自动去重，相同(trade_time, stock_code)保留最新版本
 CREATE TABLE IF NOT EXISTS tick_market_data
 (
     trade_time DateTime64(3),
@@ -126,7 +133,7 @@ CREATE TABLE IF NOT EXISTS tick_market_data
     ask_volume1 Int64,
     created_at DateTime DEFAULT now()
 )
-ENGINE = MergeTree
+ENGINE = ReplacingMergeTree(created_at)
 PARTITION BY toYYYYMMDD(trade_time)
 ORDER BY (trade_time, stock_code)
 SETTINGS index_granularity = 8192;
