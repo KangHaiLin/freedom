@@ -123,88 +123,102 @@ def test_query_invalid_condition():
 
 def test_batch_query():
     """测试批量查询"""
-    with patch("data_management.data_query.query_manager.storage_manager") as mock_storage:
-        mock_clickhouse = Mock()
-        mock_postgresql = Mock()
-        mock_redis = Mock()
-        mock_clickhouse.read.return_value = pd.DataFrame(
-            {
-                "trade_date": ["2024-01-01"],
-                "stock_code": ["600000.SH"],
-                "close": [10.5],
-            }
-        )
-        mock_redis.read.return_value = None  # 缓存未命中
-        mock_storage.get_storage_by_type.side_effect = lambda t: {
-            "clickhouse": mock_clickhouse,
-            "postgresql": mock_postgresql,
-            "redis": mock_redis,
-        }.get(t)
+    mock_storage = Mock()
+    mock_clickhouse = Mock()
+    mock_postgresql = Mock()
+    mock_redis = Mock()
+    mock_clickhouse.read.return_value = pd.DataFrame(
+        {
+            "trade_date": ["2024-01-01"],
+            "stock_code": ["600000.SH"],
+            "close": [10.5],
+        }
+    )
+    mock_redis.read.return_value = None  # 缓存未命中
 
-        manager = QueryManager()
-        queries = [
-            {
-                "service_type": "market",
-                "stock_codes": ["600000.SH"],
-                "start_date": "2024-01-01",
-                "end_date": "2024-01-31",
-                "filters": {"data_type": "daily"},
-            },
-            {
-                "service_type": "market",
-                "stock_codes": ["000001.SZ"],
-                "start_date": "2024-01-01",
-                "end_date": "2024-01-31",
-                "filters": {"data_type": "daily"},
-            },
-        ]
+    def get_storage_by_type(t):
+        if t == "clickhouse":
+            return mock_clickhouse
+        elif t == "postgresql":
+            return mock_postgresql
+        elif t == "redis":
+            return mock_redis
+        else:
+            return None
 
-        results = manager.batch_query(queries)
-        assert len(results) == 2
-        assert all(r.success for r in results)
+    mock_storage.get_storage_by_type.side_effect = get_storage_by_type
+
+    manager = QueryManager(storage_manager_inject=mock_storage)
+    queries = [
+        {
+            "service_type": "market",
+            "stock_codes": ["600000.SH"],
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+            "filters": {"data_type": "daily"},
+        },
+        {
+            "service_type": "market",
+            "stock_codes": ["000001.SZ"],
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+            "filters": {"data_type": "daily"},
+        },
+    ]
+
+    results = manager.batch_query(queries)
+    assert len(results) == 2
+    assert all(r.success for r in results)
 
 
 def test_batch_query_with_error():
     """测试批量查询包含错误查询"""
-    with patch("data_management.data_query.query_manager.storage_manager") as mock_storage:
-        mock_clickhouse = Mock()
-        mock_postgresql = Mock()
-        mock_redis = Mock()
-        mock_clickhouse.read.return_value = pd.DataFrame(
-            {
-                "trade_date": ["2024-01-01"],
-                "stock_code": ["600000.SH"],
-                "close": [10.5],
-            }
-        )
-        mock_redis.read.return_value = None  # 缓存未命中
-        mock_storage.get_storage_by_type.side_effect = lambda t: {
-            "clickhouse": mock_clickhouse,
-            "postgresql": mock_postgresql,
-            "redis": mock_redis,
-        }.get(t)
+    mock_storage = Mock()
+    mock_clickhouse = Mock()
+    mock_postgresql = Mock()
+    mock_redis = Mock()
+    mock_clickhouse.read.return_value = pd.DataFrame(
+        {
+            "trade_date": ["2024-01-01"],
+            "stock_code": ["600000.SH"],
+            "close": [10.5],
+        }
+    )
+    mock_redis.read.return_value = None  # 缓存未命中
 
-        manager = QueryManager()
-        queries = [
-            {
-                "service_type": "market",
-                "stock_codes": ["600000.SH"],
-                "start_date": "2024-01-01",
-                "end_date": "2024-01-31",
-                "filters": {"data_type": "daily"},
-            },
-            {
-                "service_type": "invalid",
-                "stock_codes": ["000001.SZ"],
-                "start_date": "2024-01-01",
-                "end_date": "2024-01-31",
-            },
-        ]
+    def get_storage_by_type(t):
+        if t == "clickhouse":
+            return mock_clickhouse
+        elif t == "postgresql":
+            return mock_postgresql
+        elif t == "redis":
+            return mock_redis
+        else:
+            return None
 
-        results = manager.batch_query(queries)
-        assert len(results) == 2
-        assert results[0].success is True
-        assert results[1].success is False
+    mock_storage.get_storage_by_type.side_effect = get_storage_by_type
+
+    manager = QueryManager(storage_manager_inject=mock_storage)
+    queries = [
+        {
+            "service_type": "market",
+            "stock_codes": ["600000.SH"],
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+            "filters": {"data_type": "daily"},
+        },
+        {
+            "service_type": "invalid",
+            "stock_codes": ["000001.SZ"],
+            "start_date": "2024-01-01",
+            "end_date": "2024-01-31",
+        },
+    ]
+
+    results = manager.batch_query(queries)
+    assert len(results) == 2
+    assert results[0].success is True
+    assert results[1].success is False
 
 
 def test_health_check():
