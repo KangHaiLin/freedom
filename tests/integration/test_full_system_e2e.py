@@ -5,26 +5,15 @@
 5. 风险控制检查 → 6. 性能指标计算 → 7. 报告生成
 """
 
-from datetime import datetime
-from unittest.mock import Mock, patch
-
 import pandas as pd
-import pytest
 
-from data_management.data_query.query_manager import QueryManager
-from data_management.data_storage.storage_manager import StorageManager
-from risk_management.compliance_management.compliance_checker import ComplianceChecker
-from risk_management.risk_calculation.limit_manager import LimitManager, LimitType, RiskLimit
+from risk_management.risk_calculation.limit_manager import LimitType, RiskLimit
 from risk_management.risk_manager import RiskManager
-from risk_management.rule_engine.builtins import get_default_pre_trade_rules
 from src.strategy_research.base.strategy_result import BacktestResult
 from strategy_research.backtest_engine.backtest_config import BacktestConfig
 from strategy_research.backtest_engine.backtest_engine import BacktestEngine
-from strategy_research.strategy_management.strategy_manager import StrategyManager
 from trading_engine.broker_adapter.simulated_broker import SimulatedBrokerAdapter
-from trading_engine.order_management.order_manager import OrderManager
 from trading_engine.position_management.portfolio_manager import PortfolioManager
-from trading_engine.trading_manager import TradingManager
 
 
 class TestFullSystemEndToEnd:
@@ -101,9 +90,6 @@ class TestFullSystemEndToEnd:
 
         # 创建回测引擎 - BacktestEngine 已经包含所有内部初始化
         backtest_engine = BacktestEngine(historical_data_int, config)
-
-        # 策略管理用于动态加载策略
-        strategy_manager = StrategyManager()
 
         # 3. 定义简单均值回归策略
         strategy_code = '''
@@ -199,7 +185,7 @@ class SimpleMeanReversionStrategy(BaseStrategy):
         # 检查投资组合最终权益
         assert result.final_capital > 0, "最终资本应该大于0"
 
-        print(f"\n[E2E Test] Simple Mean Reversion Backtest completed:")
+        print("\n[E2E Test] Simple Mean Reversion Backtest completed:")
         print(f"  - Total trades: {result.total_trades}")
         print(f"  - Final capital: {result.final_capital:.2f}")
         print(f"  - Total return: {result.total_pnl_pct:.2f}%")
@@ -227,8 +213,6 @@ class SimpleMeanReversionStrategy(BaseStrategy):
             single_position_max_ratio=0.5,
             close_at_end=True,
         )
-
-        strategy_manager = StrategyManager()
 
         # 3. 创建两个不同策略
         # 策略1: 短期均值回归
@@ -325,7 +309,7 @@ class SimpleTrendFollowing(BaseStrategy):
         assert not pd.isna(result1.sharpe_ratio)
         assert not pd.isna(result2.sharpe_ratio)
 
-        print(f"\n[E2E Test] Multi-Strategy Portfolio completed:")
+        print("\n[E2E Test] Multi-Strategy Portfolio completed:")
         print(f"  - Strategy 1 (Short Mean Reversion): return={result1.total_pnl_pct:.2f}%, sharpe={result1.sharpe_ratio:.2f}")
         print(f"  - Strategy 2 (Simple Trend Following): return={result2.total_pnl_pct:.2f}%, sharpe={result2.sharpe_ratio:.2f}")
 
@@ -334,23 +318,7 @@ class SimpleTrendFollowing(BaseStrategy):
 
     def test_risk_control_compliance_e2e(self):
         """测试风险控制和合规检查端到端"""
-        # 1. 创建数据，包含违规交易场景
-        from datetime import date
-
-        # 创建一天的数据，但包含T+1违规场景
-        data = [
-            {
-                "trade_date": date(2024, 1, 1),
-                "stock_code": "000001.SZ",
-                "open": 10.0,
-                "high": 10.5,
-                "low": 9.5,
-                "close": 10.0,
-                "volume": 1000000,
-                "amount": 10000000,
-            }
-        ]
-        df = pd.DataFrame(data)
+        # 1. 初始化系统，启用所有合规检查
 
         # 2. 初始化系统，启用所有合规检查
         portfolio = PortfolioManager(initial_cash=100000.0)
@@ -358,7 +326,6 @@ class SimpleTrendFollowing(BaseStrategy):
             portfolio_manager=portfolio,
             config={"initial_cash": 100000.0}
         )
-        order_manager = OrderManager()
         risk_manager = RiskManager()
 
         # RiskManager 默认已经加载了所有默认合规规则
@@ -400,31 +367,22 @@ class SimpleTrendFollowing(BaseStrategy):
         broker.connect()
         # Update last price before submitting so the broker can execute the order
         broker.update_last_prices({"000001.SZ": 10.0})
-        filled_order = broker.submit_order(order)
+        broker.submit_order(order)
 
         # 验证仓位
         pos = portfolio.get_position("000001.SZ")
         assert pos is not None
         assert pos.quantity == 1000
 
-        # 尝试当日卖出 - T+1应该拒绝
-        sell_order = Order(
-            ts_code="000001.SZ",
-            side=OrderSide.SELL,
-            order_type=OrderType.MARKET,
-            quantity=1000,
-            price=10.0,
-        )
-
         # Since we bought 1000 shares today, available_quantity is 0 due to T+1
         check_result_t1 = risk_manager.pre_trade_check(1, "000001.SZ", "SELL", 10.0, 1000, portfolio=portfolio, trade_date=20240101, available_quantity=0)
         # T+1规则应该拒绝今日买入当日卖出
         assert not check_result_t1.passed()
 
-        print(f"\n[E2E Test] Risk Control & Compliance:")
-        print(f"  - Overweight position check: correctly rejected")
-        print(f"  - T+1 restriction: correctly blocked same-day sell")
-        print(f"  - Position within limit: correctly passed")
+        print("\n[E2E Test] Risk Control & Compliance:")
+        print("  - Overweight position check: correctly rejected")
+        print("  - T+1 restriction: correctly blocked same-day sell")
+        print("  - Position within limit: correctly passed")
 
         # 所有检查都通过了验证
         assert True
