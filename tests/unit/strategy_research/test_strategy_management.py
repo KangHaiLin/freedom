@@ -130,6 +130,7 @@ def test_activate_version_not_found():
 def test_update_status():
     """Test updating strategy status"""
     from src.strategy_research.base import StrategyStatus
+
     with tempfile.TemporaryDirectory() as tmpdir:
         manager = StrategyManager(storage_dir=f"{tmpdir}/strategies")
         manager.create_strategy(
@@ -150,6 +151,7 @@ def test_update_status():
 def test_update_status_not_found():
     """Test update status when strategy doesn't exist returns False"""
     from src.strategy_research.base import StrategyStatus
+
     with tempfile.TemporaryDirectory() as tmpdir:
         manager = StrategyManager(storage_dir=f"{tmpdir}/strategies")
         success = manager.update_status("nonexistent", StrategyStatus.RUNNING)
@@ -178,6 +180,7 @@ def test_delete_strategy():
 def test_list_strategies_filter_by_status():
     """Test listing strategies filtered by status"""
     from src.strategy_research.base import StrategyStatus
+
     with tempfile.TemporaryDirectory() as tmpdir:
         manager = StrategyManager(storage_dir=f"{tmpdir}/strategies")
         manager.create_strategy(
@@ -271,8 +274,9 @@ def test_instantiate_no_active_version():
 
 def test_instantiate_with_version():
     """Test instantiating with specific version"""
-    import tempfile
     import os
+    import tempfile
+
     from src.strategy_research.base import BaseStrategy
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -280,12 +284,14 @@ def test_instantiate_with_version():
         strategies_dir = os.path.join(tmpdir, "strategies")
         os.makedirs(strategies_dir)
         with open(os.path.join(strategies_dir, "test_strategy.py"), "w") as f:
-            f.write('''
+            f.write(
+                """
 from src.strategy_research.base import BaseStrategy
 class TestStrategy(BaseStrategy):
     def on_bar(self, bar_data, current_date, portfolio):
         return {}
-''')
+"""
+            )
 
         manager = StrategyManager(
             storage_dir=f"{tmpdir}/meta",

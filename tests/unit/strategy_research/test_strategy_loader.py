@@ -4,8 +4,8 @@ Unit tests for strategy_loader.py
 
 import os
 import sys
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 from src.strategy_research.base import BaseStrategy
 from src.strategy_research.strategy_management.strategy_loader import StrategyLoader
@@ -15,7 +15,7 @@ def create_test_strategy_file(tmp_dir):
     """Create a test strategy file on disk"""
     strategy_dir = Path(tmp_dir)
     strategy_file = strategy_dir / "test_strategy.py"
-    content = '''
+    content = """
 from src.strategy_research.base import BaseStrategy
 
 class TestStrategy(BaseStrategy):
@@ -24,8 +24,8 @@ class TestStrategy(BaseStrategy):
 
 class NotAStrategy:
     pass
-'''
-    with open(strategy_file, 'w') as f:
+"""
+    with open(strategy_file, "w") as f:
         f.write(content)
     return strategy_dir
 
@@ -56,9 +56,11 @@ def test_load_class_no_dot():
         loader = StrategyLoader(tmpdir)
 
         # When module name == class name
-        with open(Path(tmpdir) / "TestStrategy.py", 'w') as f:
-            f.write('''
-from src.strategy_research.base import BaseStrategy\nclass TestStrategy(BaseStrategy):\n    def on_bar(self, bar_data, current_date, portfolio):\n        return {}\n''')
+        with open(Path(tmpdir) / "TestStrategy.py", "w") as f:
+            f.write(
+                """
+from src.strategy_research.base import BaseStrategy\nclass TestStrategy(BaseStrategy):\n    def on_bar(self, bar_data, current_date, portfolio):\n        return {}\n"""
+            )
 
         strategy_class = loader.load_class("TestStrategy")
         assert strategy_class is not None

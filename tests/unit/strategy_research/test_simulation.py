@@ -15,12 +15,14 @@ class TestStrategy(BaseStrategy):
 
 class BuyStrategy(BaseStrategy):
     """Strategy that buys 000001.SZ on first bar"""
+
     def on_bar(self, bar_data, current_date, portfolio):
         return {"000001.SZ": TradeDirection.BUY}
 
 
 class BuyAllStrategy(BaseStrategy):
     """Strategy that buys everything"""
+
     def on_bar(self, bar_data, current_date, portfolio):
         return {"000001.SZ": TradeDirection.BUY, "600000.SH": TradeDirection.BUY}
 

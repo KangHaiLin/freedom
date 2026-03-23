@@ -11,9 +11,9 @@ import pytest
 
 from src.strategy_research.base import BacktestResult, DailyStats
 from src.strategy_research.report_generator.report_generator import (
+    generate_html_report,
     generate_json_report,
     generate_text_report,
-    generate_html_report,
     save_report,
 )
 
@@ -137,7 +137,7 @@ def test_save_report_html():
     """Test saving HTML report to file"""
     result = create_test_backtest_result()
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".html", delete=False) as f:
         temp_path = f.name
 
     try:
@@ -158,7 +158,7 @@ def test_save_report_json():
     """Test saving JSON report to file"""
     result = create_test_backtest_result()
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         temp_path = f.name
 
     try:
@@ -168,7 +168,7 @@ def test_save_report_json():
         assert result_dict["content_type"] == "application/json"
 
         # Verify file contains valid JSON
-        with open(temp_path, 'r') as f:
+        with open(temp_path, "r") as f:
             data = json.load(f)
         assert data["strategy_name"] == "TestStrategy"
     finally:
@@ -180,7 +180,7 @@ def test_save_report_text():
     """Test saving text report to file"""
     result = create_test_backtest_result()
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
         temp_path = f.name
 
     try:
@@ -189,7 +189,7 @@ def test_save_report_text():
         assert result_dict["format"] == "text"
         assert result_dict["content_type"] == "text/plain"
 
-        with open(temp_path, 'r') as f:
+        with open(temp_path, "r") as f:
             content = f.read()
         assert "回测报告: TestStrategy" in content
     finally:

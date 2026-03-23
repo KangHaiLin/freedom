@@ -24,11 +24,12 @@ class TestFullDataFlow:
         # 1. 数据采集阶段
         # Bypass actual API calls - need to mock both pro_api and top-level realtime_quote
         from datetime import datetime
+
         import pytz
+
         from common.utils import DateTimeUtils
 
-        with patch("tushare.pro_api") as mock_tushare_api, \
-             patch("tushare.realtime_quote") as mock_realtime_quote:
+        with patch("tushare.pro_api") as mock_tushare_api, patch("tushare.realtime_quote") as mock_realtime_quote:
             mock_pro = Mock()
             mock_tushare_api.return_value = mock_pro
 
@@ -40,7 +41,7 @@ class TestFullDataFlow:
                     tushare_data[col] = None
 
             # Convert to timezone-aware to match DateTimeUtils.now() output
-            tushare_data['time'] = tushare_data['time'].apply(lambda dt: dt.replace(tzinfo=pytz.utc))
+            tushare_data["time"] = tushare_data["time"].apply(lambda dt: dt.replace(tzinfo=pytz.utc))
 
             mock_realtime_quote.return_value = tushare_data
 
@@ -97,7 +98,11 @@ class TestFullDataFlow:
             mock_result.success = True
             mock_result.total = len(cleaned_data)
             mock_result.query_time = 0.1
-            mock_result.to_dict.return_value = {"data": cleaned_data.to_dict("records"), "total": len(cleaned_data), "query_time": 0.1}
+            mock_result.to_dict.return_value = {
+                "data": cleaned_data.to_dict("records"),
+                "total": len(cleaned_data),
+                "query_time": 0.1,
+            }
             mock_query.get_realtime_quote.return_value = mock_result
 
             headers = {"X-API-Key": "test_key"}
@@ -137,8 +142,8 @@ class TestFullDataFlow:
         # calculate_ma expects stock_code and periods list for querying from storage
         # So we do the calculation manually to test the logic
         data_with_ma = sample_daily_data.copy()
-        data_with_ma['ma5'] = data_with_ma['close'].rolling(5).mean()
-        assert 'ma5' in data_with_ma.columns
+        data_with_ma["ma5"] = data_with_ma["close"].rolling(5).mean()
+        assert "ma5" in data_with_ma.columns
         assert "ma5" in data_with_ma.columns
         # 前4天没有均线值
         assert pd.isna(data_with_ma["ma5"].iloc[0])

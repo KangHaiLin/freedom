@@ -10,11 +10,7 @@ from src.strategy_research.base import BaseStrategy, TradeDirection
 from src.strategy_research.strategy_validator import detect_overfit, scan_parameter
 from src.strategy_research.strategy_validator.out_of_sample import rolling_window_test, split_sample_test
 from src.strategy_research.strategy_validator.overfit_detector import calculate_information_ratio
-from src.strategy_research.strategy_validator.param_sensitivity import (
-    grid_search,
-    scan_parameter,
-    sensitivity_summary,
-)
+from src.strategy_research.strategy_validator.param_sensitivity import grid_search, scan_parameter, sensitivity_summary
 
 
 class DummyStrategy(BaseStrategy):
@@ -71,15 +67,17 @@ def test_rolling_window_test():
     data = []
     base_date = 20240101
     for i in range(600):
-        data.append({
-            "trade_date": base_date + i,
-            "ts_code": "000001.SZ",
-            "open": 10,
-            "high": 11,
-            "low": 9.5,
-            "close": 10 + (i % 100) * 0.01,
-            "vol": 1000000,
-        })
+        data.append(
+            {
+                "trade_date": base_date + i,
+                "ts_code": "000001.SZ",
+                "open": 10,
+                "high": 11,
+                "low": 9.5,
+                "close": 10 + (i % 100) * 0.01,
+                "vol": 1000000,
+            }
+        )
     df = pd.DataFrame(data)
 
     config = BacktestConfig(initial_capital=100000)
@@ -93,7 +91,9 @@ def test_rolling_window_test():
     )
 
     assert "total_windows" in result
-    assert result["total_windows"] == 2  # start=0 (window 0-251), then start=252 (window 252-503), start=504 → 504+252=756 > 600 → loop ends → total 2 windows
+    assert (
+        result["total_windows"] == 2
+    )  # start=0 (window 0-251), then start=252 (window 252-503), start=504 → 504+252=756 > 600 → loop ends → total 2 windows
     assert len(result["results"]) == result["total_windows"]
     assert "average_train_return" in result
     assert "average_test_return" in result
@@ -106,15 +106,17 @@ def test_rolling_window_test_not_enough_data():
     data = []
     base_date = 20240101
     for i in range(100):
-        data.append({
-            "trade_date": base_date + i,
-            "ts_code": "000001.SZ",
-            "open": 10,
-            "high": 11,
-            "low": 9.5,
-            "close": 10,
-            "vol": 1000000,
-        })
+        data.append(
+            {
+                "trade_date": base_date + i,
+                "ts_code": "000001.SZ",
+                "open": 10,
+                "high": 11,
+                "low": 9.5,
+                "close": 10,
+                "vol": 1000000,
+            }
+        )
     df = pd.DataFrame(data)
 
     result = rolling_window_test(df, DummyStrategy, {}, train_window_days=252, test_window_days=60)
@@ -127,15 +129,17 @@ def test_split_sample_test():
     data = []
     base_date = 20240101
     for i in range(200):
-        data.append({
-            "trade_date": base_date + i,
-            "ts_code": "000001.SZ",
-            "open": 10,
-            "high": 11,
-            "low": 9.5,
-            "close": 10,
-            "vol": 1000000,
-        })
+        data.append(
+            {
+                "trade_date": base_date + i,
+                "ts_code": "000001.SZ",
+                "open": 10,
+                "high": 11,
+                "low": 9.5,
+                "close": 10,
+                "vol": 1000000,
+            }
+        )
     df = pd.DataFrame(data)
 
     config = BacktestConfig(initial_capital=100000)
@@ -203,15 +207,17 @@ def test_grid_search():
     data = []
     base_date = 20240101
     for i in range(100):
-        data.append({
-            "trade_date": base_date + i,
-            "ts_code": "000001.SZ",
-            "open": 10,
-            "high": 11,
-            "low": 9.5,
-            "close": 10,
-            "vol": 1000000,
-        })
+        data.append(
+            {
+                "trade_date": base_date + i,
+                "ts_code": "000001.SZ",
+                "open": 10,
+                "high": 11,
+                "low": 9.5,
+                "close": 10,
+                "vol": 1000000,
+            }
+        )
     df = pd.DataFrame(data)
 
     from src.strategy_research.base import BaseStrategy
@@ -249,15 +255,17 @@ def test_sensitivity_summary():
     data = []
     base_date = 20240101
     for i in range(50):
-        data.append({
-            "trade_date": base_date + i,
-            "ts_code": "000001.SZ",
-            "open": 10,
-            "high": 11,
-            "low": 9.5,
-            "close": 10,
-            "vol": 1000000,
-        })
+        data.append(
+            {
+                "trade_date": base_date + i,
+                "ts_code": "000001.SZ",
+                "open": 10,
+                "high": 11,
+                "low": 9.5,
+                "close": 10,
+                "vol": 1000000,
+            }
+        )
     df = pd.DataFrame(data)
 
     from src.strategy_research.base import BaseStrategy
