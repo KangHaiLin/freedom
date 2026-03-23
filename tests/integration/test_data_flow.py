@@ -7,7 +7,6 @@ from datetime import datetime
 from unittest.mock import Mock, patch
 
 import pandas as pd
-import pytest
 from fastapi.testclient import TestClient
 
 from data_management.data_ingestion.data_cleaner import DataCleaner
@@ -23,11 +22,7 @@ class TestFullDataFlow:
         """测试实时行情完整数据流"""
         # 1. 数据采集阶段
         # Bypass actual API calls - need to mock both pro_api and top-level realtime_quote
-        from datetime import datetime
-
         import pytz
-
-        from common.utils import DateTimeUtils
 
         with patch("tushare.pro_api") as mock_tushare_api, patch("tushare.realtime_quote") as mock_realtime_quote:
             mock_pro = Mock()
@@ -133,11 +128,6 @@ class TestFullDataFlow:
         query_manager.query = Mock(return_value=mock_result)
 
         # 模拟均线计算
-        from data_management.data_query.market_data_query import MarketDataQuery
-
-        mock_storage = Mock()
-        mock_storage.get_storage_by_type.return_value = Mock()
-        market_query = MarketDataQuery(mock_storage)
         # This test just verifies the MA calculation works on a data frame
         # calculate_ma expects stock_code and periods list for querying from storage
         # So we do the calculation manually to test the logic
