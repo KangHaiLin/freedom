@@ -19,16 +19,17 @@ os.environ["RATE_LIMIT"] = "0"  # 关闭限流
 
 from datetime import datetime
 from unittest.mock import Mock, patch
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from fastapi.testclient import TestClient
 
-# 不直接导入需要初始化的类，避免依赖配置
-# from data_management.data_storage.storage_manager import StorageManager
-# from data_management.data_ingestion.data_source_manager import DataSourceManager
-# from data_management.data_query.query_manager import QueryManager
-# from data_management.data_monitoring.monitor_manager import MonitorManager
-# from user_interface.backend.main import app
+if TYPE_CHECKING:
+    from data_management.data_storage.storage_manager import StorageManager
+    from data_management.data_ingestion.data_source_manager import DataSourceManager
+    from data_management.data_query.query_manager import QueryManager
+    from data_management.data_monitoring.monitor_manager import MonitorManager
+    from user_interface.backend.main import app
 
 
 @pytest.fixture(scope="session")

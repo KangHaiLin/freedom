@@ -8,7 +8,7 @@ import os
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from .base_logger import BaseLogger, LogLevel, LogRecord
 
