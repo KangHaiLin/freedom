@@ -7,12 +7,27 @@ import json
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+import numpy as np
+
 from src.strategy_research.base import BacktestResult
+
+
+def numpy_default(obj):
+    """Convert numpy types to Python native types for JSON serialization"""
+    if isinstance(obj, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+        return int(obj)
+    elif isinstance(obj, (np.floating, np.float64, np.float32, np.float16)):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif hasattr(obj, 'to_dict') and callable(getattr(obj, 'to_dict')):
+        return obj.to_dict()
+    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 
 def generate_json_report(result: BacktestResult) -> str:
     """生成JSON格式报告"""
-    return json.dumps(result.to_dict(), indent=2, ensure_ascii=False)
+    return json.dumps(result.to_dict(), indent=2, ensure_ascii=False, default=numpy_default)
 
 
 def generate_text_report(result: BacktestResult) -> str:
