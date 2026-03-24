@@ -6,7 +6,6 @@
 """
 
 import logging
-from typing import Dict, Optional
 
 from common.config import config
 

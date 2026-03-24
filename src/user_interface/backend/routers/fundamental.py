@@ -3,7 +3,7 @@
 """
 
 import logging
-from datetime import date, datetime
+from datetime import date
 from typing import List, Optional, Union
 
 from fastapi import APIRouter, Depends, Query
@@ -11,16 +11,7 @@ from fastapi import APIRouter, Depends, Query
 from data_management.data_query.query_manager import query_manager
 
 from ..dependencies import verify_api_key
-from ..schemas import (
-    BalanceSheetResponse,
-    CashFlowResponse,
-    DividendResponse,
-    FinancialIndicatorResponse,
-    HolderInfoResponse,
-    IncomeStatementResponse,
-    MarketDataResponse,
-    StockBasicResponse,
-)
+from ..schemas import MarketDataResponse
 
 logger = logging.getLogger(__name__)
 

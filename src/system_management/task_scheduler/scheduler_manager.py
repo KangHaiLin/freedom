@@ -4,12 +4,10 @@
 """
 
 import threading
-import time
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .async_task import AsyncTask, AsyncTaskQueue
-from .base_task import TaskStatus
 from .scheduled_task import ScheduledTask
 from .task_registry import TaskRegistry
 

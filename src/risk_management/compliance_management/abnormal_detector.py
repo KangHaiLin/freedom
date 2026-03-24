@@ -3,10 +3,9 @@
 识别异常交易模式，满足反洗钱和监管要求
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-import numpy as np
 import pandas as pd
 
 

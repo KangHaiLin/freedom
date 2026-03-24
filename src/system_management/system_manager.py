@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Type, TypeVar
 
 from .configuration_center import ConfigManager, get_config_manager
-from .log_center import LogManager, ModuleLogger, get_log_manager, get_logger
+from .log_center import LogManager, ModuleLogger, get_log_manager
 from .monitoring_center import MonitorManager, get_monitor_manager
 from .operation_tools import HealthCheckManager, Maintenance, SystemDiagnostic
 from .task_scheduler import SchedulerManager, get_scheduler_manager

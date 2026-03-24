@@ -3,13 +3,12 @@
 测试不同参数对策略表现的影响
 """
 
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List
 
 import numpy as np
-import pandas as pd
 
-from src.strategy_research.backtest_engine import BacktestConfig, BacktestEngine
-from src.strategy_research.base import BacktestResult, BaseStrategy
+from src.strategy_research.backtest_engine import BacktestEngine
+from src.strategy_research.base import BaseStrategy
 
 
 def scan_parameter(

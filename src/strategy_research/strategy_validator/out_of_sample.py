@@ -3,12 +3,12 @@
 时间序列样本外测试
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import pandas as pd
 
 from src.strategy_research.backtest_engine import BacktestConfig, BacktestEngine
-from src.strategy_research.base import BacktestResult, BaseStrategy
+from src.strategy_research.base import BaseStrategy
 
 
 def rolling_window_test(

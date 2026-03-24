@@ -6,7 +6,7 @@
 from typing import Dict, List, Optional, Union
 
 from .async_task import AsyncTask
-from .base_task import BaseTask, TaskStatus
+from .base_task import TaskStatus
 from .scheduled_task import ScheduledTask
 
 

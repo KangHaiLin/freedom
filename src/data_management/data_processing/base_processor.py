@@ -6,12 +6,11 @@
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict
 
 import numpy as np
 import pandas as pd
 
-from common.exceptions import DataException
 from common.utils import DateTimeUtils
 
 logger = logging.getLogger(__name__)

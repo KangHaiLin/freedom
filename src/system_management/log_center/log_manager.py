@@ -5,7 +5,7 @@
 
 import threading
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .base_logger import BaseLogger, LogLevel, LogRecord
 from .console_logger import ConsoleLogger

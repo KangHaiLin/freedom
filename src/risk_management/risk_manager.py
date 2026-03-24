@@ -9,13 +9,12 @@ from typing import Any, Callable, Dict, List, Optional
 
 from src.risk_management.audit_trail.operation_logger import OperationLogger, OperationType
 from src.risk_management.audit_trail.risk_event_store import RiskEvent, RiskEventStore
-from src.risk_management.base.base_rule import BaseRule, RuleLevel
 from src.risk_management.compliance_management.abnormal_detector import AbnormalTradeDetector
 from src.risk_management.compliance_management.compliance_checker import ComplianceChecker
 from src.risk_management.compliance_management.report_generator import ComplianceReportGenerator
 from src.risk_management.realtime_monitor.alert_generator import Alert, AlertGenerator
 from src.risk_management.realtime_monitor.risk_scanner import RealtimeRiskScanner
-from src.risk_management.risk_calculation.limit_manager import LimitManager, LimitType, RiskLimit
+from src.risk_management.risk_calculation.limit_manager import LimitManager, RiskLimit
 from src.risk_management.risk_calculation.scenario_analyzer import ScenarioAnalyzer
 from src.risk_management.risk_calculation.stress_tester import StressTester
 from src.risk_management.risk_calculation.var_calculator import VaRCalculator
@@ -23,7 +22,7 @@ from src.risk_management.rule_engine.builtins import get_default_pre_trade_rules
 from src.risk_management.rule_engine.rule import Rule, RuleVersion
 from src.risk_management.rule_engine.rule_executor import RuleExecutor
 from src.risk_management.rule_engine.rule_manager import RuleManager
-from src.risk_management.rule_engine.rule_result import RuleResult, RuleViolation
+from src.risk_management.rule_engine.rule_result import RuleResult
 
 logger = logging.getLogger(__name__)
 

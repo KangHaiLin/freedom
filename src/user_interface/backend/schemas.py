@@ -3,7 +3,7 @@ API响应模型
 """
 
 from datetime import date, datetime
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 

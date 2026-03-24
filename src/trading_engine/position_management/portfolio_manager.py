@@ -6,7 +6,6 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.trading_engine.base.base_order import OrderSide
 from src.trading_engine.order_management.order import Order
 from src.trading_engine.position_management.position import Position
 from src.trading_engine.position_management.position_calculator import PositionCalculator

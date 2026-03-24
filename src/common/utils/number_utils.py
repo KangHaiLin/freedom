@@ -4,7 +4,7 @@
 """
 
 import decimal
-from typing import Optional, Union
+from typing import Union
 
 import numpy as np
 

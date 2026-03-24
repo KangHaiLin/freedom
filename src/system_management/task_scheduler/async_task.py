@@ -9,7 +9,7 @@ from threading import Thread
 from typing import Any, Callable, List, Optional
 from uuid import uuid4
 
-from .base_task import BaseTask, TaskResult, TaskStatus
+from .base_task import TaskResult, TaskStatus
 
 
 class AsyncTask:

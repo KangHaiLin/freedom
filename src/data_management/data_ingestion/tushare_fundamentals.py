@@ -5,7 +5,6 @@ Tushare数据源基本面数据适配器
 
 import logging
 import time
-from datetime import datetime
 from typing import Dict, List
 
 import pandas as pd
@@ -13,7 +12,7 @@ import tushare as ts
 
 from common.constants import BusinessConstants
 from common.exceptions import DataSourceException
-from common.utils import DateTimeUtils, StockCodeUtils
+from common.utils import StockCodeUtils
 
 from .fundamentals_collector import FundamentalsCollector
 

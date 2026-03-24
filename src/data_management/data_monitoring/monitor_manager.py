@@ -7,8 +7,8 @@ import json
 import logging
 import threading
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Dict, List, Optional
 
 from common.config import settings
 from common.utils import DateTimeUtils

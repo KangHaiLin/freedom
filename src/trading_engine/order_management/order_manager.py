@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.trading_engine.base.base_order import BaseOrder, OrderStatus
-from src.trading_engine.order_management.order import Order
 from src.trading_engine.order_management.order_state_machine import OrderStateMachine
 
 logger = logging.getLogger(__name__)

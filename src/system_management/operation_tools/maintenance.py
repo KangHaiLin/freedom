@@ -3,11 +3,10 @@
 清理过期日志、清理临时文件、备份配置、空间估算
 """
 
-import os
 import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 class Maintenance:

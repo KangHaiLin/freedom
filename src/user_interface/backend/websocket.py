@@ -9,11 +9,9 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 
 from data_management.data_query.query_manager import query_manager
-
-from .dependencies import verify_api_key
 
 logger = logging.getLogger(__name__)
 

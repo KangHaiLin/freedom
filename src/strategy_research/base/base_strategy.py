@@ -4,9 +4,8 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
-import pandas as pd
 from pandas import DataFrame
 
 from .enums import TradeDirection

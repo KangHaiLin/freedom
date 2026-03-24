@@ -3,9 +3,9 @@
 预定义常见风控规则
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from src.risk_management.base.base_rule import RuleLevel, RuleType
+from src.risk_management.base.base_rule import RuleLevel
 from src.risk_management.rule_engine.rule import Rule
 
 # ========== 预定义交易前检查规则 ==========

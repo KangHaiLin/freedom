@@ -7,7 +7,6 @@ import logging
 from typing import Any, Dict, Optional
 
 from common.config import settings
-from system_management.task_scheduler.scheduled_task import ScheduledTask
 from system_management.task_scheduler.scheduler_manager import get_scheduler_manager
 
 from .historical_sync_task import (

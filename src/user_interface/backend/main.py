@@ -191,3 +191,5 @@ if __name__ == "__main__":
     else:
         # 生产模式直接传入app
         uvicorn.run(app, host=settings.host, port=settings.port, reload=False, workers=1)
+
+# flake8: noqa: E402

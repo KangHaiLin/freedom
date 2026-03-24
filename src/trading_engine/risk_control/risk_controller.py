@@ -3,13 +3,12 @@
 整合事前风控和合规检查，统一接口
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from src.trading_engine.base.base_order import OrderSide
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.risk_control.compliance_rules import AShareComplianceRules, ComplianceCheckResult
-from src.trading_engine.risk_control.pre_trade_check import PreTradeChecker, PreTradeCheckResult
+from src.trading_engine.risk_control.compliance_rules import AShareComplianceRules
+from src.trading_engine.risk_control.pre_trade_check import PreTradeChecker
 
 
 class RiskCheckResult:

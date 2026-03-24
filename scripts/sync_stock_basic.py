@@ -4,17 +4,13 @@
 从AKShare获取全量股票基础信息并写入PostgreSQL
 """
 
+import logging
 import os
 import sys
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
 
-import logging
-
-import pandas as pd
-
-from common.config import settings
 from data_management.data_ingestion.akshare_fundamentals import AKShareFundamentalsCollector
 from data_management.data_storage.storage_manager import storage_manager
 

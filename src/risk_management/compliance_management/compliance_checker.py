@@ -3,7 +3,7 @@
 检查交易行为是否符合监管要求和A股规则
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 import pandas as pd

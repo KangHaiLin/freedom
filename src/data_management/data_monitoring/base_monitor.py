@@ -7,9 +7,8 @@ import logging
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from common.exceptions import MonitorException
 from common.utils import DateTimeUtils
 
 logger = logging.getLogger(__name__)

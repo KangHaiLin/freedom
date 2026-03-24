@@ -12,8 +12,8 @@ from src.strategy_research.base import BacktestResult, BaseStrategy, StrategySta
 from src.strategy_research.report_generator import generate_text_report, save_report
 from src.strategy_research.simulation_trading import SimulationConfig, SimulationEngine
 from src.strategy_research.strategy_management import StrategyManager as MetadataManager
-from src.strategy_research.strategy_management import StrategyMetadata, StrategyVersion
-from src.strategy_research.strategy_validator import detect_overfit, rolling_window_test, scan_parameter
+from src.strategy_research.strategy_management import StrategyMetadata
+from src.strategy_research.strategy_validator import detect_overfit, scan_parameter
 
 
 class StrategyResearchManager:

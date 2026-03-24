@@ -6,7 +6,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from .enums import PositionSide, TradeDirection
+from .enums import TradeDirection
 
 
 @dataclass

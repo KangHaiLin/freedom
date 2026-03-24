@@ -11,7 +11,6 @@ from src.trading_engine.base.base_broker_adapter import BaseBrokerAdapter
 from src.trading_engine.base.base_order import BaseOrder, OrderStatus
 from src.trading_engine.broker_adapter.interface import CommissionCalculator, CommissionConfig
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.trade_record.trade_record import TradeRecord
 from src.trading_engine.trade_record.trade_record_manager import TradeRecordManager
 
 logger = logging.getLogger(__name__)

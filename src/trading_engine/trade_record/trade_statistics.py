@@ -3,8 +3,7 @@
 计算胜率、盈亏比、最大回撤、收益曲线等统计指标
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas as pd

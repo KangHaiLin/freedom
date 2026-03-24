@@ -5,7 +5,6 @@ JoinQuant数据源适配器
 
 import logging
 import time
-from datetime import datetime
 from typing import Dict, List
 
 import pandas as pd

@@ -4,7 +4,6 @@
 """
 
 import threading
-import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from .application_monitor import ApplicationMonitor

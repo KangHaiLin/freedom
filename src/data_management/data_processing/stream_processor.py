@@ -5,9 +5,8 @@
 
 import logging
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 
 from .base_processor import BaseProcessor

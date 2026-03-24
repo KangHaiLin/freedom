@@ -7,7 +7,6 @@ from datetime import date, datetime, timedelta
 from typing import List, Optional, Union
 
 import holidays
-import pandas as pd
 import pytz
 
 

@@ -5,11 +5,10 @@
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 from src.risk_management.rule_engine.rule_executor import RuleExecutor
-from src.risk_management.rule_engine.rule_manager import RuleManager
 from src.risk_management.rule_engine.rule_result import RuleResult
 
 from .alert_generator import AlertGenerator, AlertLevel

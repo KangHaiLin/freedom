@@ -6,14 +6,12 @@
 import base64
 import hashlib
 import hmac
-import json
 import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import bcrypt
 import jwt
-from pydantic_settings import BaseSettings
 
 
 class CryptoUtils:
@@ -200,7 +198,7 @@ class CryptoUtils:
             fernet_key = base64.urlsafe_b64encode(key_bytes)
             f = Fernet(fernet_key)
             return f.decrypt(encrypted_data.encode()).decode()
-        except:
+        except Exception:
             return None
 
     @classmethod

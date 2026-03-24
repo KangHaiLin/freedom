@@ -3,8 +3,8 @@ TWAP (Time Weighted Average Price) 执行算法
 将大单等分拆分，按固定时间间隔下单
 """
 
-from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from datetime import datetime
+from typing import List, Optional
 
 from src.trading_engine.base.base_order import OrderSide
 

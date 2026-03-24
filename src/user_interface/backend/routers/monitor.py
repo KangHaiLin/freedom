@@ -4,14 +4,14 @@
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
 from data_management.data_monitoring.monitor_manager import monitor_manager
 
 from ..dependencies import verify_admin_role, verify_api_key
-from ..schemas import AlertRecordResponse, BaseResponse, DashboardResponse, MonitorStatusResponse
+from ..schemas import BaseResponse
 
 logger = logging.getLogger(__name__)
 

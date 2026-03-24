@@ -4,7 +4,7 @@
 """
 
 import re
-from typing import Dict, Optional, Tuple
+from typing import Tuple
 
 
 class StockCodeUtils:

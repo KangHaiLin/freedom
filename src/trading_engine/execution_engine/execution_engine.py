@@ -6,14 +6,13 @@
 import logging
 from datetime import datetime
 from queue import Empty, Queue
-from threading import Thread, Timer
-from typing import Any, Callable, Dict, List, Optional
+from threading import Thread
+from typing import Any, Dict, List, Optional
 
 from src.trading_engine.base.base_broker_adapter import BaseBrokerAdapter
-from src.trading_engine.base.base_order import BaseOrder, OrderSide
+from src.trading_engine.base.base_order import OrderSide
 from src.trading_engine.execution_engine.twap_algo import TWAPAlgo
 from src.trading_engine.execution_engine.vwap_algo import VWAPAlgo
-from src.trading_engine.order_management.order import Order
 from src.trading_engine.order_management.order_manager import OrderManager
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
 

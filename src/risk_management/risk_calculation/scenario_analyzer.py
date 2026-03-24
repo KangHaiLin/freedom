@@ -5,9 +5,6 @@
 
 from typing import Any, Dict, List, Optional
 
-import numpy as np
-import pandas as pd
-
 
 class Scenario:
     """情景定义"""

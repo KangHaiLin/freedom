@@ -4,7 +4,7 @@
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from src.trading_engine.base.base_position import BasePosition
 

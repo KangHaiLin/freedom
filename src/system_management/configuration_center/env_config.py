@@ -4,7 +4,7 @@
 """
 
 import os
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional
 
 from .base_config import ConfigSource
 

@@ -6,7 +6,6 @@
 import logging
 from typing import Any, Dict, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 
 from .base_processor import BaseProcessor

@@ -6,12 +6,10 @@ A股合规规则检查
 - 停牌股票禁止交易
 """
 
-from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple
 
 from src.trading_engine.base.base_order import OrderSide
 from src.trading_engine.position_management.portfolio_manager import PortfolioManager
-from src.trading_engine.position_management.position import Position
 
 
 class ComplianceCheckResult:

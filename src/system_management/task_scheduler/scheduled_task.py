@@ -8,7 +8,7 @@ from typing import Any, Callable, Optional
 
 from croniter import croniter
 
-from .base_task import BaseTask, TaskResult, TaskStatus
+from .base_task import BaseTask, TaskStatus
 
 
 class ScheduledTask(BaseTask):

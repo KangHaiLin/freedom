@@ -5,7 +5,6 @@
 
 import sys
 from datetime import datetime
-from typing import Optional
 
 from .base_logger import BaseLogger, LogLevel, LogRecord
 

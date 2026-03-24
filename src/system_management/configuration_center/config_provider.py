@@ -3,8 +3,7 @@
 多源配置合并，类型转换，默认值支持，配置验证
 """
 
-import re
-from typing import Any, Callable, Dict, Generic, Optional, Type, TypeVar, Union, get_type_hints
+from typing import Any, Callable, Dict, Optional, Type, TypeVar, Union
 
 from .base_config import ConfigSource
 

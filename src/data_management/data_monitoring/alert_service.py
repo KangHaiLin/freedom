@@ -6,10 +6,9 @@
 import json
 import logging
 import smtplib
-from datetime import datetime
 from email.header import Header
 from email.mime.text import MIMEText
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import requests
 

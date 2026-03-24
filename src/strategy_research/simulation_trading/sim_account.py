@@ -4,7 +4,7 @@
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict
 
 from src.strategy_research.base import PositionSnapshot, TradeDirection, TradeRecord
 

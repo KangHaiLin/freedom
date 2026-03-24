@@ -6,7 +6,7 @@
 from datetime import datetime
 from typing import Any, Callable, Dict, Optional
 
-from src.risk_management.base.base_rule import BaseRule, RuleLevel, RuleType
+from src.risk_management.base.base_rule import BaseRule, RuleLevel
 
 
 class Rule(BaseRule):

@@ -4,14 +4,11 @@
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-
-import pandas as pd
+from datetime import timedelta
+from typing import Dict
 
 from common.utils import DateTimeUtils
 
-from ..data_ingestion.data_source_manager import data_source_manager
 from ..data_storage.storage_manager import storage_manager
 from .base_monitor import AlertLevel, BaseMonitor, MonitorResult
 

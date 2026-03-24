@@ -5,9 +5,7 @@
 
 import math
 import random
-from typing import List, Optional, Tuple
-
-from src.trading_engine.base.base_order import OrderSide
+from typing import List
 
 
 class OrderSplitter:

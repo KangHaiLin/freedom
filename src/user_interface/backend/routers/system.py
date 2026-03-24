@@ -5,8 +5,6 @@
 import logging
 import platform
 import uuid
-from datetime import datetime
-from typing import List
 
 import psutil
 from fastapi import APIRouter, Depends
@@ -16,7 +14,7 @@ from data_management.data_storage.storage_manager import storage_manager
 from src.strategy_research.strategy_manager import StrategyResearchManager
 
 from ..dependencies import verify_admin_role, verify_api_key
-from ..schemas import BacktestResultResponse, BacktestTaskResponse, BaseResponse, SystemStatusResponse
+from ..schemas import BaseResponse
 
 logger = logging.getLogger(__name__)
 
@@ -184,8 +182,6 @@ async def list_strategies():
     strategies = manager.list_strategies()
 
     # 转换为前端需要的格式
-    from datetime import datetime
-
     result = []
     for idx, meta in enumerate(strategies):
         # 这里简化处理，实际应该从存储获取最新绩效数据

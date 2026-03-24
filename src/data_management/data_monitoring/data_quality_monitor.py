@@ -4,15 +4,14 @@
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import timedelta
+from typing import Dict
 
 import pandas as pd
 
 from common.constants import DEFAULT_QUALITY_RULES
 from common.utils import DateTimeUtils
 
-from ..data_storage.storage_manager import storage_manager
 from .base_monitor import AlertLevel, BaseMonitor, MonitorResult
 
 logger = logging.getLogger(__name__)

@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 
-from common.constants import DEFAULT_QUALITY_RULES, BusinessConstants
+from common.constants import DEFAULT_QUALITY_RULES
 from common.utils import DateTimeUtils
 
 logger = logging.getLogger(__name__)

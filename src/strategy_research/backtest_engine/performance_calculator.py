@@ -8,7 +8,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from src.strategy_research.base import BacktestResult, DailyStats, TradeRecord
+from src.strategy_research.base import DailyStats, TradeRecord
 
 
 def calculate_sharpe_ratio(daily_returns: pd.Series, risk_free_rate: float = 0.03) -> float:
