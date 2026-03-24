@@ -61,31 +61,61 @@ class VWAPAlgo:
 
     def _create_split_plan(self) -> List[Tuple[datetime, int]]:
         """创建拆分计划"""
-        plan = []
-        remaining = self.total_quantity
+        if self.total_quantity <= 0:
+            return []
 
-        # 平均分配
         base_quantity = self.total_quantity // self.num_splits
         remainder = self.total_quantity % self.num_splits
+
+        # 先计算理论上每一块的原始数量，然后合并小批量
+        # 如果单块小于min_chunk，累积起来直到超过min_chunk再添加
+        plan = []
+        pending = 0
 
         for i in range(self.num_splits):
             chunk_quantity = base_quantity
             if i < remainder:
                 chunk_quantity += 1
 
-            # 限制在min-max范围内
-            chunk_quantity = max(self.min_chunk, min(self.max_chunk, chunk_quantity))
+            pending += chunk_quantity
 
-            # 计算成交时间
-            offset_seconds = self.interval * (i + 0.5)  # 中间时间
-            chunk_time = self.start_time + timedelta(seconds=offset_seconds)
-            plan.append((chunk_time, chunk_quantity))
-            remaining -= chunk_quantity
+            # 当累积达到min_chunk或者是最后一块，就输出
+            if pending >= self.min_chunk or i == self.num_splits - 1:
+                if pending > 0:
+                    # 限制最大块，如果超过最大块分成多个
+                    if pending > self.max_chunk:
+                        remaining_pending = pending
+                        idx = len(plan)
+                        while remaining_pending > 0:
+                            current = min(remaining_pending, self.max_chunk)
+                            # 计算成交时间 - 平均分布在区间内
+                            offset_seconds = self.interval * (idx + 0.5)
+                            chunk_time = self.start_time + timedelta(seconds=offset_seconds)
+                            plan.append((chunk_time, current))
+                            remaining_pending -= current
+                            idx += 1
+                    else:
+                        offset_seconds = self.interval * (i + 0.5)
+                        chunk_time = self.start_time + timedelta(seconds=offset_seconds)
+                        plan.append((chunk_time, pending))
+                    pending = 0
 
-        # 如果还有剩余，分配到最后一笔
-        if remaining > 0:
+        # 如果还有剩余，添加到最后一块
+        if pending > 0:
+            if plan:
+                last_time, last_qty = plan[-1]
+                plan[-1] = (last_time, last_qty + pending)
+            else:
+                offset_seconds = self.interval * 0.5
+                chunk_time = self.start_time + timedelta(seconds=offset_seconds)
+                plan.append((chunk_time, min(pending, self.max_chunk)))
+
+        # 确保总和正确
+        total = sum(qty for _, qty in plan)
+        diff = self.total_quantity - total
+        if diff != 0 and plan:
             last_time, last_qty = plan[-1]
-            plan[-1] = (last_time, last_qty + remaining)
+            plan[-1] = (last_time, last_qty + diff)
 
         return plan
 
@@ -99,6 +129,22 @@ class VWAPAlgo:
         """
         if self.done:
             return None
+
+        # 如果已经超过结束时间，所有剩余全部执行
+        if current_time >= self.end_time:
+            if self.current_split < len(self._split_plan):
+                # 累积所有剩余的总数量一次性返回
+                total = 0
+                while self.current_split < len(self._split_plan):
+                    _, chunk_quantity = self._split_plan[self.current_split]
+                    total += chunk_quantity
+                    self.current_split += 1
+                self.remaining_quantity -= total
+                self.done = True
+                return total
+            else:
+                self.done = True
+                return None
 
         while self.current_split < len(self._split_plan):
             chunk_time, chunk_quantity = self._split_plan[self.current_split]

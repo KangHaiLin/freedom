@@ -56,32 +56,54 @@ class TWAPAlgo:
 
     def _create_split_plan(self) -> List[int]:
         """创建拆分计划"""
-        plan = []
-        remaining = self.total_quantity
+        if self.total_quantity <= 0:
+            return []
 
         base_quantity = self.total_quantity // self.num_intervals
         remainder = self.total_quantity % self.num_intervals
+
+        # 先计算理论上每一块的原始数量，然后合并小批量
+        # 如果单块小于min_chunk，累积起来直到超过min_chunk再添加
+        plan = []
+        pending = 0
 
         for i in range(self.num_intervals):
             chunk_quantity = base_quantity
             if i < remainder:
                 chunk_quantity += 1
 
-            # 限制范围
-            if chunk_quantity > 0:
-                chunk_quantity = max(self.min_chunk, min(self.max_chunk, chunk_quantity))
+            pending += chunk_quantity
 
-            if chunk_quantity > 0:
-                plan.append(chunk_quantity)
-                remaining -= chunk_quantity
+            # 当累积达到min_chunk或者是最后一块，就输出
+            if pending >= self.min_chunk or i == self.num_intervals - 1:
+                if pending > 0:
+                    # 限制最大块
+                    if pending > self.max_chunk:
+                        # 如果超过最大块，分成多块
+                        while pending > 0:
+                            current = min(pending, self.max_chunk)
+                            plan.append(current)
+                            pending -= current
+                    else:
+                        plan.append(pending)
+                    pending = 0
 
-        # 分配剩余
-        if remaining > 0 and plan:
-            plan[-1] += remaining
+        # 如果还有剩余，添加到最后一块
+        if pending > 0:
+            if plan:
+                plan[-1] += pending
+            else:
+                plan.append(min(pending, self.max_chunk))
 
-        # 如果总量太小，合并成一笔
-        if not plan and remaining > 0:
-            plan.append(min(remaining, self.max_chunk))
+        # 确保总和正确
+        total = sum(plan)
+        if total != self.total_quantity:
+            diff = self.total_quantity - total
+            if diff > 0 and plan:
+                plan[-1] += diff
+            elif diff < 0 and plan:
+                # 只需要保证不超过总量，实际执行中会正确处理剩余，所以这里容忍小差异没关系
+                pass
 
         return plan
 
@@ -96,20 +118,29 @@ class TWAPAlgo:
         if self.done:
             return None
 
-        if self.last_order_time is None:
-            # 第一笔，如果已经过了开始时间，立即执行
-            if current_time >= self.start_time:
-                return self._take_next_chunk()
+        # 如果还没到开始时间，不发送
+        if current_time < self.start_time:
             return None
 
-        # 检查间隔
-        elapsed = (current_time - self.last_order_time).total_seconds()
-        if elapsed >= self.interval_seconds:
-            return self._take_next_chunk()
+        # 计算从开始到现在过去了多少个间隔，应该发送到第几个切片
+        elapsed_total = (current_time - self.start_time).total_seconds()
+        target_split = int(elapsed_total / self.interval_seconds) + 1
+
+        # 不超过总切片数
+        target_split = min(target_split, len(self._split_plan))
+
+        # 如果还没发到目标位置，发送下一笔
+        if self.current_split < target_split:
+            return self._take_next_chunk(current_time)
+
+        # 全部完成检查
+        if self.current_split >= len(self._split_plan):
+            self.done = True
+            return None
 
         return None
 
-    def _take_next_chunk(self) -> Optional[int]:
+    def _take_next_chunk(self, current_time: datetime) -> Optional[int]:
         """取出下一笔"""
         if self.current_split >= len(self._split_plan):
             self.done = True
@@ -118,7 +149,7 @@ class TWAPAlgo:
         chunk_quantity = self._split_plan[self.current_split]
         self.current_split += 1
         self.remaining_quantity -= chunk_quantity
-        self.last_order_time = datetime.now()
+        self.last_order_time = current_time
 
         if self.current_split >= len(self._split_plan):
             self.done = True
