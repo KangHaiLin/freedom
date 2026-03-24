@@ -20,7 +20,7 @@ def numpy_default(obj):
         return float(obj)
     elif isinstance(obj, np.ndarray):
         return obj.tolist()
-    elif hasattr(obj, 'to_dict') and callable(getattr(obj, 'to_dict')):
+    elif hasattr(obj, "to_dict") and callable(getattr(obj, "to_dict")):
         return obj.to_dict()
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 

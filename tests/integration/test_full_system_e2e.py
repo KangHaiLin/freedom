@@ -34,27 +34,31 @@ class TestFullSystemEndToEnd:
             change_1 = (i % 10 - 5) * 0.1
             change_2 = ((i + 3) % 10 - 5) * 0.15
 
-            data.append({
-                "trade_date": date,
-                "stock_code": "000001.SZ",
-                "open": round(base_price_1 + change_1, 2),
-                "high": round(base_price_1 + change_1 + 0.2, 2),
-                "low": round(base_price_1 + change_1 - 0.2, 2),
-                "close": round(base_price_1 + change_1, 2),
-                "volume": 1000000 + i * 10000,
-                "amount": 10000000 + i * 100000,
-            })
+            data.append(
+                {
+                    "trade_date": date,
+                    "stock_code": "000001.SZ",
+                    "open": round(base_price_1 + change_1, 2),
+                    "high": round(base_price_1 + change_1 + 0.2, 2),
+                    "low": round(base_price_1 + change_1 - 0.2, 2),
+                    "close": round(base_price_1 + change_1, 2),
+                    "volume": 1000000 + i * 10000,
+                    "amount": 10000000 + i * 100000,
+                }
+            )
 
-            data.append({
-                "trade_date": date,
-                "stock_code": "600000.SH",
-                "open": round(base_price_2 + change_2, 2),
-                "high": round(base_price_2 + change_2 + 0.3, 2),
-                "low": round(base_price_2 + change_2 - 0.3, 2),
-                "close": round(base_price_2 + change_2, 2),
-                "volume": 800000 + i * 8000,
-                "amount": 16000000 + i * 80000,
-            })
+            data.append(
+                {
+                    "trade_date": date,
+                    "stock_code": "600000.SH",
+                    "open": round(base_price_2 + change_2, 2),
+                    "high": round(base_price_2 + change_2 + 0.3, 2),
+                    "low": round(base_price_2 + change_2 - 0.3, 2),
+                    "close": round(base_price_2 + change_2, 2),
+                    "volume": 800000 + i * 8000,
+                    "amount": 16000000 + i * 80000,
+                }
+            )
 
             base_price_1 += change_1
             base_price_2 += change_2
@@ -132,7 +136,7 @@ class SimpleMeanReversionStrategy(BaseStrategy):
 
         # Execute the code string to get the strategy class
         global_dict = globals().copy()
-        global_dict['BaseStrategy'] = BaseStrategy
+        global_dict["BaseStrategy"] = BaseStrategy
         exec(strategy_code, global_dict)
         strategy_class = global_dict["SimpleMeanReversionStrategy"]
         strategy = strategy_class()
@@ -168,11 +172,13 @@ class SimpleMeanReversionStrategy(BaseStrategy):
 
         # 7. 生成回测报告
         from strategy_research.report_generator.report_generator import generate_json_report
+
         report_json_str = generate_json_report(result)
         assert report_json_str is not None
         assert len(report_json_str) > 0
         # 解析回JSON验证格式
         import json
+
         report_json = json.loads(report_json_str)
         assert "strategy_name" in report_json
         assert "annualized_return" in report_json
@@ -216,7 +222,7 @@ class SimpleMeanReversionStrategy(BaseStrategy):
 
         # 3. 创建两个不同策略
         # 策略1: 短期均值回归
-        strategy1_code = '''
+        strategy1_code = """
 from src.strategy_research.base.base_strategy import BaseStrategy
 from src.strategy_research.base.enums import TradeDirection
 
@@ -243,10 +249,10 @@ class ShortMeanReversion(BaseStrategy):
                 elif close > 20.0 + self.threshold * 20.0:
                     signals[ts_code] = TradeDirection.SELL
         return signals
-'''
+"""
 
         # 策略2: 趋势跟踪
-        strategy2_code = '''
+        strategy2_code = """
 from src.strategy_research.base.base_strategy import BaseStrategy
 from src.strategy_research.base.enums import TradeDirection
 
@@ -269,18 +275,19 @@ class SimpleTrendFollowing(BaseStrategy):
             else:
                 signals[ts_code] = TradeDirection.HOLD
         return signals
-'''
+"""
 
         # 4. 实例化策略 - 动态加载从代码字符串
         from src.strategy_research.base.base_strategy import BaseStrategy
+
         global_dict1 = globals().copy()
-        global_dict1['BaseStrategy'] = BaseStrategy
+        global_dict1["BaseStrategy"] = BaseStrategy
         exec(strategy1_code, global_dict1)
         strategy1_class = global_dict1["ShortMeanReversion"]
         strategy1 = strategy1_class()
 
         global_dict2 = globals().copy()
-        global_dict2['BaseStrategy'] = BaseStrategy
+        global_dict2["BaseStrategy"] = BaseStrategy
         exec(strategy2_code, global_dict2)
         strategy2_class = global_dict2["SimpleTrendFollowing"]
         strategy2 = strategy2_class()
@@ -310,8 +317,12 @@ class SimpleTrendFollowing(BaseStrategy):
         assert not pd.isna(result2.sharpe_ratio)
 
         print("\n[E2E Test] Multi-Strategy Portfolio completed:")
-        print(f"  - Strategy 1 (Short Mean Reversion): return={result1.total_pnl_pct:.2f}%, sharpe={result1.sharpe_ratio:.2f}")
-        print(f"  - Strategy 2 (Simple Trend Following): return={result2.total_pnl_pct:.2f}%, sharpe={result2.sharpe_ratio:.2f}")
+        print(
+            f"  - Strategy 1 (Short Mean Reversion): return={result1.total_pnl_pct:.2f}%, sharpe={result1.sharpe_ratio:.2f}"
+        )
+        print(
+            f"  - Strategy 2 (Simple Trend Following): return={result2.total_pnl_pct:.2f}%, sharpe={result2.sharpe_ratio:.2f}"
+        )
 
         # 验证整个流程成功完成
         assert True
@@ -322,20 +333,19 @@ class SimpleTrendFollowing(BaseStrategy):
 
         # 2. 初始化系统，启用所有合规检查
         portfolio = PortfolioManager(initial_cash=100000.0)
-        broker = SimulatedBrokerAdapter(
-            portfolio_manager=portfolio,
-            config={"initial_cash": 100000.0}
-        )
+        broker = SimulatedBrokerAdapter(portfolio_manager=portfolio, config={"initial_cash": 100000.0})
         risk_manager = RiskManager()
 
         # RiskManager 默认已经加载了所有默认合规规则
         # 添加自定义单个仓位比例限制
-        risk_manager._limit_manager.add_limit(RiskLimit(
-            limit_id=1,
-            limit_type=LimitType.SINGLE_POSITION_RATIO,
-            limit_value=0.1,
-            description="单个仓位不超过总资产的10%",
-        ))
+        risk_manager._limit_manager.add_limit(
+            RiskLimit(
+                limit_id=1,
+                limit_type=LimitType.SINGLE_POSITION_RATIO,
+                limit_value=0.1,
+                description="单个仓位不超过总资产的10%",
+            )
+        )
 
         # 3. 测试买入后立即卖出 (T+1违规)
         # 第一天买入
@@ -352,7 +362,9 @@ class SimpleTrendFollowing(BaseStrategy):
         )
 
         # 预交易检查
-        check_result = risk_manager.pre_trade_check(1, "000001.SZ", "BUY", 10.0, 10000, portfolio=portfolio, total_asset=100000.0, current_quantity=0)
+        check_result = risk_manager.pre_trade_check(
+            1, "000001.SZ", "BUY", 10.0, 10000, portfolio=portfolio, total_asset=100000.0, current_quantity=0
+        )
         # 应该被拒绝 - 超过仓位限制
         assert not check_result.passed()
         violations = check_result.get_violations()
@@ -360,7 +372,9 @@ class SimpleTrendFollowing(BaseStrategy):
 
         # 减少数量到合规
         order.quantity = 1000  # 1000 * 10 = 10000 → 10% 刚好
-        check_result2 = risk_manager.pre_trade_check(1, "000001.SZ", "BUY", 10.0, 1000, portfolio=portfolio, total_asset=100000.0, current_quantity=0)
+        check_result2 = risk_manager.pre_trade_check(
+            1, "000001.SZ", "BUY", 10.0, 1000, portfolio=portfolio, total_asset=100000.0, current_quantity=0
+        )
         assert check_result2.passed(), "应该通过，刚好10%"
 
         # 执行买入
@@ -375,7 +389,9 @@ class SimpleTrendFollowing(BaseStrategy):
         assert pos.quantity == 1000
 
         # Since we bought 1000 shares today, available_quantity is 0 due to T+1
-        check_result_t1 = risk_manager.pre_trade_check(1, "000001.SZ", "SELL", 10.0, 1000, portfolio=portfolio, trade_date=20240101, available_quantity=0)
+        check_result_t1 = risk_manager.pre_trade_check(
+            1, "000001.SZ", "SELL", 10.0, 1000, portfolio=portfolio, trade_date=20240101, available_quantity=0
+        )
         # T+1规则应该拒绝今日买入当日卖出
         assert not check_result_t1.passed()
 
