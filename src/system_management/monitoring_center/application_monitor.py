@@ -5,7 +5,7 @@
 
 import time
 from collections import deque
-from typing import Dict, List
+from typing import Any, Dict, List
 
 from .base_monitor import BaseMonitor
 
