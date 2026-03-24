@@ -39,3 +39,4 @@ repos:
         - types-redis
         - types-python-dateutil
         - pydantic[mypy]
+        exclude: ^tests/
