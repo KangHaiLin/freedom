@@ -189,7 +189,6 @@ class AKShareFundamentalsCollector(FundamentalsCollector):
         rename_map = {
             "outstanding_share": "float_share",
             "total_share": "total_share",
-            "outstanding_share": "float_share",
             "total_mv": "total_mv",
             "circ_mv": "circ_mv",
             "pe": "pe",
