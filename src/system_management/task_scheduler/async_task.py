@@ -179,11 +179,11 @@ class AsyncTaskQueue:
         if not self._running:
             return
 
-        self._stop_flag = True
-
         if wait:
-            # 等待队列清空
+            # 等待队列清空所有任务完成后再设置停止标志
             self._queue.join()
+
+        self._stop_flag = True
 
         for worker in self._workers:
             worker.join(timeout=5.0)
