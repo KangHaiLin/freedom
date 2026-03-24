@@ -13,6 +13,7 @@ from starlette.types import ASGIApp
 
 from common.config import settings
 from common.utils import DateTimeUtils
+from data_management.data_storage.storage_manager import storage_manager
 
 logger = logging.getLogger(__name__)
 
@@ -68,16 +69,18 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app: ASGIApp):
         super().__init__(app)
-        self.rate_limit = settings.RATE_LIMIT  # 每分钟请求次数限制
         self.redis = None
-        if settings.REDIS_CONFIG:
-            from src.data_management.data_storage.storage_manager import storage_manager
-
-            self.redis = storage_manager.get_storage_by_type("redis")
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # 从settings读取当前配置，支持测试中patch修改
+        rate_limit = settings.RATE_LIMIT
+
+        # 延迟初始化redis
+        if self.redis is None and settings.REDIS_CONFIG:
+            self.redis = storage_manager.get_storage_by_type("redis")
+
         # 如果没有配置Redis或者限流关闭，直接放行
-        if not self.redis or not self.rate_limit or self.rate_limit <= 0:
+        if not self.redis or not rate_limit or rate_limit <= 0:
             return await call_next(request)
 
         # 跳过非API请求
@@ -94,7 +97,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if current == 1:
                 self.redis.execute_sql(f"EXPIRE {key} 60")
 
-            if current > self.rate_limit:
+            if current > rate_limit:
                 logger.warning(f"客户端{client_ip}请求频率超限：{current}次/分钟")
                 return Response(
                     content='{"code": 429, "message": "请求频率过高，请稍后再试"}',

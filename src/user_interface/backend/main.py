@@ -117,6 +117,23 @@ app.add_middleware(
 app.add_middleware(RequestLogMiddleware)
 app.add_middleware(RateLimitMiddleware)
 
+# 根路由
+@app.get("/", tags=["根路径"])
+async def root():
+    return {
+        "code": 200,
+        "message": "A股量化交易系统API服务",
+        "version": settings.VERSION,
+        "debug": settings.DEBUG,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+# 健康检查
+@app.get("/health", tags=["健康检查"])
+async def health_check():
+    return {"code": 200, "status": "healthy", "timestamp": datetime.now().isoformat()}
+
 # 注册路由
 app.include_router(market.router, prefix="/api/v1/market", tags=["行情数据"])
 app.include_router(fundamental.router, prefix="/api/v1/fundamental", tags=["基本面数据"])
@@ -162,24 +179,6 @@ async def global_exception_handler(request: Request, exc: Exception):
             "timestamp": datetime.now().isoformat(),
         },
     )
-
-
-# 根路由
-@app.get("/", tags=["根路径"])
-async def root():
-    return {
-        "code": 200,
-        "message": "A股量化交易系统API服务",
-        "version": settings.VERSION,
-        "debug": settings.DEBUG,
-        "timestamp": datetime.now().isoformat(),
-    }
-
-
-# 健康检查
-@app.get("/health", tags=["健康检查"])
-async def health_check():
-    return {"code": 200, "status": "healthy", "timestamp": datetime.now().isoformat()}
 
 
 if __name__ == "__main__":

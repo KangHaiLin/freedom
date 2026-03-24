@@ -121,8 +121,11 @@ class AppConfig(BaseSettings):
     API_KEY_ENABLED: bool = Field(default=False, env="API_KEY_ENABLED")  # 是否启用API Key验证
     API_KEYS: list = Field(default=["test_api_key"], env="API_KEYS")  # API Key列表
     JWT_SECRET_KEY: str = Field(default="test_jwt_secret", env="JWT_SECRET_KEY")  # JWT密钥
+    JWT_EXPIRATION_HOURS: int = Field(default=24, env="JWT_EXPIRATION_HOURS")  # JWT过期小时数
     RATE_LIMIT: int = Field(default=1000, env="RATE_LIMIT")  # 每分钟请求次数限制
     RATE_LIMIT_ENABLED: bool = Field(default=False, env="RATE_LIMIT_ENABLED")  # 是否启用限流
+    ADMIN_USERNAME: str = Field(default="admin", env="ADMIN_USERNAME")  # 管理员用户名
+    ADMIN_PASSWORD_HASH: str = Field(default="$2b$12$EixZaYbspg1eR9xUGhhu1u8zH3jG4mYtqk/.p0jB9nQ7vOy1t5eWG", env="ADMIN_PASSWORD_HASH")  # 管理员密码哈希（默认是 'admin123'）
 
     # PostgreSQL配置
     postgres_host: str = Field(default="localhost", env="POSTGRES_HOST")

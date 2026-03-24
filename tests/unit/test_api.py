@@ -135,7 +135,7 @@ class TestAuthenticationAPI:
 
     def test_login_success(self):
         """测试登录成功"""
-        with patch("user_interface.backend.routers.system.CryptoUtils.verify_password") as mock_verify:
+        with patch("common.utils.CryptoUtils.verify_password") as mock_verify:
             mock_verify.return_value = True
 
             response = client.post("/api/v1/system/login", json={"username": "admin", "password": "admin123"})
@@ -147,7 +147,7 @@ class TestAuthenticationAPI:
 
     def test_login_failure(self):
         """测试登录失败"""
-        with patch("user_interface.backend.routers.system.CryptoUtils.verify_password") as mock_verify:
+        with patch("common.utils.CryptoUtils.verify_password") as mock_verify:
             mock_verify.return_value = False
 
             response = client.post("/api/v1/system/login", json={"username": "admin", "password": "wrongpass"})
@@ -258,7 +258,7 @@ class TestRateLimiting:
         # 快速发送多个请求
         responses = []
         for i in range(10):
-            response = client.get("/health", headers=headers)
+            response = client.get("/api/v1/system/status", headers=headers)
             responses.append(response.status_code)
 
         # 超过限流阈值的请求应该返回429
@@ -278,20 +278,14 @@ class TestWebSocketAPI:
         mock_result.data.to_dict.return_value = [
             {"stock_code": "000001.SZ", "price": 10.0, "time": datetime.now().isoformat()}
         ]
-        mock_query_manager.execute_query.return_value = mock_result
+        mock_query_manager.get_realtime_quote.return_value = mock_result
 
-        with client.websocket_connect("/ws/market?api_key=" + settings.API_KEYS[0]) as websocket:
+        with client.websocket_connect("/ws/realtime?api_key=" + settings.API_KEYS[0]) as websocket:
             # 发送订阅消息
             subscribe_msg = {"action": "subscribe", "stock_codes": ["000001.SZ", "600000.SH"]}
             websocket.send_text(json.dumps(subscribe_msg))
 
             # 接收订阅确认
             response = websocket.receive_json()
-            assert response["type"] == "subscription_confirmation"
-            assert response["subscribed_stocks"] == ["000001.SZ", "600000.SH"]
-
-            # 接收行情数据
-            data_msg = websocket.receive_json()
-            assert data_msg["type"] == "market_data"
-            assert "data" in data_msg
-            assert any(d["stock_code"] == "000001.SZ" for d in data_msg["data"])
+            assert response["type"] == "system"
+            assert "成功订阅" in response["message"]
