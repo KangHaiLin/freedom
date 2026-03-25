@@ -74,7 +74,7 @@ def test_resample_tick_to_minute():
     """测试Tick重采样到分钟线"""
     processor = TransformationProcessor()
     # 创建模拟Tick数据
-    times = pd.date_range("2024-01-01 09:30:00", "2024-01-01 09:34:59", freq="1T")
+    times = pd.date_range("2024-01-01 09:30:00", "2024-01-01 09:34:59", freq="1min")
     df = pd.DataFrame(
         {
             "trade_time": times,

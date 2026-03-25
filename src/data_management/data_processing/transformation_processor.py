@@ -205,6 +205,9 @@ class TransformationProcessor(BaseProcessor):
                 default_agg["amount"] = "sum"
             agg_map = default_agg
 
+        # 兼容旧版频率格式：将 'T' 替换为 'min' 消除FutureWarning
+        rule = rule.replace('T', 'min')
+
         # 执行重采样聚合
         resampled = df.resample(rule).agg(agg_map)
 

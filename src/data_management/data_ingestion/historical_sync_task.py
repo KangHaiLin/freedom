@@ -297,6 +297,9 @@ class HistoricalSyncTask(BaseTask, ABC):
             # AKShare的stock_zh_a_spot只返回当前上市的股票
             # 所以filter_only_listed默认已经满足
 
+            # 复制一份避免SettingWithCopyWarning
+            stock_info = stock_info.copy()
+
             # 转换代码格式
             def _convert_code(ak_code: str) -> str:
                 # AKShare格式: sh600000 → 转换为 600000.SH
@@ -311,7 +314,7 @@ class HistoricalSyncTask(BaseTask, ABC):
                         return f"{code}.BJ"
                 return ak_code
 
-            stock_info["stock_code"] = stock_info["代码"].apply(_convert_code)
+            stock_info.loc[:, "stock_code"] = stock_info["代码"].apply(_convert_code)
 
             # 只保留股票，过滤掉指数、基金、债券等
             from common.utils import StockCodeUtils

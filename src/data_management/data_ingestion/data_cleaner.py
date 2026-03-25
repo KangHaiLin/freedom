@@ -49,6 +49,8 @@ class DataCleaner:
             return pd.DataFrame()
 
         try:
+            # 复制一份避免SettingWithCopyWarning
+            df = df.copy()
             # 1. 去重
             if self.enable_duplicate_removal:
                 before_count = len(df)
@@ -58,37 +60,37 @@ class DataCleaner:
                     logger.debug(f"实时行情去重，移除{before_count - after_count}条重复数据")
 
             # 2. 数据类型转换
-            df["price"] = pd.to_numeric(df["price"], errors="coerce")
+            df.loc[:, "price"] = pd.to_numeric(df["price"], errors="coerce")
             if "open" in df.columns:
-                df["open"] = pd.to_numeric(df["open"], errors="coerce")
+                df.loc[:, "open"] = pd.to_numeric(df["open"], errors="coerce")
             if "high" in df.columns:
-                df["high"] = pd.to_numeric(df["high"], errors="coerce")
+                df.loc[:, "high"] = pd.to_numeric(df["high"], errors="coerce")
             if "low" in df.columns:
-                df["low"] = pd.to_numeric(df["low"], errors="coerce")
-            df["volume"] = pd.to_numeric(df["volume"], errors="coerce").astype("Int64")
+                df.loc[:, "low"] = pd.to_numeric(df["low"], errors="coerce")
+            df.loc[:, "volume"] = pd.to_numeric(df["volume"], errors="coerce").astype("Int64")
             if "amount" in df.columns:
-                df["amount"] = pd.to_numeric(df["amount"], errors="coerce")
+                df.loc[:, "amount"] = pd.to_numeric(df["amount"], errors="coerce")
             if "bid_price1" in df.columns:
-                df["bid_price1"] = pd.to_numeric(df["bid_price1"], errors="coerce")
+                df.loc[:, "bid_price1"] = pd.to_numeric(df["bid_price1"], errors="coerce")
             if "bid_volume1" in df.columns:
-                df["bid_volume1"] = pd.to_numeric(df["bid_volume1"], errors="coerce").astype("Int64")
+                df.loc[:, "bid_volume1"] = pd.to_numeric(df["bid_volume1"], errors="coerce").astype("Int64")
             if "ask_price1" in df.columns:
-                df["ask_price1"] = pd.to_numeric(df["ask_price1"], errors="coerce")
+                df.loc[:, "ask_price1"] = pd.to_numeric(df["ask_price1"], errors="coerce")
             if "ask_volume1" in df.columns:
-                df["ask_volume1"] = pd.to_numeric(df["ask_volume1"], errors="coerce").astype("Int64")
+                df.loc[:, "ask_volume1"] = pd.to_numeric(df["ask_volume1"], errors="coerce").astype("Int64")
 
             # 3. 缺失值处理
             if self.enable_missing_value_fill:
                 # 价格缺失的用最近价格填充
-                df["price"] = df.groupby("stock_code")["price"].ffill()
+                df.loc[:, "price"] = df.groupby("stock_code")["price"].ffill()
                 # 成交量缺失填充0
-                df["volume"] = df["volume"].fillna(0)
+                df.loc[:, "volume"] = df["volume"].fillna(0)
                 if "amount" in df.columns:
-                    df["amount"] = df["amount"].fillna(0)
+                    df.loc[:, "amount"] = df["amount"].fillna(0)
                 if "bid_volume1" in df.columns:
-                    df["bid_volume1"] = df["bid_volume1"].fillna(0)
+                    df.loc[:, "bid_volume1"] = df["bid_volume1"].fillna(0)
                 if "ask_volume1" in df.columns:
-                    df["ask_volume1"] = df["ask_volume1"].fillna(0)
+                    df.loc[:, "ask_volume1"] = df["ask_volume1"].fillna(0)
 
             # 4. 异常值检测与处理
             if self.enable_outlier_detection:
@@ -327,7 +329,7 @@ class DataCleaner:
 
                 return group
 
-            df = df.groupby("stock_code", group_keys=False).apply(process_group)
+            df = df.groupby("stock_code", group_keys=False, include_groups=False).apply(process_group)
 
             # 移除辅助列
             if "price_change" in df.columns:
